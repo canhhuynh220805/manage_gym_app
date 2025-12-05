@@ -1,0 +1,113 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<section class="container">
+
+    <div class="row justify-content-center g-3 mt-2">
+        {% for p in packages %}
+        <div class="col-12 col-md-6 col-lg-3 d-flex">
+            <div class="card border-dark border-3 h-100 flex-fill bg-">
+                <div class="card-header bg-light border-dark border-bottom-3 text-center fw-bold">{{ p.name }}</div>
+
+                <div class="card-body text-center pt-4 pb-4">
+                    <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto"
+                         style="width: 120px; height: 120px; font-weight: bold; font-size: 12px; color: #333;">
+                        MEMBERSHIP<br>BRONZE<br>DIRECTORIUM
+                    </div>
+                </div>
+
+                <div class="border-dark border-bottom-3">
+                    <ul class="list-unstyled ps-3 pe-3 pt-3 pb-3 mb-0">
+                        {% for pb in package_benefits %}
+                        {% if pb.package_id == p.id %}
+                        <li class="mb-2 small"><span class="fw-bold">✓</span> {{ pb.name }}</li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="bg-light border-dark border-bottom-3 text-center fw-bold py-3">{{ p.price }}đ/tháng</div>
+
+                <div class="card-footer bg-white border-0 d-flex flex-column gap-2 p-2">
+                    <!-- nút mở modal -->
+                    <button type="button" class="btn btn-info fw-bold btn-outline-dark" data-bs-toggle="modal"
+                            data-bs-target="#packageModal{{ p.id }}">Chi tiết gói tập
+                    </button>
+
+                    <!-- modal riêng cho từng gói -->
+                    <div class="modal fade" id="packageModal{{ p.id }}" data-bs-backdrop="static"
+                         data-bs-keyboard="false" tabindex="-1" aria-labelledby="packageLabel{{ p.id }}"
+                         aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-fullscreen-lg-down">
+                            <div class="modal-content modal-package">
+
+                                <div class="modal-header border-0 pb-0">
+                                    <div class="d-flex w-100 align-items-start">
+                                        <div class="me-4">
+                                            <img src="{{ url_for('static', filename='img/badge-bronze.png') }}"
+                                                 alt="Bronze Membership" class="img-fluid" style="max-width: 140px;">
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <h4 class="fw-bold mb-1" id="packageLabel{{ p.id }}">{{ p.name }}</h4>
+                                            <p class="mb-2 text-muted">{{ p.description }}</p>
+                                            <p class="fw-bold fs-4 mb-0">{{ p.price }}₫/tháng</p>
+                                        </div>
+
+                                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                    </div>
+                                </div>
+
+                                <hr class="my-3">
+
+                                <div class="modal-body pt-0">
+                                    <h5 class="fw-bold mb-3">Các ưu đãi</h5>
+                                    <div class="row gy-4">
+                                        {% for pb in package_benefits %}
+                                        {% if pb.package_id == p.id %}
+                                        <div class="col-md-6">
+                                            <div class="d-flex benefit-item">
+                                                <span class="me-2 mt-1">☑</span>
+                                                <div>
+                                                    <div class="fw-bold">{{ pb.name }}</div>
+                                                    <div class="text-muted small">{{ pb.detail }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer border-0 pt-0">
+                                    <div class="container px-0">
+                                        <div class="row g-3 w-100">
+                                            <div class="col-md-6">
+                                                <button type="button" class="btn btn-outline-dark w-100 py-2" data-bs-dismiss="modal">Đóng</button>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <button type="button" class="btn btn-outline-dark w-100 py-2 fw-bold">Đăng ký ngay </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <button class="btn btn-outline-dark fw-bold small bg-primary">Đăng ký</button>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</section>
+
+<div id="modalContainer"></div>
+
+{% endblock %}
