@@ -3,7 +3,7 @@ import hashlib
 import cloudinary
 
 from gymapp import db, app
-from gymapp.models import User
+from gymapp.models import User, Member, UserRole
 
 
 def get_user_by_id(id):
@@ -15,8 +15,8 @@ def auth_user(username, password):
                              User.password==password).first()
 
 
-def add_user(name, username, password, avatar):
-    u = User(name=name,
+def add_member(name, username, password, avatar):
+    u = Member(name=name,
              username=username.strip(),
              password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()))
 

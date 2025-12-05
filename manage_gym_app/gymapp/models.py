@@ -52,7 +52,7 @@ class UserRole(enum.Enum):
     USER = 2
     COACH = 3
     RECEPTIONIST = 4
-    CASHER = 5
+    CASHIER = 5
 
 #Giới tính
 class Gender(enum.Enum):
@@ -69,7 +69,7 @@ class User(BaseModel, UserMixin):
     phone = Column(String(20), nullable=True)
     gender = Column(Enum(Gender), default=Gender.MALE)
 
-    type = Column(String(50), nullable=True)
+    type = Column(String(50), nullable=False)
     __mapper_args__ = {
         'polymorphic_identity': 'user',
         'polymorphic_on': type
@@ -80,15 +80,16 @@ class User(BaseModel, UserMixin):
 
 
 class Member(User):
-    id = Column(Integer, ForeignKey(User.id), primary_key=True)
-    packages = relationship('MemberPackage', backref='package', lazy=True)
+    id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
+    packages = relationship('MemberPackage', backref='package', lazy=True, cascade="all, delete-orphan")
+    invoices = relationship('Invoice', backref='member', lazy=True)
     __mapper_args__ = {
         'polymorphic_identity': 'member',
     }
 
 
 class Coach(User):
-    id = Column(Integer, ForeignKey(User.id), primary_key=True)
+    id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
     workout_plans = relationship("WorkoutPlan", backref="coach", lazy=True)
     assigned_packages = relationship('MemberPackage', backref='assigned_coach', lazy=True)
     __mapper_args__ = {
@@ -135,7 +136,7 @@ class Package(BaseModel):
     duration = Column(Integer, nullable=False)
     price = Column(Double, nullable=False)
     description = Column(Text, nullable=False)
-    members = relationship('MemberPackage', backref='member', lazy=True)
+    members = relationship('MemberPackage', backref='package]', lazy=True)
 
 class MemberPackage(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -172,7 +173,7 @@ class InvoiceDetail(db.Model):
 if __name__ == '__main__':
     with app.app_context():
         # db.create_all()
-        # u = User(name='admin', username='admin', password = str(hashlib.md5("12346".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
+        # u = User(name='admin', username='admin', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
         #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
         # db.session.add(u)
         # db.session.commit()
