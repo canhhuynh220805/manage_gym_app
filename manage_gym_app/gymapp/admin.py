@@ -6,7 +6,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_login import logout_user, current_user
 
 from gymapp import app, db
-from gymapp.models import UserRole, User, Member, Coach
+from gymapp.models import UserRole, User, Member, Coach, Exercise
 
 admin = Admin(app=app, name='GYMApp')
 
@@ -62,6 +62,9 @@ class CoachView(AuthenticatedModelView):
         if is_created:
             model.user_role = UserRole.COACH
 
+class ExerciseView(AuthenticatedModelView):
+    column_list = ['id', 'name', 'description']
+    form_columns = ['name', 'description', 'image']
 
 class LogoutView(BaseView):
     @expose('/')
@@ -76,4 +79,5 @@ class LogoutView(BaseView):
 admin.add_view(UserAdminView(User, db.session))
 admin.add_view(MemberView(Member, db.session))
 admin.add_view(CoachView(Coach, db.session))
+admin.add_view(ExerciseView(Exercise, db.session))
 admin.add_view(LogoutView(name='Đăng xuất'))

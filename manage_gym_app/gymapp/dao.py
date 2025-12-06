@@ -3,7 +3,7 @@ import hashlib
 import cloudinary
 
 from gymapp import db, app
-from gymapp.models import User, Member, UserRole
+from gymapp.models import User, Member, UserRole, Exercise
 
 
 def get_user_by_id(id):
@@ -27,4 +27,7 @@ def add_member(name, username, password, avatar):
     db.session.add(u)
     db.session.commit()
 
+#HUẤN LUYỆN VIÊN
 
+def get_all_exercises():
+    return Exercise.query.all()

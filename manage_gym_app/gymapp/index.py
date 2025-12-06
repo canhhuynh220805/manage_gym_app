@@ -7,8 +7,11 @@ from gymapp.models import UserRole
 
 @app.route('/')
 def index():
-    return render_template('index.html',)
+    return render_template('index.html', )
 
+
+###################### VIEW ############################
+# coach view
 @app.route('/coach')
 @login_required
 def coach_view():
@@ -16,6 +19,18 @@ def coach_view():
         return redirect('/')
     return render_template('coach/index_coach.html')
 
+
+@app.route('/coach/workout-plans/create')
+@login_required
+def workout_plans_create():
+    if current_user.user_role != UserRole.COACH:
+        return redirect('/')
+    exercises = dao.get_all_exercises()
+
+    return render_template('coach/create_workout_plan.html', exercises=exercises)
+
+
+###########
 @app.route('/cashier')
 @login_required
 def cashier_view():
@@ -23,12 +38,14 @@ def cashier_view():
         return redirect('/')
     return render_template('cashier/index_cashier.html')
 
+
 @app.route('/receptionist')
 @login_required
 def receptionist_view():
     if current_user.user_role != UserRole.RECEPTIONIST:
         return redirect('/')
     return render_template('receptionist/index_receptionist.html')
+
 
 @app.route('/login')
 def login_view():
@@ -40,6 +57,7 @@ def register_view():
     return render_template('register.html')
 
 
+###################################################
 @app.route('/register', methods=['post'])
 def register_process():
     password = request.form.get('password')
@@ -52,9 +70,9 @@ def register_process():
     avatar = request.files.get('avatar')
     try:
         dao.add_member(avatar=avatar,
-                    name=request.form.get('name'),
-                    username=request.form.get('username'),
-                    password=request.form.get('password'))
+                       name=request.form.get('name'),
+                       username=request.form.get('username'),
+                       password=request.form.get('password'))
     except Exception as ex:
         return render_template('register.html', err_msg="Hệ thống đang có lỗi!")
 
@@ -90,6 +108,7 @@ def logout_process():
     logout_user()
     return redirect('/login')
 
+
 @login.user_loader
 def load_user(pk):
     return dao.get_user_by_id(pk)
@@ -97,4 +116,5 @@ def load_user(pk):
 
 if __name__ == '__main__':
     from gymapp import admin
+
     app.run(debug=True)

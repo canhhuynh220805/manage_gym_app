@@ -101,6 +101,7 @@ class Coach(User):
 
 class Exercise(BaseModel):
     description = Column(String(100), nullable=False)
+    image = Column(String(150), nullable=False)
     workout_plans = relationship('PlanDetail', backref='workout_plan')
 
 
@@ -175,6 +176,15 @@ if __name__ == '__main__':
         # db.create_all()
         # u = User(name='admin', username='admin', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
         #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        # u1 = Coach(name='đăng béo', username='dangbeo', password = str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.COACH,
+        #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
         # db.session.add(u)
+        # db.session.add(u1)
+        #
+        # e1 = Exercise(name="Pull up", description="vào lưng, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
+        # e2 = Exercise(name="Dumbbel Press", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
+        #
+        # db.session.add(e1)
+        # db.session.add(e2)
         # db.session.commit()
         pass
