@@ -102,13 +102,11 @@ class Coach(User):
 class Exercise(BaseModel):
     description = Column(String(100), nullable=False)
     image = Column(String(150), nullable=False)
-    workout_plans = relationship('PlanDetail', backref='workout_plan')
-
+    workout_plans = relationship('PlanDetail', backref='exercise')
 
 class WorkoutPlan(BaseModel):
-    exercises = relationship('PlanDetail', backref='exercise', cascade='all, delete-orphan')
+    exercises = relationship('PlanDetail', backref='workout_plan', cascade='all, delete-orphan')
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=False)
-
 
 class PlanDetail(BaseModel):
     workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id), primary_key=True)
