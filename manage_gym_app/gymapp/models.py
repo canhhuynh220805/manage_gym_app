@@ -81,7 +81,7 @@ class User(BaseModel, UserMixin):
 
 class Member(User):
     id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
-    packages = relationship('MemberPackage', backref='package', lazy=True, cascade="all, delete-orphan")
+    packages = relationship('MemberPackage', backref='member', lazy=True, cascade="all, delete-orphan")
     invoices = relationship('Invoice', backref='member', lazy=True)
     __mapper_args__ = {
         'polymorphic_identity': 'member',
@@ -91,11 +91,10 @@ class Member(User):
 class Coach(User):
     id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
     workout_plans = relationship("WorkoutPlan", backref="coach", lazy=True)
-    assigned_packages = relationship('MemberPackage', backref='assigned_coach', lazy=True)
+    assigned_packages = relationship('MemberPackage', backref='coach', lazy=True)
     __mapper_args__ = {
         'polymorphic_identity': 'trainer',
     }
-
 
 # Tập luyện
 
@@ -132,7 +131,7 @@ class ExerciseSchedule(db.Model):
 
 
 #Hóa đơn, gói tập
-package_plan_ssignment = db.Table('package_plan_ssignment',
+package_plan_assignment = db.Table('package_plan_assignment',
                                    Column('workout_plan_id', Integer, ForeignKey(WorkoutPlan.id), nullable=False),
                                    Column('member_package_id', Integer, ForeignKey('member_package.id'), nullable=False))
 
@@ -140,7 +139,7 @@ class Package(BaseModel):
     duration = Column(Integer, nullable=False)
     price = Column(Double, nullable=False)
     description = Column(Text, nullable=False)
-    members = relationship('MemberPackage', backref='package]', lazy=True)
+    members = relationship('MemberPackage', backref='package', lazy=True)
 
 class MemberPackage(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -153,7 +152,7 @@ class MemberPackage(db.Model):
 
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=True)
     workout_plans = relationship(WorkoutPlan, secondary=package_plan_ssignment, lazy='subquery',
-                                 backref=backref('member_packages', lazy=True))
+                                 backref=backref('member_package', lazy=True))
     invoice_details = relationship('InvoiceDetail', backref='member_package', lazy=True)
 
 
@@ -171,7 +170,7 @@ class InvoiceDetail(db.Model):
 
     invoice_id = Column(Integer, ForeignKey(Invoice.id), nullable=False)
     amount = Column(Double, nullable=False)
-    quantity = Column(Integer, default=1)
+    # quantity = Column(Integer, default=1)
     member_package_id = Column(Integer, ForeignKey(MemberPackage.id), nullable=False)
 
 if __name__ == '__main__':

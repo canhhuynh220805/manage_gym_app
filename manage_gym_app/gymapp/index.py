@@ -1,4 +1,5 @@
-from flask import render_template, request, redirect, url_for, session, jsonify
+
+from flask import render_template, request, redirect, url_for, jsonify, session
 from flask_login import logout_user, login_user, current_user, login_required
 
 from gymapp import app, dao, login
@@ -13,18 +14,14 @@ def index():
 ###################### VIEW ############################
 # coach view
 @app.route('/coach')
-@login_required
+@login_required(UserRole.COACH)
 def coach_view():
-    if current_user.user_role != UserRole.COACH:
-        return redirect('/')
     return render_template('coach/index_coach.html')
 
 
 @app.route('/coach/workout-plans/create')
-@login_required
+@login_required(UserRole.COACH)
 def workout_plans_create():
-    if current_user.user_role != UserRole.COACH:
-        return redirect('/')
     exercises = dao.get_all_exercises()
     days = dao.get_all_day_of_week()
     return render_template('coach/create_workout_plan.html', exercises=exercises, days=days)
@@ -119,18 +116,37 @@ def create_workout_plan():
 
 ###########
 @app.route('/cashier')
-@login_required
+@login_required(UserRole.CASHIER)
 def cashier_view():
-    if current_user.user_role != UserRole.CASHIER:
-        return redirect('/')
     return render_template('cashier/index_cashier.html')
 
+@app.route('/api/cashier/pay', methods = ['post'])
+@login_required(UserRole.CASHIER)
+def cashier_pay():
+    try:
+        data = request.json
+        id = data.get('member_package_id')
+
+        new_invoice = dao.process_payment(member_package_id=id)
+
+        if new_invoice:
+            return jsonify({
+                'status': 200,
+                'data': {
+                    'invoice_id': new_invoice.id,
+                    'total_amount': new_invoice.total_amount,
+                    'payment_date': str(new_invoice.payment_date)
+                }
+            })
+        else:
+            return jsonify({'status': 400, 'err_msg': 'Gói tập không tồn tại hoặc lỗi xử lý'})
+
+    except Exception as ex:
+        return jsonify({'status': 400, 'err_msg': str(ex)})
 
 @app.route('/receptionist')
-@login_required
+@login_required(UserRole.RECEPTIONIST)
 def receptionist_view():
-    if current_user.user_role != UserRole.RECEPTIONIST:
-        return redirect('/')
     return render_template('receptionist/index_receptionist.html')
 
 

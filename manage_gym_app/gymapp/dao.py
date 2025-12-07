@@ -1,10 +1,14 @@
 import hashlib
+from datetime import datetime
 
 import cloudinary
 from flask_login import current_user
 
 from gymapp import db, app
-from gymapp.models import User, Member, UserRole, Exercise, DayOfWeek, WorkoutPlan, PlanDetail, ExerciseSchedule
+
+from gymapp.models import User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage, StatusInvoice, \
+    StatusPackage, DayOfWeek, WorkoutPlan, PlanDetail, ExerciseSchedule
+
 
 
 def get_user_by_id(id):
@@ -62,3 +66,27 @@ def add_workout_plan(name, plan):
 if __name__ == '__main__':
     with app.app_context():
         print(get_all_day_of_week())
+#CASHIER
+
+def get_payment_history():
+    return Invoice.query.all()
+
+
+def process_payment(member_package_id):
+    mp = MemberPackage.query.get(member_package_id)
+
+    if mp:
+        bill = Invoice(member_id=mp.member_id, total_amount=mp.package.price, status=StatusInvoice.PAID,
+                       payment_date=datetime.now())
+        db.session.add(bill)
+
+        detail = InvoiceDetail(invoice=bill, member_package_id=mp.id, amount=mp.package.price)
+
+        db.session.add(detail)
+        mp.status = StatusPackage.ACTIVE
+        db.session.commit()
+        return bill
+    return None
+
+def get_invoice_detail(invoice_id):
+    return Invoice.query.get(invoice_id)
