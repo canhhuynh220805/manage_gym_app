@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, session, jsonify
 from flask_login import logout_user, login_user, current_user, login_required
 
 from gymapp import app, dao, login
@@ -26,8 +26,95 @@ def workout_plans_create():
     if current_user.user_role != UserRole.COACH:
         return redirect('/')
     exercises = dao.get_all_exercises()
+    days = dao.get_all_day_of_week()
+    return render_template('coach/create_workout_plan.html', exercises=exercises, days=days)
 
-    return render_template('coach/create_workout_plan.html', exercises=exercises)
+
+@app.route('/api/workout-exercises', methods=['POST'])
+@login_required
+def add_exercise_to_plan():
+    if current_user.user_role != UserRole.COACH:
+        return redirect('/')
+
+    plan = session.get('workout-plan')
+    if not plan:
+        plan = {}
+
+    id = str(request.json.get('id'))
+    name = request.json.get('name')
+    description = request.json.get('description')
+    image_url = request.json.get('image')
+
+    if id in plan:
+        plan[id]['sets'] += 1
+    else:
+        plan[id] = {
+            "id": id,
+            "name": name,
+            "description": description,
+            "image": image_url,
+            "sets": 0,
+            "reps": 0,
+            "days": []
+        }
+
+    session['workout-plan'] = plan
+    print(list(plan.values()))
+    return jsonify(list(plan.values()))
+
+
+@app.route('/api/workout-exercises/<id>', methods=['PUT'])
+@login_required
+def update_exercise_to_plan(id):
+    if current_user.user_role != UserRole.COACH:
+        return redirect('/')
+
+    plan = session.get('workout-plan')
+    sets = int(request.json.get("sets"))
+    reps = int(request.json.get("reps"))
+    days = request.json.get("days")
+    if plan and id in plan:
+        if sets:
+            plan[id]["sets"] = sets
+        if reps:
+            plan[id]["reps"] = reps
+        if days:
+            plan[id]["days"] = days
+
+    session['workout-plan'] = plan
+    print(plan[id])
+    return jsonify(plan[id])
+
+
+@app.route('/api/workout-exercises/<id>', methods=['DELETE'])
+@login_required
+def delete_exercise_from_plan(id):
+    if current_user.user_role != UserRole.COACH:
+        return redirect('/')
+    plan = session.get('workout-plan', {})
+
+    if plan and id in plan:
+        del plan[id]
+
+    session['workout-plan'] = plan
+    return jsonify(list(plan.values()))
+
+
+@app.route('/api/workout-plans', methods=['POST'])
+@login_required
+def create_workout_plan():
+    if current_user.user_role != UserRole.COACH:
+        return redirect('/')
+    try:
+        data = request.json
+        name_plan = str(data.get('name-plan'))
+        print(name_plan)
+        dao.add_workout_plan(name=name_plan,  plan=session.get('workout-plan'))
+        del session['workout-plan']
+
+        return jsonify({'status': 200})
+    except Exception as e:
+        return jsonify({'status': 400, 'err_msg': str(e)})
 
 
 ###########
