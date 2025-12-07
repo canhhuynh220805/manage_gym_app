@@ -81,7 +81,7 @@ class User(BaseModel, UserMixin):
 
 class Member(User):
     id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
-    packages = relationship('MemberPackage', backref='package', lazy=True, cascade="all, delete-orphan")
+    packages = relationship('MemberPackage', backref='member', lazy=True, cascade="all, delete-orphan")
     invoices = relationship('Invoice', backref='member', lazy=True)
     __mapper_args__ = {
         'polymorphic_identity': 'member',
@@ -91,11 +91,10 @@ class Member(User):
 class Coach(User):
     id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
     workout_plans = relationship("WorkoutPlan", backref="coach", lazy=True)
-    assigned_packages = relationship('MemberPackage', backref='assigned_coach', lazy=True)
+    assigned_packages = relationship('MemberPackage', backref='coach', lazy=True)
     __mapper_args__ = {
         'polymorphic_identity': 'trainer',
     }
-
 
 # Tập luyện
 
@@ -105,12 +104,12 @@ class Exercise(BaseModel):
     workout_plans = relationship('PlanDetail', backref='exercise')
 
 class WorkoutPlan(BaseModel):
-    exercises = relationship('PlanDetail', backref='workout_plan', cascade='all, delete-orphan')
+    exercises = relationship('PlanDetail', backref='workout_plan', cascade='all, delete-orphan', lazy=True)
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=False)
 
 class PlanDetail(BaseModel):
-    workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id), primary_key=True)
-    exercise_id = Column(Integer, ForeignKey(Exercise.id), primary_key=True)
+    workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id), nullable= False)
+    exercise_id = Column(Integer, ForeignKey(Exercise.id), nullable= False)
     reps = Column(Integer, nullable=False)
     sets = Column(Integer, nullable=False)
     note = Column(String(100), nullable=True)
@@ -135,7 +134,7 @@ class Package(BaseModel):
     duration = Column(Integer, nullable=False)
     price = Column(Double, nullable=False)
     description = Column(Text, nullable=False)
-    members = relationship('MemberPackage', backref='package]', lazy=True)
+    members = relationship('MemberPackage', backref='package', lazy=True)
 
 class MemberPackage(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -148,7 +147,7 @@ class MemberPackage(db.Model):
 
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=True)
     workout_plans = relationship(WorkoutPlan, secondary=package_plan_ssignment, lazy='subquery',
-                                 backref=backref('member_packages', lazy=True))
+                                 backref=backref('member_package', lazy=True))
     invoice_details = relationship('InvoiceDetail', backref='member_package', lazy=True)
 
 
@@ -171,18 +170,18 @@ class InvoiceDetail(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
-        # u = User(name='admin', username='admin', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
-        #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
-        # u1 = Coach(name='đăng béo', username='dangbeo', password = str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.COACH,
-        #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
-        # db.session.add(u)
-        # db.session.add(u1)
-        #
-        # e1 = Exercise(name="Pull up", description="vào lưng, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
-        # e2 = Exercise(name="Dumbbel Press", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
-        #
-        # db.session.add(e1)
-        # db.session.add(e2)
-        # db.session.commit()
+        db.create_all()
+        u = User(name='admin', username='admin', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
+                 avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        u1 = Coach(name='đăng béo', username='dangbeo', password = str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.COACH,
+                 avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        db.session.add(u)
+        db.session.add(u1)
+
+        e1 = Exercise(name="Pull up", description="vào lưng, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
+        e2 = Exercise(name="Dumbbel Press", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
+
+        db.session.add(e1)
+        db.session.add(e2)
+        db.session.commit()
         pass
