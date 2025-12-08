@@ -146,7 +146,7 @@ class MemberPackage(db.Model):
     status = Column(Enum(StatusPackage), default=StatusPackage.ACTIVE)
 
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=True)
-    workout_plans = relationship(WorkoutPlan, secondary=package_plan_ssignment, lazy='subquery',
+    workout_plans = relationship(WorkoutPlan, secondary=package_plan_assignment, lazy='subquery',
                                  backref=backref('member_package', lazy=True))
     invoice_details = relationship('InvoiceDetail', backref='member_package', lazy=True)
 
