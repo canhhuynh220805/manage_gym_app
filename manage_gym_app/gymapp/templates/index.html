@@ -10,10 +10,7 @@
                 <div class="card-header bg-light border-dark border-bottom-3 text-center fw-bold">{{ p.name }}</div>
 
                 <div class="card-body text-center pt-4 pb-4">
-                    <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto"
-                         style="width: 120px; height: 120px; font-weight: bold; font-size: 12px; color: #333;">
-                        MEMBERSHIP<br>BRONZE<br>DIRECTORIUM
-                    </div>
+                    <img src="{{p.image}}">
                 </div>
 
                 <div class="border-dark border-bottom-3">
@@ -44,7 +41,7 @@
                                 <div class="modal-header border-0 pb-0">
                                     <div class="d-flex w-100 align-items-start">
                                         <div class="me-4">
-                                            <img src="{{ url_for('static', filename='img/badge-bronze.png') }}"
+                                            <img src="{{p.image}}"
                                                  alt="Bronze Membership" class="img-fluid" style="max-width: 140px;">
                                         </div>
 
@@ -84,10 +81,19 @@
                                     <div class="container px-0">
                                         <div class="row g-3 w-100">
                                             <div class="col-md-6">
-                                                <button type="button" class="btn btn-outline-dark w-100 py-2" data-bs-dismiss="modal">Đóng</button>
+                                                <button type="button" class="btn btn-outline-dark w-100 py-2"
+                                                        data-bs-dismiss="modal">Đóng
+                                                </button>
                                             </div>
                                             <div class="col-md-6">
-                                                <button type="button" class="btn btn-outline-dark w-100 py-2 fw-bold">Đăng ký ngay </button>
+                                                {% if current_user.is_authenticated%}
+                                                <button class="btn btn-outline-dark w-100 py-2" onclick="register_package({{ current_user.id }}, {{ p.id }})">
+                                                    Đăng ký
+                                                </button>
+                                                {%else%}
+                                                <a href="/login" class="btn btn-outline-dark w-100 py-2">Đăng
+                                                    ký</a>
+                                                {%endif%}
                                             </div>
                                         </div>
                                     </div>
@@ -96,9 +102,14 @@
                             </div>
                         </div>
                     </div>
-
-
-                    <button class="btn btn-outline-dark fw-bold small bg-primary">Đăng ký</button>
+                    {% if current_user.is_authenticated%}
+                    <button class="btn btn-outline-dark fw-bold small bg-primary"
+                            onclick="register_package({{ current_user.id }}, {{ p.id }})">
+                        Đăng ký
+                    </button>
+                    {%else%}
+                    <a href="/login" class="btn btn-outline-dark fw-bold small bg-primary">Đăng ký</a>
+                    {%endif%}
                 </div>
 
             </div>

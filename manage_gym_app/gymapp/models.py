@@ -2,7 +2,7 @@ import hashlib
 from datetime import datetime
 
 from flask_login import UserMixin
-from sqlalchemy import Column, String, Enum, DateTime, Integer, ForeignKey, Double, Text
+from sqlalchemy import Column, String, Enum, DateTime, Integer, ForeignKey, Double, Text, column
 import enum
 
 from sqlalchemy.orm import relationship, backref
@@ -81,7 +81,7 @@ class User(BaseModel, UserMixin):
 
 class Member(User):
     id = Column(Integer, ForeignKey(User.id), primary_key=True)
-    packages = relationship('MemberPackage', backref='package', lazy=True)
+    packages = relationship('MemberPackage', backref='member', lazy=True)
     __mapper_args__ = {
         'polymorphic_identity': 'member',
     }
@@ -100,17 +100,17 @@ class Coach(User):
 
 class Exercise(BaseModel):
     description = Column(String(100), nullable=False)
-    workout_plans = relationship('PlanDetail', backref='workout_plan')
+    workout_plans = relationship('PlanDetail', backref='exercise')
 
 
 class WorkoutPlan(BaseModel):
-    exercises = relationship('PlanDetail', backref='exercise', cascade='all, delete-orphan')
+    exercises = relationship('PlanDetail', backref='workout_plan', cascade='all, delete-orphan')
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=False)
 
 
 class PlanDetail(BaseModel):
-    workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id), primary_key=True)
-    exercise_id = Column(Integer, ForeignKey(Exercise.id), primary_key=True)
+    workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id),nullable=False)
+    exercise_id = Column(Integer, ForeignKey(Exercise.id),nullable=False)
     reps = Column(Integer, nullable=False)
     sets = Column(Integer, nullable=False)
     note = Column(String(100), nullable=True)
@@ -127,7 +127,7 @@ class ExerciseSchedule(db.Model):
 
 
 #Hóa đơn, gói tập
-package_plan_ssignment = db.Table('package_plan_ssignment',
+package_plan_assignment = db.Table('package_plan_assignment',
                                    Column('workout_plan_id', Integer, ForeignKey(WorkoutPlan.id), nullable=False),
                                    Column('member_package_id', Integer, ForeignKey('member_package.id'), nullable=False))
 
@@ -135,8 +135,9 @@ class Package(BaseModel):
     duration = Column(Integer, nullable=False)
     price = Column(Double, nullable=False)
     description = Column(Text, nullable=False)
-    members = relationship('MemberPackage', backref='member', lazy=True)
+    members = relationship('MemberPackage', backref='package', lazy=True)
     benefits = db.relationship("PackageBenefit",backref="package",lazy=True,cascade="all, delete-orphan")
+    image = Column(String(100))# update image
 
 
 class PackageBenefit(BaseModel):
@@ -150,10 +151,10 @@ class MemberPackage(db.Model):
 
     startDate = Column(DateTime, nullable=False)
     endDate = Column(DateTime, nullable=False)
-    status = Column(Enum(StatusPackage), default=StatusPackage.ACTIVE)
+    status = Column(Enum(StatusPackage), default=StatusPackage.EXPIRED)
 
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=True)
-    workout_plans = relationship(WorkoutPlan, secondary=package_plan_ssignment, lazy='subquery',
+    workout_plans = relationship(WorkoutPlan, secondary=package_plan_assignment, lazy='subquery',
                                  backref=backref('member_packages', lazy=True))
     invoice_details = relationship('InvoiceDetail', backref='member_package', lazy=True)
 
@@ -177,38 +178,42 @@ class InvoiceDetail(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
-        # u = User(name='admin', username='admin', password = str(hashlib.md5("12346".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
-        #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
-        # db.session.add(u)
+        db.create_all()
+        u = User(name='admin', username='admin', password = str(hashlib.md5("12346".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
+                 avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        db.session.add(u)
         packages = [
             {
                 "id": 1,
                 "name": "CLASSIC",
                 "duration": 1,
                 "price": 300000,
-                "description": "Gói cơ bản với đầy đủ thiết bị và tiện ích cần thiết cho người mới bắt đầu."
+                "description": "Gói cơ bản với đầy đủ thiết bị và tiện ích cần thiết cho người mới bắt đầu.",
+                "image" : "https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157775/dong_uwvxli.png"
             },
             {
                 "id": 2,
                 "name": "CLASSIC-PLUS",
                 "duration": 1,
                 "price": 500000,
-                "description": "Nâng cấp từ CLASSIC, thêm quyền truy cập 24/7 và các dịch vụ phục hồi."
+                "description": "Nâng cấp từ CLASSIC, thêm quyền truy cập 24/7 và các dịch vụ phục hồi.",
+                "image": "https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157774/bac_ljtnva.png"
             },
             {
                 "id": 3,
                 "name": "ROYRAL",
                 "duration": 1,
                 "price": 1500000,
-                "description": "Gói cao cấp với PT cá nhân, tư vấn dinh dưỡng và dịch vụ chăm sóc toàn diện."
+                "description": "Gói cao cấp với PT cá nhân, tư vấn dinh dưỡng và dịch vụ chăm sóc toàn diện.",
+                "image" : "https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157775/vang_igx7ax.png"
             },
             {
                 "id": 4,
                 "name": "SIGNATURE",
                 "duration": 1,
                 "price": 5000000,
-                "description": "Gói VIP với tất cả quyền lợi ROYRAL, PT riêng nhiều buổi và ưu tiên dịch vụ tối đa."
+                "description": "Gói VIP với tất cả quyền lợi ROYRAL, PT riêng nhiều buổi và ưu tiên dịch vụ tối đa.",
+                "image": "https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157775/vip_xsz4c4.png"
             }
         ]
 

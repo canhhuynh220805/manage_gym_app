@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect
+from flask import render_template, request, redirect, jsonify
 from flask_login import logout_user, login_user
 
 from gymapp import app, dao, login
@@ -63,7 +63,23 @@ def logout_process():
 @login.user_loader
 def load_user(pk):
     return dao.get_user_by_id(pk)
-s
+
+@app.route('/api/register_package', methods=['post'])
+def register_package():
+    data = request.json
+    user_id = data.get('user_id')
+    package_id = data.get('package_id')
+
+    if not user_id or not package_id:
+        return jsonify({'status': 400, 'err_msg': 'Dữ liệu không hợp lệ (Thiếu ID)'})
+
+    is_success, message = dao.add_package_registration(user_id, package_id)
+
+    if is_success:
+        return jsonify({'status': 200, 'msg': message})
+    else:
+        return jsonify({'status': 400, 'err_msg': message})
+
 if __name__ == '__main__':
     from gymapp import admin
     app.run(debug=True)
