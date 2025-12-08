@@ -1,4 +1,3 @@
-
 const listMember = document.getElementById("assigned-member");
 const memberDropdown = document.getElementById("member-dropdown");
 const msg = document.getElementById("no-member-msg");
@@ -175,4 +174,3 @@ function createWorkoutPlan(){
 
     }
 }
-

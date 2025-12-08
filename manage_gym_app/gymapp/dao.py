@@ -5,10 +5,8 @@ import cloudinary
 from flask_login import current_user
 
 from gymapp import db, app
-
 from gymapp.models import User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage, StatusInvoice, \
     StatusPackage, DayOfWeek, WorkoutPlan, PlanDetail, ExerciseSchedule
-
 
 
 def get_user_by_id(id):
@@ -63,9 +61,6 @@ def add_workout_plan(name, plan):
         db.session.commit()
 
 
-if __name__ == '__main__':
-    with app.app_context():
-        print(get_all_day_of_week())
 #CASHIER
 
 def get_payment_history():
