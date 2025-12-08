@@ -1,9 +1,10 @@
 
 from flask import render_template, request, redirect, url_for, jsonify, session
-from flask_login import logout_user, login_user, current_user, login_required
+from flask_login import logout_user, login_user, current_user
 
 from gymapp import app, dao, login
 from gymapp.models import UserRole
+from decorators import login_required
 
 
 @app.route('/')
@@ -28,7 +29,7 @@ def workout_plans_create():
 
 
 @app.route('/api/workout-exercises', methods=['POST'])
-@login_required
+@login_required(UserRole.COACH)
 def add_exercise_to_plan():
     if current_user.user_role != UserRole.COACH:
         return redirect('/')
@@ -61,7 +62,7 @@ def add_exercise_to_plan():
 
 
 @app.route('/api/workout-exercises/<id>', methods=['PUT'])
-@login_required
+@login_required(UserRole.COACH)
 def update_exercise_to_plan(id):
     if current_user.user_role != UserRole.COACH:
         return redirect('/')
@@ -84,7 +85,7 @@ def update_exercise_to_plan(id):
 
 
 @app.route('/api/workout-exercises/<id>', methods=['DELETE'])
-@login_required
+@login_required(UserRole.COACH)
 def delete_exercise_from_plan(id):
     if current_user.user_role != UserRole.COACH:
         return redirect('/')
@@ -98,7 +99,7 @@ def delete_exercise_from_plan(id):
 
 
 @app.route('/api/workout-plans', methods=['POST'])
-@login_required
+@login_required(UserRole.COACH)
 def create_workout_plan():
     if current_user.user_role != UserRole.COACH:
         return redirect('/')
