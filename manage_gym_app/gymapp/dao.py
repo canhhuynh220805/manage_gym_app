@@ -1,11 +1,11 @@
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import cloudinary
 
 from gymapp import db, app
 from gymapp.models import User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage, StatusInvoice, \
-    StatusPackage, Package
+    StatusPackage
 
 
 def get_user_by_id(id):
@@ -58,29 +58,3 @@ def process_payment(member_package_id):
 
 def get_invoice_detail(invoice_id):
     return Invoice.query.get(invoice_id)
-
-
-def load_packages():
-    return Package.query.all()
-
-
-def load_members():
-    return Member.query.all()
-
-def add_member_package_and_pay(member_id, package_id):
-    pack = Package.query.get(package_id)
-    if not pack:
-        raise Exception("Gói tập không tồn tại")
-
-    end_date = datetime.now() + timedelta(days=pack.duration * 30)
-
-    mp = MemberPackage(
-        member_id=member_id,
-        package_id=package_id,
-        startDate=datetime.now(),
-        endDate=end_date,
-        status=StatusPackage.ACTIVE,
-    )
-    db.session.add(mp)
-    db.session.commit()
-    return process_payment(member_package_id=mp.id)

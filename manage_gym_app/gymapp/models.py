@@ -175,11 +175,8 @@ if __name__ == '__main__':
         #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
         # u1 = Coach(name='đăng béo', username='dangbeo', password = str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.COACH,
         #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
-        # u2 = User(name='canh huynh', username='canh', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.CASHIER,
-        #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
         # db.session.add(u)
         # db.session.add(u1)
-        # db.session.add(u2)
         #
         # e1 = Exercise(name="Pull up", description="vào lưng, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
         # e2 = Exercise(name="Dumbbel Press", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
