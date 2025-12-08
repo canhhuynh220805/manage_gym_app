@@ -34,6 +34,32 @@ def add_member(name, username, password, avatar):
 def get_all_exercises():
     return Exercise.query.all()
 
+def get_all_day_of_week():
+    return [e.name for e in DayOfWeek]
+
+def add_workout_plan(name, plan):
+    if plan:
+        p = WorkoutPlan(name=name, coach=current_user)
+        db.session.add(p)
+        print(plan.values())
+        for ex in plan.values():
+            pd = PlanDetail(exercise_id=ex['id'], reps=ex['reps'], sets=ex['sets'], workout_plan=p)
+            db.session.add(pd)
+
+            for day in ex['days']:
+                try:
+                    day_enum = DayOfWeek[day]
+                except KeyError:
+                    continue
+                d = ExerciseSchedule(
+                    day = day_enum,
+                    plan_detail=pd
+                )
+                db.session.add(d)
+
+        db.session.commit()
+
+
 #CASHIER
 
 def get_payment_history():
