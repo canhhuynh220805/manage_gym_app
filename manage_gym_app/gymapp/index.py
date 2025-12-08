@@ -26,41 +26,52 @@ def workout_plans_create():
 
     return render_template('coach/create_workout_plan.html', exercises=exercises)
 
-
 ###########
 @app.route('/cashier')
 @login_required(UserRole.CASHIER)
 def cashier_view():
-    return render_template('cashier/index_cashier.html')
+    members = dao.load_members()
+    packages = dao.load_packages()
+    invoices = dao.get_payment_history()
 
-@app.route('/api/cashier/pay', methods = ['post'])
+    return render_template('cashier/index_cashier.html',
+                           members=members,
+                           packages=packages,
+                           invoices=invoices)
+
+
+@app.route('/api/cashier/pay', methods=['post'])
 @login_required(UserRole.CASHIER)
-def cashier_pay():
+def cashier_pay_process():
     try:
         data = request.json
-        id = data.get('member_package_id')
+        member_id = data.get('member_id')
+        package_id = data.get('package_id')
 
-        new_invoice = dao.process_payment(member_package_id=id)
+        if not member_id or not package_id:
+            return jsonify({'status': 400, 'err_msg': 'Thiếu thông tin hội viên hoặc gói tập'})
+
+        new_invoice = dao.add_member_package_and_pay(member_id, package_id)
 
         if new_invoice:
             return jsonify({
                 'status': 200,
                 'data': {
                     'invoice_id': new_invoice.id,
-                    'total_amount': new_invoice.total_amount,
-                    'payment_date': str(new_invoice.payment_date)
+                    'total_amount': new_invoice.total_amount
                 }
             })
         else:
-            return jsonify({'status': 400, 'err_msg': 'Gói tập không tồn tại hoặc lỗi xử lý'})
+            return jsonify({'status': 400, 'err_msg': 'Lỗi xử lý thanh toán'})
 
     except Exception as ex:
-        return jsonify({'status': 400, 'err_msg': str(ex)})
+        return jsonify({'status': 500, 'err_msg': str(ex)})
 
 @app.route('/receptionist')
 @login_required(UserRole.RECEPTIONIST)
 def receptionist_view():
     return render_template('receptionist/index_receptionist.html')
+
 
 
 @app.route('/login')
@@ -93,7 +104,6 @@ def register_process():
         return render_template('register.html', err_msg="Hệ thống đang có lỗi!")
 
     return redirect('/login')
-
 
 @app.route('/login', methods=['post'])
 def login_process():
