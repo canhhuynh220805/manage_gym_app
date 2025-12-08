@@ -8,7 +8,6 @@ from gymapp import app, dao, login
 def index():
     packages = dao.load_package()
     package_benefits = dao.load_package_benefit()
-    print(packages)
     return render_template('index.html',packages=packages,package_benefits = package_benefits)
 
 
@@ -64,8 +63,7 @@ def logout_process():
 @login.user_loader
 def load_user(pk):
     return dao.get_user_by_id(pk)
-
-
+s
 if __name__ == '__main__':
     from gymapp import admin
     app.run(debug=True)
