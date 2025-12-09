@@ -118,42 +118,60 @@ def create_workout_plan():
 @app.route('/cashier')
 @login_required(UserRole.CASHIER)
 def cashier_view():
+    kw = request.args.get('kw')
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+
     members = dao.load_members()
     packages = dao.load_packages()
-    invoices = dao.get_payment_history()
+    invoices = dao.get_invoices(kw=kw, from_date=from_date, to_date=to_date)
 
-    return render_template('cashier/index_cashier.html',
-                           members=members,
-                           packages=packages,
+    return render_template('cashier/index_cashier.html', members=members, packages=packages,
                            invoices=invoices)
-
 
 @app.route('/api/cashier/pay', methods=['post'])
 @login_required(UserRole.CASHIER)
 def cashier_pay_process():
+    member_id = request.json.get('member_id')
+    package_id = request.json.get('package_id')
+
+    if not member_id or not package_id:
+        return jsonify({'status': 400, 'msg': 'Thiếu thông tin hội viên hoặc gói tập'})
+
     try:
-        data = request.json
-        member_id = data.get('member_id')
-        package_id = data.get('package_id')
-
-        if not member_id or not package_id:
-            return jsonify({'status': 400, 'err_msg': 'Thiếu thông tin hội viên hoặc gói tập'})
-
         new_invoice = dao.add_member_package_and_pay(member_id, package_id)
-
         if new_invoice:
-            return jsonify({
-                'status': 200,
-                'data': {
-                    'invoice_id': new_invoice.id,
-                    'total_amount': new_invoice.total_amount
-                }
-            })
+            return jsonify({'status': 200, 'msg': 'Thanh toán thành công'})
         else:
-            return jsonify({'status': 400, 'err_msg': 'Lỗi xử lý thanh toán'})
-
+            return jsonify({'status': 400, 'msg': 'Lỗi xử lý nghiệp vụ'})
     except Exception as ex:
-        return jsonify({'status': 500, 'err_msg': str(ex)})
+        return jsonify({'status': 500, 'msg': str(ex)})
+
+
+@app.route("/api/invoices/<int:invoice_id>", methods=['get'])
+@login_required(UserRole.CASHIER)
+def get_invoice_detail_api(invoice_id):
+    try:
+        invoice = dao.get_invoice_detail(invoice_id)
+        if invoice: #Quan trọng đáy, dùng để phòng ngừa invoice rỗng khi truy xuất
+            detail = invoice.invoice_details[0] if invoice.invoice_details else None
+            pkg_name = detail.member_package.package.description if detail else "N/A"
+            duration = detail.member_package.package.duration if detail else 0
+
+            data = {
+                'id': invoice.id,
+                'created_date': invoice.payment_date.strftime('%d/%m/%Y %H:%M'),
+                'member_name': invoice.member.name,
+                'staff_name': current_user.name,
+                'package_name': pkg_name,
+                'duration': duration,
+                'total_amount': invoice.total_amount
+            }
+            return jsonify({'status': 200, 'data': data})
+
+        return jsonify({'status': 404, 'msg': 'Không tìm thấy hóa đơn'})
+    except Exception as ex:
+        return jsonify({'status': 500, 'msg': str(ex)})
 
 @app.route('/receptionist')
 @login_required(UserRole.RECEPTIONIST)
@@ -216,12 +234,10 @@ def login_process():
     else:
         return redirect('/')
 
-
 @app.route('/logout')
 def logout_process():
     logout_user()
     return redirect('/login')
-
 
 @login.user_loader
 def load_user(pk):

@@ -126,7 +126,7 @@ class ExerciseSchedule(db.Model):
 
 
 #Hóa đơn, gói tập
-package_plan_ssignment = db.Table('package_plan_ssignment',
+package_plan_assignment = db.Table('package_plan_assignment',
                                    Column('workout_plan_id', Integer, ForeignKey(WorkoutPlan.id), nullable=False),
                                    Column('member_package_id', Integer, ForeignKey('member_package.id'), nullable=False))
 
@@ -170,20 +170,24 @@ class InvoiceDetail(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
-        # u = User(name='admin', username='admin', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
-        #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
-        # u1 = Coach(name='đăng béo', username='dangbeo', password = str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.COACH,
-        #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
-        # u2 = User(name='canh huynh', username='canh', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.CASHIER,
-        #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
-        # db.session.add(u)
-        # db.session.add(u1)
-        # db.session.add(u2)
-        # e1 = Exercise(name="Pull up", description="vào lưng, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
-        # e2 = Exercise(name="Dumbbel Press", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
-        #
-        # db.session.add(e1)
-        # db.session.add(e2)
-        # db.session.commit()
+        db.create_all()
+        u = User(name='admin', username='admin', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
+                 avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        u1 = Coach(name='đăng béo', username='dangbeo', password = str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.COACH,
+                 avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        u2 = User(name='canh huynh', username='canh', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.CASHIER,
+                 avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        u3 = Member(name='cozgdeptrai', username='cozg', password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                  user_role=UserRole.USER,
+                  avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        db.session.add(u)
+        db.session.add(u1)
+        db.session.add(u2)
+        db.session.add(u3)
+        e1 = Exercise(name="Pull up", description="vào lưng, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
+        e2 = Exercise(name="Dumbbel Press", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
+
+        db.session.add(e1)
+        db.session.add(e2)
+        db.session.commit()
         pass
