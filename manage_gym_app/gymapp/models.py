@@ -136,6 +136,16 @@ class Package(BaseModel):
     price = Column(Double, nullable=False)
     description = Column(Text, nullable=False)
     members = relationship('MemberPackage', backref='package', lazy=True)
+    benefits = db.relationship("PackageBenefit", backref="package", lazy=True, cascade="all, delete-orphan")
+    image = Column(String(100))
+
+
+class PackageBenefit(BaseModel):
+    package_id = Column(Integer, ForeignKey('package.id'), nullable=False)
+    detail = Column(String(255), nullable=True)
+
+    def __str__(self):
+        return self.name
 
 class MemberPackage(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)

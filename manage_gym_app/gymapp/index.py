@@ -1,14 +1,15 @@
-from flask import render_template, request, redirect, jsonify
-from flask_login import logout_user, login_user
+from flask import render_template, request, redirect, jsonify, session
+from flask_login import logout_user, login_user, current_user
 
 from gymapp import app, dao, login
+from gymapp.decorators import login_required
+from gymapp.models import UserRole
 
 
 @app.route('/')
 def index():
     packages = dao.load_package()
-    package_benefits = dao.load_package_benefit()
-    return render_template('index.html',packages=packages,package_benefits = package_benefits)
+    return render_template('index.html',packages=packages)
 
 
 ###################### VIEW ############################

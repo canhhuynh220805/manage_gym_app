@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import cloudinary
 from flask_login import current_user
+from sqlalchemy import text
 
 from gymapp import db, app
 from gymapp.models import User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage, StatusInvoice, \
@@ -19,11 +20,7 @@ def auth_user(username, password):
 
 
 def add_user(name, username, password, avatar):
-    u = User(name=name,
-def add_member(name, username, password, avatar):
-    u = Member(name=name,
-             username=username.strip(),
-             password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()))
+    u = User(name=name, username=username.strip(), password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()))
 
     if avatar:
         res = cloudinary.uploader.upload(avatar)
@@ -37,9 +34,8 @@ def load_package():
     return query
 
 def load_package_benefit():
-    query = PackageBenefit.query.all()
+    query = Package.query.all()
     return query
-
 
 def add_package_registration(user_id, package_id):
     db.session.remove()
@@ -65,7 +61,7 @@ def add_package_registration(user_id, package_id):
         return False, "Gói tập không tồn tại"
     start_date = datetime.now()
     duration = getattr(package, 'duration', 1)
-    end_date = start_date + relativedelta(months=duration)
+    end_date = start_date + timedelta(months=duration)
 
     new_registration = MemberPackage(
         member_id=member.id,

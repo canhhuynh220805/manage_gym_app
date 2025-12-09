@@ -61,19 +61,21 @@
                                 <div class="modal-body pt-0">
                                     <h5 class="fw-bold mb-3">Các ưu đãi</h5>
                                     <div class="row gy-4">
-                                        {% for pb in package_benefits %}
-                                        {% if pb.package_id == p.id %}
-                                        <div class="col-md-6">
-                                            <div class="d-flex benefit-item">
-                                                <span class="me-2 mt-1">☑</span>
-                                                <div>
-                                                    <div class="fw-bold">{{ pb.name }}</div>
-                                                    <div class="text-muted small">{{ pb.detail }}</div>
+                                        {% if p.benefits %}
+                                            {% for pb in p.benefits %}
+                                            <div class="col-md-6">
+                                                <div class="d-flex benefit-item">
+                                                    <span class="me-2 mt-1 text-success">☑</span>
+                                                    <div>
+                                                        <div class="fw-bold">{{ pb.name }}</div>
+                                                        <div class="text-muted small">{{ pb.detail }}</div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="col-12 text-center text-muted">Đang cập nhật ưu đãi...</div>
                                         {% endif %}
-                                        {% endfor %}
                                     </div>
                                 </div>
 

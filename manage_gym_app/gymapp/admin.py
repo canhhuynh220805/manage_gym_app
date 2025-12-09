@@ -6,7 +6,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_login import logout_user, current_user
 
 from gymapp import app, db
-from gymapp.models import UserRole, User, Member, Coach, Exercise
+from gymapp.models import UserRole, User, Member, Coach, Exercise, Package, Regulation
 
 admin = Admin(app=app, name='GYMApp')
 
@@ -66,6 +66,17 @@ class ExerciseView(AuthenticatedModelView):
     column_list = ['id', 'name', 'description']
     form_columns = ['name', 'description', 'image']
 
+class PackageView(AuthenticatedModelView):
+    column_list = ['name', 'duration', 'price', 'description']
+    form_columns = ['name', 'duration', 'price', 'description', 'image']
+    can_export = True
+
+class RegulationView(AuthenticatedModelView):
+    column_list = ['name', 'value']
+    form_columns = ['name', 'value']
+    can_create = False
+    can_delete = False
+
 class LogoutView(BaseView):
     @expose('/')
     def index(self):
@@ -79,5 +90,7 @@ class LogoutView(BaseView):
 admin.add_view(UserAdminView(User, db.session))
 admin.add_view(MemberView(Member, db.session))
 admin.add_view(CoachView(Coach, db.session))
-admin.add_view(ExerciseView(Exercise, db.session))
+admin.add_view(ExerciseView(Exercise, db.session, name = 'Bài tập'))
+admin.add_view(PackageView(Package, db.session, name='Gói tập'))
+admin.add_view(RegulationView(Regulation, db.session, name='Quy định'))
 admin.add_view(LogoutView(name='Đăng xuất'))
