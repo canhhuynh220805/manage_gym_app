@@ -2,10 +2,11 @@ import hashlib
 from datetime import datetime, timedelta
 
 import cloudinary
+from flask_login import current_user
 
 from gymapp import db, app
 from gymapp.models import User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage, StatusInvoice, \
-    StatusPackage, Package
+    StatusPackage, Package, ExerciseSchedule, DayOfWeek, PlanDetail, WorkoutPlan
 
 
 def get_user_by_id(id):
@@ -85,12 +86,34 @@ def process_payment(member_package_id):
 def get_invoice_detail(invoice_id):
     return Invoice.query.get(invoice_id)
 
-def load_members():
-    return Member.query.all()
+
+def load_members(kw=None):
+    query = Member.query
+    if kw:
+        query = query.filter(Member.name.contains(kw) | Member.phone.contains(kw))
+    return query.limit(10).all()
+
 
 def load_packages():
     return Package.query.all()
 
+
+def get_invoices(kw=None, from_date=None, to_date=None):
+    q = Invoice.query
+    if kw:
+        q = q.join(Member).filter(Member.name.contains(kw) | Member.username.contains(kw))
+
+    if from_date:
+        q = q.filter(Invoice.payment_date >= from_date)
+
+    if to_date:
+        q = q.filter(Invoice.payment_date <= to_date)
+
+    return q.order_by(Invoice.payment_date.desc()).all()
+
+
+def get_invoice_detail(invoice_id):
+    return Invoice.query.get(invoice_id)
 
 def add_member_package_and_pay(member_id, package_id):
     pack = Package.query.get(package_id)
@@ -115,3 +138,5 @@ def add_member_package_and_pay(member_id, package_id):
         return bill
 
     return None
+
+
