@@ -1,0 +1,103 @@
+{% extends 'layout/base.html' %}
+
+{% block header %}
+{% include 'coach/header_coach.html' %}
+{% endblock %}
+
+{% block content %}
+<section class="container">
+    <div class="row">
+        <div class="col-5 border border-3">
+            <h2>Bài tập</h2>
+            <div id="exercise-warning" class="text-danger mt-2 text-center">
+                <h2>Vui lòng ấn "Thêm bài tập" để hiển thị danh sách</h2>
+            </div>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <div id="list-exercise" class="row g-2 d-none">
+                    {% if exercises %}
+                    {% for e in exercises %}
+                    <div class="col-auto">
+                        <div class="card position-relative" style="width:150px">
+                            <div class="image-wrapper position-relative exercise-card">
+                                <img class="card-img-top" src="{{e.image}}" alt="Card image">
+                                <input type="checkbox" id="cb-{{e.id}}" class="chooseEx" onchange="togglePlan(this, {{e.id}},
+                             '{{e.name}}', '{{e.description}}', '{{e.image}}')">
+                            </div>
+                            <hr class="m-0">
+                            <div class="card-body exercise-name">
+                                <strong class="card-title">{{e.name}}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor%}
+                    {% else %}
+                    <div>
+                        <h4>KHÔNG CÓ BÀI TẬP</h4>
+                    </div>
+                    {% endif%}
+                </div>
+            </div>
+        </div>
+        <div class="col-7 border border-3">
+            <div class="d-flex align-item-center">
+                <h2 class="mb-0">Tạo kế hoạch tâp luyện mới</h2>
+                <div class="ms-auto mt-1">
+                    <a href="/coach" class="btn btn-secondary me-2">Hủy</a>
+                    <button class="btn btn-primary" onclick="createWorkoutPlan()">Lưu kế hoạch</button>
+                </div>
+            </div>
+            <div class="border border-3 mt-1 py-3">
+                <h3 class="text-center">THÔNG TIN CHUNG</h3>
+                <div class="d-flex align-item-center">
+                    <span class="me-2">Tên kế hoạch:</span>
+                    <input type="text" class="form-control w-75" id="name-plan">
+                </div>
+                <div class="d-flex align-item-center">
+                    <div class="d-flex align-item-center mt-2">
+                        <span class="me-2">Gán cho: </span>
+                        <div id="assigned-member" class="d-flex align-item-center">
+                            (chưa có hội viên)
+                        </div>
+                    </div>
+                    <div class="dropdown ms-auto mt-2">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                            Thêm hội viên
+                        </button>
+                        <ul class="dropdown-menu" id="member-dropdown">
+                            <li><a class="dropdown-item" href="#" data-name="canh">canh</a></li>
+                            <li><a class="dropdown-item" href="#" data-name="cong">cong</a></li>
+                            <li><a class="dropdown-item" href="#" data-name="nem chua">nem chua</a></li>
+                        </ul>
+                        <div id="no-member-msg" class="text-muted mt-1 d-none">
+                            Không có hội viên
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table mt-2">
+                    <div class="d-flex align-item-center mt-2">
+                        <h2 class="mb-0">Danh sách bài tập</h2>
+                        <button class="btn btn-primary ms-auto mt-1" onclick="openListExercise()">Thêm bài tập</button>
+                    </div>
+                    <thead>
+                    <th>STT</th>
+                    <th>Bài tập</th>
+                    <th>Số hiệp</th>
+                    <th>Số lần</th>
+                    <th>Ngày tập</th>
+                    <th>Chức năng</th>
+                    </thead>
+                    <tbody id="exercise-table-body">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</section>
+<script>
+    const days = {{ days | tojson }};
+</script>
+{% endblock %}

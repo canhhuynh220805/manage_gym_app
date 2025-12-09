@@ -52,7 +52,7 @@ class UserRole(enum.Enum):
     USER = 2
     COACH = 3
     RECEPTIONIST = 4
-    CASHER = 5
+    CASHIER = 5
 
 #Giới tính
 class Gender(enum.Enum):
@@ -69,7 +69,7 @@ class User(BaseModel, UserMixin):
     phone = Column(String(20), nullable=True)
     gender = Column(Enum(Gender), default=Gender.MALE)
 
-    type = Column(String(50), nullable=True)
+    type = Column(String(50), nullable=False)
     __mapper_args__ = {
         'polymorphic_identity': 'user',
         'polymorphic_on': type
@@ -80,17 +80,18 @@ class User(BaseModel, UserMixin):
 
 
 class Member(User):
-    id = Column(Integer, ForeignKey(User.id), primary_key=True)
-    packages = relationship('MemberPackage', backref='member', lazy=True)
+    id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
+    packages = relationship('MemberPackage', backref='member', lazy=True, cascade="all, delete-orphan")
+    invoices = relationship('Invoice', backref='member', lazy=True)
     __mapper_args__ = {
         'polymorphic_identity': 'member',
     }
 
 
 class Coach(User):
-    id = Column(Integer, ForeignKey(User.id), primary_key=True)
+    id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
     workout_plans = relationship("WorkoutPlan", backref="coach", lazy=True)
-    assigned_packages = relationship('MemberPackage', backref='assigned_coach', lazy=True)
+    assigned_packages = relationship('MemberPackage', backref='coach', lazy=True)
     __mapper_args__ = {
         'polymorphic_identity': 'trainer',
     }
@@ -100,17 +101,16 @@ class Coach(User):
 
 class Exercise(BaseModel):
     description = Column(String(100), nullable=False)
+    image = Column(String(150), nullable=False)
     workout_plans = relationship('PlanDetail', backref='exercise')
 
-
 class WorkoutPlan(BaseModel):
-    exercises = relationship('PlanDetail', backref='workout_plan', cascade='all, delete-orphan')
+    exercises = relationship('PlanDetail', backref='workout_plan', cascade='all, delete-orphan', lazy=True)
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=False)
 
-
 class PlanDetail(BaseModel):
-    workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id),nullable=False)
-    exercise_id = Column(Integer, ForeignKey(Exercise.id),nullable=False)
+    workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id), nullable= False)
+    exercise_id = Column(Integer, ForeignKey(Exercise.id), nullable= False)
     reps = Column(Integer, nullable=False)
     sets = Column(Integer, nullable=False)
     note = Column(String(100), nullable=True)
@@ -136,13 +136,6 @@ class Package(BaseModel):
     price = Column(Double, nullable=False)
     description = Column(Text, nullable=False)
     members = relationship('MemberPackage', backref='package', lazy=True)
-    benefits = db.relationship("PackageBenefit",backref="package",lazy=True,cascade="all, delete-orphan")
-    image = Column(String(100))# update image
-
-
-class PackageBenefit(BaseModel):
-    detail = Column(Text, nullable=True)
-    package_id = db.Column(db.Integer,db.ForeignKey(Package.id),nullable=False)
 
 class MemberPackage(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -151,11 +144,11 @@ class MemberPackage(db.Model):
 
     startDate = Column(DateTime, nullable=False)
     endDate = Column(DateTime, nullable=False)
-    status = Column(Enum(StatusPackage), default=StatusPackage.EXPIRED)
+    status = Column(Enum(StatusPackage), default=StatusPackage.ACTIVE)
 
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=True)
     workout_plans = relationship(WorkoutPlan, secondary=package_plan_assignment, lazy='subquery',
-                                 backref=backref('member_packages', lazy=True))
+                                 backref=backref('member_package', lazy=True))
     invoice_details = relationship('InvoiceDetail', backref='member_package', lazy=True)
 
 
@@ -173,7 +166,7 @@ class InvoiceDetail(db.Model):
 
     invoice_id = Column(Integer, ForeignKey(Invoice.id), nullable=False)
     amount = Column(Double, nullable=False)
-    quantity = Column(Integer, default=1)
+    # quantity = Column(Integer, default=1)
     member_package_id = Column(Integer, ForeignKey(MemberPackage.id), nullable=False)
 
 if __name__ == '__main__':
@@ -346,3 +339,20 @@ if __name__ == '__main__':
             db.session.add(PackageBenefit(**b))
 
         db.session.commit()
+        u1 = Coach(name='đăng béo', username='dangbeo', password = str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.COACH,
+                 avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        u2 = User(name='canh huynh', username='canh', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.CASHIER,
+                 avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        u3 = Member(name='cozgdeptrai', username='cozg', password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                  user_role=UserRole.USER,
+                  avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
+        db.session.add(u1)
+        db.session.add(u2)
+        db.session.add(u3)
+        e1 = Exercise(name="Pull up", description="vào lưng, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
+        e2 = Exercise(name="Dumbbel Press", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
+
+        db.session.add(e1)
+        db.session.add(e2)
+        db.session.commit()
+        pass

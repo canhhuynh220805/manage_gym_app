@@ -1,10 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'layout/base.html' %}
 
-</body>
-</html>
+{% block header %}
+{% include 'coach/header_coach.html' %}
+{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+<div class=" d-flex flex-column justify-content-center align-items-center">
+    <h1>TRANG CHỦ HUẤN LUYỆN VIÊN</h1>
+    <h2>Chào mừng HLV {{current_user.name}}</h2>
+</div>
+
+
+</section>
+{% endblock %}
