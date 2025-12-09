@@ -1,0 +1,44 @@
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.image-wrapper {
+    position: relative;
+}
+
+.chooseEx {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #0d6efd;
+}
+
+.card-img-top {
+    border-bottom: 1px solid #ddd;
+}
+
+.exercise-card {
+    width: 150px;
+    height: 150px;
+}
+
+.exercise-card .card-body {
+    height: 60px;
+    overflow: hidden;
+}
+
+.exercise-name{
+    width: 150px;
+    height: 50px;
+}
+
+.chooseEx {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 10;
+}
