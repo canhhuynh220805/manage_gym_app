@@ -251,7 +251,9 @@ def login_process():
     next = request.args.get('next')
     if next:                                                                                                                                                                                                                                                                  
         return redirect(next)
-    if u.user_role == UserRole.COACH:
+    if u.user_role == UserRole.ADMIN:
+        return redirect('/admin')
+    elif u.user_role == UserRole.COACH:
         return redirect('/coach')
     elif u.user_role == UserRole.CASHIER:
         return redirect('/cashier')

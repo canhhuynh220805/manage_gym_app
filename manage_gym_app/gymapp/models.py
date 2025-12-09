@@ -135,7 +135,7 @@ class Package(BaseModel):
     duration = Column(Integer, nullable=False)
     price = Column(Double, nullable=False)
     description = Column(Text, nullable=False)
-    members = relationship('MemberPackage', backref='package', lazy=True)
+    members = relationship('MemberPackage', backref='package', lazy=True, cascade="all, delete-orphan") #Co the dung is_active de xoa an toan hon
     benefits = db.relationship("PackageBenefit", backref="package", lazy=True, cascade="all, delete-orphan")
     image =Column(String(100))
 
@@ -177,9 +177,9 @@ class InvoiceDetail(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-        #
+
         # db.create_all()
-        # u = User(name='admin', username='admin', password = str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
+        # u = User(name='admin', username='admin', password = str(hashlib.md5("1".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
         #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
         # db.session.add(u)
         # packages = [
@@ -351,18 +351,18 @@ if __name__ == '__main__':
         # u3 = Member(name='cozgdeptrai', username='cozg', password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
         #           user_role=UserRole.USER,
         #           avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
-        # # u3 = Coach(name= 'hợi gym', username='hoigym', password = str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.COACH,
-        # #              avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765199333/Screenshot_2025-12-08_200923_qqbckv.png")
-        # # u4 = Member(name='ronaldo', username='ronaldo', password=str(hashlib.md5("123".encode('utf-8')).hexdigest()),
-        # #            user_role=UserRole.USER,
-        # #            avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765200160/xb2vpquxw3gv0mxi7bbk.png")
+        # u3 = Coach(name= 'hợi gym', username='hoigym', password = str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.COACH,
+        #              avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765199333/Screenshot_2025-12-08_200923_qqbckv.png")
+        # u4 = Member(name='ronaldo', username='ronaldo', password=str(hashlib.md5("123".encode('utf-8')).hexdigest()),
+        #            user_role=UserRole.USER,
+        #            avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765200160/xb2vpquxw3gv0mxi7bbk.png")
         # db.session.add(u1)
         # db.session.add(u2)
         # db.session.add(u3)
-        # # e1 = Exercise(name="Pull up", description="vào lưng, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
-        # # e2 = Exercise(name="Dumbbel Press", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
-        # # e3 = Exercise(name="Bar bell", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-12-06_101255_flozvt.png")
-        # # e4 = Exercise(name="Dip", description="vào ngực dưới vai, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764992819/Screenshot_2025-12-06_104738_c2u0nw.png")
+        # e1 = Exercise(name="Pull up", description="vào lưng, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
+        # e2 = Exercise(name="Dumbbel Press", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
+        # e3 = Exercise(name="Bar bell", description="vào ngực giữa, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-12-06_101255_flozvt.png")
+        # e4 = Exercise(name="Dip", description="vào ngực dưới vai, tăng sức bền", image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764992819/Screenshot_2025-12-06_104738_c2u0nw.png")
         # db.session.add(e1)
         # db.session.add(e2)
         # u5 = Member(name='messi', username='messi', password=str(hashlib.md5("123".encode('utf-8')).hexdigest()),
@@ -372,8 +372,8 @@ if __name__ == '__main__':
         # db.session.add(u5)
         # member = Member.query.filter(Member.name.contains('messi')).first()
         # coach = Coach.query.filter(Coach.name.contains('gym')).first()
-        # # p = Package(name="Gói đồng", description="miễn phí nước khăn tập", price=300000, duration=30)
-        # # db.session.add(p)
+        # p = Package(name="Gói đồng", description="miễn phí nước khăn tập", price=300000, duration=30)
+        # db.session.add(p)
         # p = Package.query.filter(Package.name.contains("Đồng")).first()
         # member_package = MemberPackage(member=member, package=p, startDate=datetime.now(), endDate=datetime.now() + timedelta(days=30), coach=coach)
         # db.session.add(member_package)
