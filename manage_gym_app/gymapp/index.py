@@ -1,8 +1,11 @@
-from flask import render_template, request, redirect, jsonify
-from flask_login import logout_user, login_user
+from flask import render_template, request, redirect, jsonify, session
+from flask_login import logout_user, login_user, current_user
 
 from gymapp import app, dao, login
 
+from decorators import login_required
+
+from gymapp.models import UserRole
 
 @app.route('/')
 def index():
@@ -216,7 +219,6 @@ def login_process():
     password = request.form.get('password')
 
     u = dao.auth_user(username=username, password=password)
-    print()
     if u:
         login_user(user=u)
     else:
@@ -249,7 +251,7 @@ def register_package():
     package_id = data.get('package_id')
 
     if not user_id or not package_id:
-        return jsonify({'status': 400, 'err_msg': 'Dữ liệu không hợp lệ (Thiếu ID)'})
+        return jsonify({'status': 400, 'err_msg': 'Dữ liệu không hợp lệ'})
 
     is_success, message = dao.add_package_registration(user_id, package_id)
 

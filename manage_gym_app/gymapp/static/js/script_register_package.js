@@ -13,14 +13,14 @@ function register_package(userId, packageId) {
             return res.json();
         }).then(function(data) {
             if (data.status === 200) {
-                alert('Đăng ký thành công!');
+                alert(data.msg);
                 location.reload();
             } else {
                 alert('Lỗi: ' + data.err_msg);
             }
         }).catch(function(err) {
             console.error(err);
-            alert('Lỗi kết nối server.');
+            alert('Đã có lỗi hệ thống xảy ra!');
         });
     }
 }
