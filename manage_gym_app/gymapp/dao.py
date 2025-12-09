@@ -50,7 +50,7 @@ def add_package_registration(user_id, package_id):
         return False, "Gói tập không tồn tại"
     start_date = datetime.now()
     duration = getattr(package, 'duration', 1)
-    end_date = start_date + timedelta(months=duration)
+    end_date = start_date + relativedelta(months=duration)
 
     #########################
     new_invoice_pending = Invoice(
@@ -60,10 +60,6 @@ def add_package_registration(user_id, package_id):
     )
 
     #########################
-    # start_date = datetime.now()
-    # duration = getattr(package, 'duration', 1)
-    # end_date = start_date + relativedelta(months=duration)
-    #
     # new_registration = MemberPackage(
     #     member_id=member.id,
     #     package_id=package.id,
