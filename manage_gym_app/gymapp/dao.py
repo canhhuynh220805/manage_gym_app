@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 
 import cloudinary
 from flask_login import current_user
-from sqlalchemy import text
-
 from cloudinary import uploader #them uploader de up anh luc dang ki
 from gymapp import db, app
-from gymapp.models import User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage, StatusInvoice,StatusPackage, Package, ExerciseSchedule, DayOfWeek, PlanDetail, WorkoutPlan, PackageBenefit
+from gymapp.models import (User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage,
+                           StatusInvoice,StatusPackage, Package, ExerciseSchedule, DayOfWeek,
+                           PlanDetail, WorkoutPlan, PackageBenefit)
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text
@@ -15,14 +15,18 @@ from sqlalchemy import text
 def get_user_by_id(id):
     return User.query.get(id)
 
+
 def auth_user(username, password):
     password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
-    return User.query.filter(User.username==username.strip(),
-                             User.password==password).first()
+    return User.query.filter(User.username == username.strip(),
+                             User.password == password).first()
 
 
-def add_user(name, username, password, avatar):
-    u = User(name=name, username=username.strip(), password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()))
+
+def add_member(name, username, password, avatar):
+    u = Member(name=name,
+               username=username.strip(),
+               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()))
 
     if avatar:
         res = cloudinary.uploader.upload(avatar)
@@ -83,30 +87,65 @@ def add_package_registration(user_id, package_id):
     finally:
         db.session.remove()
 
-#HUẤN LUYỆN VIÊN
 
+
+# HUẤN LUYỆN VIÊN
 def get_all_exercises():
     return Exercise.query.all()
+
 
 def get_all_day_of_week():
     return [e.name for e in DayOfWeek]
 
-def add_workout_plan(name, plan):
+
+def get_active_packages(coach_id, member_ids):
+    if not member_ids:
+        return []
+    return db.session.query(MemberPackage).filter(
+                MemberPackage.member_id.in_(member_ids),
+                MemberPackage.coach_id == coach_id,
+                MemberPackage.status == StatusPackage.ACTIVE
+            ).all()
+
+def has_plan_assigned(coach_id, member_id):
+    active_packages = get_active_packages(coach_id, [member_id])
+    for pkg in active_packages:
+        if pkg.workout_plans:
+            return True
+    return False
+
+def assign_existing_plan(coach_id, member_id, plan_id):
+    plan = WorkoutPlan.query.get(plan_id)
+
+    if plan and plan.coach_id == coach_id:
+        packages = get_active_packages(coach_id, [member_id])
+        if packages:
+            plan.member_packages.extend(packages)
+            db.session.commit()
+            return True
+
+    return False
+
+
+
+
+def add_workout_plan(name, plan, member_ids):
     if plan:
         p = WorkoutPlan(name=name, coach=current_user)
         db.session.add(p)
-        print(plan.values())
+
+        if member_ids:
+            packages = get_active_packages(coach_id=current_user.id, member_ids=member_ids)
+            p.member_packages.extend(packages)
+
         for ex in plan.values():
             pd = PlanDetail(exercise_id=ex['id'], reps=ex['reps'], sets=ex['sets'], workout_plan=p)
             db.session.add(pd)
 
             for day in ex['days']:
-                try:
-                    day_enum = DayOfWeek[day]
-                except KeyError:
-                    continue
+                day_enum = DayOfWeek[day]
                 d = ExerciseSchedule(
-                    day = day_enum,
+                    day=day_enum,
                     plan_detail=pd
                 )
                 db.session.add(d)
@@ -114,7 +153,18 @@ def add_workout_plan(name, plan):
         db.session.commit()
 
 
-#CASHIER
+def get_members_by_coach(coach_id):
+    query = (db.session.query(Member)
+             .join(MemberPackage, MemberPackage.member_id == Member.id)
+             .filter(MemberPackage.coach_id == coach_id))
+
+    return query.all()
+
+
+def get_plan_by_coach(coach_id):
+    return WorkoutPlan.query.filter(WorkoutPlan.coach_id == coach_id).all()
+
+# CASHIER
 
 def get_payment_history():
     return Invoice.query.all()
@@ -136,6 +186,7 @@ def process_payment(member_package_id):
         return bill
     return None
 
+
 def get_invoice_detail(invoice_id):
     return Invoice.query.get(invoice_id)
 
@@ -145,6 +196,7 @@ def load_members(kw=None):
     if kw:
         query = query.filter(Member.name.contains(kw) | Member.phone.contains(kw))
     return query.limit(10).all()
+
 
 
 def load_packages():
@@ -172,7 +224,6 @@ def add_member_package_and_pay(member_id, package_id):
     pack = Package.query.get(package_id)
 
     if pack:
-
         start_date = datetime.now()
         end_date = start_date + timedelta(days=pack.duration * 30)
 
@@ -180,7 +231,8 @@ def add_member_package_and_pay(member_id, package_id):
                            status=StatusPackage.ACTIVE)
         db.session.add(mp)
 
-        bill = Invoice(member_id=member_id, total_amount=pack.price, status=StatusInvoice.PAID, payment_date=datetime.now())
+        bill = Invoice(member_id=member_id, total_amount=pack.price, status=StatusInvoice.PAID,
+                       payment_date=datetime.now())
         db.session.add(bill)
 
         detail = InvoiceDetail(invoice=bill, member_package=mp, amount=pack.price)
@@ -193,3 +245,8 @@ def add_member_package_and_pay(member_id, package_id):
     return None
 
 
+
+
+if __name__ == '__main__':
+    with app.app_context():
+        print(get_members_by_coach(4))

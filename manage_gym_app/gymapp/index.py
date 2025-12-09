@@ -1,4 +1,5 @@
-from flask import render_template, request, redirect, jsonify, session
+
+from flask import render_template, request, redirect, url_for, jsonify, session
 from flask_login import logout_user, login_user, current_user
 
 from gymapp import app, dao, login
@@ -23,12 +24,24 @@ def coach_view():
     return render_template('coach/index_coach.html')
 
 
+@app.route('/coach/members')
+@login_required(UserRole.COACH)
+def coach_members_view():
+    members = dao.get_members_by_coach(current_user.id)
+    for m in members:
+        m.has_plan = dao.has_plan_assigned(coach_id=current_user.id, member_id=m.id)
+    plans = dao.get_plan_by_coach(current_user.id)
+    return render_template('coach/members_coach.html', members=members, plans=plans)
+
+
 @app.route('/coach/workout-plans/create')
 @login_required(UserRole.COACH)
 def workout_plans_create():
+    members = dao.get_members_by_coach(current_user.id)
     exercises = dao.get_all_exercises()
     days = dao.get_all_day_of_week()
-    return render_template('coach/create_workout_plan.html', exercises=exercises, days=days)
+    return render_template('coach/create_workout_plan.html', exercises=exercises,
+                           days=days, members=members)
 
 
 @app.route('/api/workout-exercises', methods=['POST'])
@@ -104,18 +117,35 @@ def delete_exercise_from_plan(id):
 @app.route('/api/workout-plans', methods=['POST'])
 @login_required(UserRole.COACH)
 def create_workout_plan():
-    if current_user.user_role != UserRole.COACH:
-        return redirect('/')
     try:
         data = request.json
         name_plan = str(data.get('name-plan'))
+        member_ids = data.get('member_ids')
+
         print(name_plan)
-        dao.add_workout_plan(name=name_plan,  plan=session.get('workout-plan'))
+        dao.add_workout_plan(name=name_plan, plan=session.get('workout-plan'), member_ids=member_ids)
         del session['workout-plan']
 
         return jsonify({'status': 200})
     except Exception as e:
         return jsonify({'status': 400, 'err_msg': str(e)})
+
+
+@app.route('/api/assign-existing-plan', methods=['POST'])
+@login_required(UserRole.COACH)
+def assign_workout_plan():
+    data = request.json
+    member_id = data.get('member_id')
+    plan_id = data.get('plan_id')
+    try:
+        success = dao.assign_existing_plan(coach_id=current_user.id, member_id=member_id, plan_id=plan_id)
+        if success:
+            return jsonify({'status': 200, 'msg': 'Gán thành công!'})
+        else:
+            return jsonify({'status': 400, 'msg': 'Gán thất bại (Gói hết hạn hoặc lỗi dữ liệu)'})
+    except Exception as e:
+        return jsonify({'status': 400, 'err_msg': str(e)})
+
 
 ###########
 @app.route('/cashier')
@@ -176,11 +206,11 @@ def get_invoice_detail_api(invoice_id):
     except Exception as ex:
         return jsonify({'status': 500, 'msg': str(ex)})
 
+
 @app.route('/receptionist')
 @login_required(UserRole.RECEPTIONIST)
 def receptionist_view():
     return render_template('receptionist/index_receptionist.html')
-
 
 
 @app.route('/login')
@@ -209,7 +239,7 @@ def register_process():
                        username=request.form.get('username'),
                        password=request.form.get('password'))
     except Exception as ex:
-        return render_template('register.html', err_msg="Hệ thống đang có lỗi!")
+        return render_template('register.html', err_msg=str(ex))
 
     return redirect('/login')
 
