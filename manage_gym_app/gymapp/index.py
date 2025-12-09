@@ -1,15 +1,14 @@
-
-from flask import render_template, request, redirect, url_for, jsonify, session
-from flask_login import logout_user, login_user, current_user
+from flask import render_template, request, redirect, jsonify
+from flask_login import logout_user, login_user
 
 from gymapp import app, dao, login
-from gymapp.models import UserRole
-from decorators import login_required
 
 
 @app.route('/')
 def index():
-    return render_template('index.html', )
+    packages = dao.load_package()
+    package_benefits = dao.load_package_benefit()
+    return render_template('index.html',packages=packages,package_benefits = package_benefits)
 
 
 ###################### VIEW ############################
@@ -190,7 +189,6 @@ def register_view():
     return render_template('register.html')
 
 
-###################################################
 @app.route('/register', methods=['post'])
 def register_process():
     password = request.form.get('password')
@@ -211,6 +209,7 @@ def register_process():
 
     return redirect('/login')
 
+
 @app.route('/login', methods=['post'])
 def login_process():
     username = request.form.get('username')
@@ -223,7 +222,7 @@ def login_process():
     else:
         return redirect('/login')
     next = request.args.get('next')
-    if next:
+    if next:                                                                                                                                                                                                                                                                  
         return redirect(next)
     if u.user_role == UserRole.COACH:
         return redirect('/coach')
@@ -243,8 +242,22 @@ def logout_process():
 def load_user(pk):
     return dao.get_user_by_id(pk)
 
+@app.route('/api/register_package', methods=['post'])
+def register_package():
+    data = request.json
+    user_id = data.get('user_id')
+    package_id = data.get('package_id')
+
+    if not user_id or not package_id:
+        return jsonify({'status': 400, 'err_msg': 'Dữ liệu không hợp lệ (Thiếu ID)'})
+
+    is_success, message = dao.add_package_registration(user_id, package_id)
+
+    if is_success:
+        return jsonify({'status': 200, 'msg': message})
+    else:
+        return jsonify({'status': 400, 'err_msg': message})
 
 if __name__ == '__main__':
     from gymapp import admin
-
     app.run(debug=True)
