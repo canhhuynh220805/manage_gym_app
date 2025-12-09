@@ -6,10 +6,6 @@ from gymapp import app, dao, login
 from gymapp.decorators import login_required
 from gymapp.models import UserRole
 
-from decorators import login_required
-
-from gymapp.models import UserRole
-
 @app.route('/')
 def index():
     packages = dao.load_package()
@@ -47,8 +43,6 @@ def workout_plans_create():
 @app.route('/api/workout-exercises', methods=['POST'])
 @login_required(UserRole.COACH)
 def add_exercise_to_plan():
-    if current_user.user_role != UserRole.COACH:
-        return redirect('/')
 
     plan = session.get('workout-plan')
     if not plan:
