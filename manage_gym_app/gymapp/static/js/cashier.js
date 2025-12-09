@@ -48,7 +48,7 @@ function showInvoiceDetail(invoiceId) {
                 const myModal = new bootstrap.Modal(document.getElementById('invoiceModal'));
                 myModal.show();
             } else {
-                alert(data.err_msg);
+                alert(data.msg);
             }
         })
         .catch(err => console.error(err));
