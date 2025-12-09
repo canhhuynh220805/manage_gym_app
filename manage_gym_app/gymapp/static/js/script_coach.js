@@ -16,9 +16,11 @@ memberDropdown.addEventListener("click", function(event) {
         }
 
         const name = event.target.dataset.name;
+        const id = event.target.dataset.id;
 
         const div = document.createElement("div")
         div.className = "d-flex align-items-center me-1";
+        div.dataset.id = id;
 
 
         const span = document.createElement("span");
@@ -37,10 +39,13 @@ memberDropdown.addEventListener("click", function(event) {
             a.href = "#";
             a.className = "dropdown-item";
             a.dataset.name = name;
+            a.dataset.id = id;
             a.textContent = name;
             li.appendChild(a);
             memberDropdown.appendChild(li);
-
+            if (listMember.children.length === 0) {
+                 listMember.innerHTML = "(chưa có hội viên)";
+            }
             checkDropdownEmpty()
         };
 
@@ -150,6 +155,9 @@ function createWorkoutPlan(){
     if(confirm("Bạn có chắc chắn là tạo kế hoạch này") === true){
         const namePlan = document.getElementById("name-plan").value
 
+        const selectedDivs = document.querySelectorAll("#assigned-member div[data-id]");
+        const memberIds = Array.from(selectedDivs).map(div => div.dataset.id);
+
         if(!namePlan){
             alert("Vui lòng nhập tên kế hoạch!");
             return;
@@ -161,7 +169,8 @@ function createWorkoutPlan(){
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "name-plan": namePlan
+                "name-plan": namePlan,
+                "member_ids": memberIds
             })
         }).then(res => res.json()).then(data => {
             if (data.status === 200) {
@@ -171,6 +180,44 @@ function createWorkoutPlan(){
                 alert("Lỗi: " + data.err_msg);
             }
         })
+
+    }
+}
+
+function searchExercise(){
+    let kw = document.getElementById("search-input");
+    kw = kw.value.toLowerCase();
+
+    let exercises = document.getElementsByClassName('exercise-item');
+    for(let i = 0; i < exercises.length; i++){
+        let content = exercises[i].innerText.toLowerCase();
+        if(content.includes(kw))
+            exercises[i].classList.remove('d-none');
+        else
+            exercises[i].classList.add('d-none');
+    }
+}
+
+function assignPlanToMember(plan_id, member_id){
+    if(confirm("Bạn muốn gán kế hoạch này cho hội viên?") === true){
+        fetch('/api/assign-existing-plan', {
+            method: 'post',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "plan_id": plan_id,
+                "member_id": member_id
+            })
+        }).then(res => res.json()).then(data =>{
+            if(data.status == 200){
+               alert(data.msg);
+               location.reload();
+            }
+            else{
+                alert(data.err_msg);
+            }
+        });
 
     }
 }

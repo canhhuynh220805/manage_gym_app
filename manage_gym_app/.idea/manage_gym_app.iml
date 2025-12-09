@@ -6,7 +6,11 @@
       <excludeFolder url="file://$MODULE_DIR$/.venv1" />
       <excludeFolder url="file://$MODULE_DIR$/.venv/.venv" />
     </content>
+<<<<<<< Updated upstream
     <orderEntry type="jdk" jdkName="Python 3.12 (manage_gym_app)" jdkType="Python SDK" />
+=======
+    <orderEntry type="jdk" jdkName="Python 3.13 (manage_gym_app)" jdkType="Python SDK" />
+>>>>>>> Stashed changes
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

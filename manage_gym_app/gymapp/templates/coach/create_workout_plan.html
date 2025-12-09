@@ -14,10 +14,15 @@
             </div>
             <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                 <div id="list-exercise" class="row g-2 d-none">
+                    <div class="d-flex mb-3">
+                        <input class="form-control me-2" type="text"
+                               id="search-input"
+                               placeholder="Nhập tên bài tập..."
+                               onkeyup="searchExercise()"></div>
                     {% if exercises %}
                     {% for e in exercises %}
                     <div class="col-auto">
-                        <div class="card position-relative" style="width:150px">
+                        <div class="card position-relative exercise-item" style="width:150px">
                             <div class="image-wrapper position-relative exercise-card">
                                 <img class="card-img-top" src="{{e.image}}" alt="Card image">
                                 <input type="checkbox" id="cb-{{e.id}}" class="chooseEx" onchange="togglePlan(this, {{e.id}},
@@ -63,14 +68,18 @@
                         <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                             Thêm hội viên
                         </button>
+                        {% if members %}
                         <ul class="dropdown-menu" id="member-dropdown">
-                            <li><a class="dropdown-item" href="#" data-name="canh">canh</a></li>
-                            <li><a class="dropdown-item" href="#" data-name="cong">cong</a></li>
-                            <li><a class="dropdown-item" href="#" data-name="nem chua">nem chua</a></li>
+                            {% for m in members %}
+                            <li><a class="dropdown-item" href="#" data-name="{{m.name}}"
+                                   data-id="{{m.id}}">{{m.name}}</a></li>
+                            {% endfor %}
                         </ul>
+                        {% else %}
                         <div id="no-member-msg" class="text-muted mt-1 d-none">
                             Không có hội viên
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

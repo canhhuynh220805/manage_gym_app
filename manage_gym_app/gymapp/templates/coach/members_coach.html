@@ -1,0 +1,96 @@
+{% extends 'layout/base.html' %}
+
+{% block header %}
+{% include 'coach/header_coach.html' %}
+{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <div class=" d-flex flex-column justify-content-center align-items-center">
+        <h1>DANH SÁCH HỘI VIÊN</h1>
+        <div id="list-exercise" class="row g-2">
+            {% if members %}
+            {% for m in members %}
+            <div class="col-auto">
+                <div class="card h-100 shadow-sm border-0" style="width:160px; overflow: hidden;">
+
+                    <div class="image-wrapper position-relative">
+                        <img class="card-img-top"
+                             src="{{ m.avatar if m.avatar else 'https://via.placeholder.com/150' }}"
+                             alt="{{ m.name }}"
+                             style="height: 150px; object-fit: cover;">
+
+                        {% if m.gender.name == 'MALE' %}
+                        <span class="position-absolute top-0 end-0 badge bg-primary m-1 rounded-pill">Nam</span>
+                        {% elif m.gender.name == 'FEMALE' %}
+                        <span class="position-absolute top-0 end-0 badge bg-danger m-1 rounded-pill">Nữ</span>
+                        {% else %}
+                        <span class="position-absolute top-0 end-0 badge bg-secondary m-1 rounded-pill">Khác</span>
+                        {% endif %}
+                    </div>
+
+                    <hr class="m-0">
+
+                    <div class="card-body p-2 text-center">
+                        <h6 class="card-title text-truncate mb-1" title="{{ m.name }}">
+                            {{ m.name }}
+                        </h6>
+
+                        <div class="small text-muted mb-1">
+                            <i class="fas fa-phone-alt"></i> {{ m.phone if m.phone else 'Chưa có SĐT' }}
+                        </div>
+
+                        <div class="small text-secondary" style="font-size: 0.75rem;">
+                            <i class="far fa-calendar-alt"></i>
+                            {% if m.dob %}
+                            {{ m.dob.strftime('%d/%m/%Y') }}
+                            {% else %}
+                            --/--/----
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card-footer p-1 bg-white border-top-0">
+                        {% if m.has_plan %}
+                        <button class="btn btn-success btn-sm w-100 py-0 disabled" style="opacity: 0.8;">
+                            <i class="fas fa-check-circle"></i> Đã có KH
+                        </button>
+                        {% else %}
+                        <div class="btn-group w-100 dropup">
+                            <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle py-0"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-list"></i> Gán có sẵn
+                            </button>
+                            <ul class="dropdown-menu shadow">
+                                {% if plans %}
+                                {% for p in plans %}
+                                <li>
+                                    <button class="dropdown-item" type="button"
+                                            onclick="assignPlanToMember('{{ p.id }}', '{{ m.id }}')">
+                                        {{ p.name }}
+                                    </button>
+                                </li>
+                                {% endfor %}
+                                {% else %}
+                                <li><span class="dropdown-item text-muted">Chưa có kế hoạch nào</span></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <a href="{{ url_for('workout_plans_create') }}"
+                           class="btn btn-outline-primary btn-sm w-100 py-0">
+                            <i class="fas fa-plus"></i> Tạo kế hoạch mới
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor%}
+            {% else %}
+            <div>
+                <h4>KHÔNG CÓ HỘI VIÊN</h4>
+            </div>
+            {% endif%}
+        </div>
+    </div>
+</section>
+{% endblock %}
