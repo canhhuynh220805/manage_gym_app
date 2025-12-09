@@ -21,7 +21,7 @@ def auth_user(username, password):
                              User.password==password).first()
 
 
-def add_user(name, username, password, avatar):
+def add_member(name, username, password, avatar):
     u = User(name=name, username=username.strip(), password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()))
 
     if avatar:
@@ -58,19 +58,19 @@ def add_package_registration(user_id, package_id):
         status=StatusInvoice.PENDING,
         total_amount=package.price
     )
-
-    #########################
-    # new_registration = MemberPackage(
-    #     member_id=member.id,
-    #     package_id=package.id,
-    #     startDate=start_date,
-    #     endDate=end_date,
-    #     status=StatusPackage.EXPIRED,
-    #     coach_id=None
-    # )
-    #########################
+    _upgrade_user_to_member_force(user_id)
+    ########################
+    new_registration = MemberPackage(
+        member_id=member.id,
+        package_id=package.id,
+        startDate=start_date,
+        endDate=end_date,
+        status=StatusPackage.EXPIRED,
+        coach_id=None
+    )
+    ########################
     try:
-        db.session.add(new_invoice_pending)
+        db.session.add_all([new_invoice_pending,new_registration])
         db.session.commit()
         return True, "Đăng ký thành công, vui lòng đến phòng gym để thanh toán và kích hoạt tài khoản!"
     except Exception as e:
@@ -79,6 +79,19 @@ def add_package_registration(user_id, package_id):
     finally:
         db.session.remove()
 
+def _upgrade_user_to_member_force(user_id):
+    try:
+        sql_insert = text("INSERT IGNORE INTO member (id) VALUES (:id)")
+        db.session.execute(sql_insert, {'id': user_id})
+
+        sql_update = text("UPDATE user SET type = 'member' WHERE id = :id")
+        db.session.execute(sql_update, {'id': user_id})
+
+        db.session.commit()
+
+        db.session.expire_all()
+    except Exception as e:
+        db.session.rollback()
 #HUẤN LUYỆN VIÊN
 
 def get_all_exercises():
