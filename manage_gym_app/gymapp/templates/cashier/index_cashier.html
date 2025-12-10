@@ -3,105 +3,142 @@
 {% block header %}
     {% include 'cashier/header_cashier.html' %}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<h1 class="text-center text-info mt-3">QUẢN LÝ THU NGÂN</h1>
+<div class="container mt-4">
+    <h2 class="text-center text-primary mb-4 text-uppercase">Quản Lý Thu Ngân</h2>
 
-<div class="row mt-3">
-    <div class="col-md-4 col-12">
-        <h3 class="text-success">Lập hóa đơn</h3>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card border-primary"> <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-edit"></i> Lập hóa đơn</h5>
+                </div>
+                <div class="card-body bg-light">
+                    <div class="form-group mb-3">
+                        <label class="fw-bold mb-1">Chọn Khách hàng:</label>
+                        <select id="memberSelect" class="form-select">
+                            <option value="" selected disabled>-- Nhập tên hoặc SĐT --</option>
+                            {% for m in members %}
+                            <option value="{{ m.id }}">{{ m.name }} - {{ m.phone }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-        <div class="mb-3 mt-3">
-            <label class="form-label fw-bold">Khách hàng (Hội viên):</label>
-            <select id="memberSelect" class="form-select">
-                <option value="" selected disabled>-- Tìm kiếm hội viên --</option>
-                {% for m in members %}
-                <option value="{{ m.id }}">{{ m.name }} - {{ m.username }}</option>
-                {% endfor %}
-            </select>
+                    <div class="form-group mb-3">
+                        <label class="fw-bold mb-1">Chọn Gói tập:</label>
+                        <select id="packageSelect" class="form-select">
+                            <option value="" selected disabled>-- Chọn gói dịch vụ --</option>
+                            {% for p in packages %}
+                            <option value="{{ p.id }}">
+                                {{ p.name }} - {{ "{:,.0f}".format(p.price) }} VNĐ
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <hr>
+
+                    <button onclick="pay()" class="btn btn-success w-100 fw-bold">
+                        <i class="fas fa-money-bill-wave"></i> THANH TOÁN NGAY
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label fw-bold">Gói tập đăng ký:</label>
-            <select id="packageSelect" class="form-select">
-                <option value="" selected disabled>-- Chọn gói tập --</option>
-                {% for p in packages %}
-                <option value="{{ p.id }}">
-                    {{ p.name }} - {{ "{:,.0f}".format(p.price) }}đ
-                </option>
-                {% endfor %}
-            </select>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-dark"><i class="fas fa-list"></i> Lịch sử giao dịch trong ngày</h5>
+                    <button class="btn btn-sm btn-outline-dark" onclick="location.reload()">
+                        <i class="fas fa-sync"></i> Tải lại
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="text-center" style="width: 50px;">ID</th>
+                                    <th>Khách hàng</th>
+                                    <th>Thời gian</th>
+                                    <th>Số tiền</th>
+                                    <th class="text-center" style="width: 80px;">Tác vụ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if invoices %}
+                                    {% for i in invoices %}
+                                    <tr>
+                                        <td class="text-center font-weight-bold">{{ i.id }}</td>
+                                        <td>{{ i.member.name if i.member else 'Khách lẻ' }}</td>
+                                        <td>{{ i.payment_date.strftime('%H:%M - %d/%m') }}</td>
+                                        <td class="text-danger fw-bold text-end">
+                                            {{ "{:,.0f}".format(i.total_amount) }} đ
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-info text-white" onclick="showInvoiceDetail({{ i.id }})" title="Xem chi tiết">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">
+                                            Chưa phát sinh giao dịch nào.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="mt-4">
-            <button onclick="pay()" class="btn btn-primary w-100">LẬP & THANH TOÁN</button>
-        </div>
-    </div>
-
-    <div class="col-md-8 col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h3 class="text-primary">Lịch sử thanh toán</h3>
-            <button class="btn btn-secondary btn-sm" onclick="location.reload()">Làm mới</button>
-        </div>
-
-        <table class="table table-bordered mt-2">
-            <thead class="table-light">
-                <tr>
-                    <th>Mã HĐ</th>
-                    <th>Khách hàng</th>
-                    <th>Ngày lập</th>
-                    <th>Tổng tiền</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if invoices %}
-                    {% for i in invoices %}
-                    <tr>
-                        <td>{{ i.id }}</td>
-                        <td>{{ i.member.name if i.member else 'Khách vãng lai' }}</td>
-                        <td>{{ i.payment_date.strftime('%d/%m/%Y %H:%M') }}</td>
-                        <td class="text-danger fw-bold">
-                            {{ "{:,.0f}".format(i.total_amount) }} VNĐ
-                        </td>
-                        <td class="text-center">
-                            <button class="btn btn-info btn-sm text-white" onclick="showInvoiceDetail({{ i.id }})">
-                                Xem
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">Chưa có dữ liệu</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
     </div>
 </div>
 
-<div class="modal fade" id="invoiceModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="invoiceModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Chi tiết Hóa đơn #<span id="modal-id"></span></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-header bg-secondary text-white">
+        <h5 class="modal-title">Hóa đơn #<span id="modal-id"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p><strong>Ngày lập:</strong> <span id="modal-date"></span></p>
-        <p><strong>Thu ngân:</strong> <span id="modal-staff"></span></p>
-        <p><strong>Khách hàng:</strong> <span id="modal-member"></span></p>
-        <hr>
-        <p><strong>Dịch vụ:</strong> <span id="modal-package"></span></p>
-        <p><strong>Thời hạn:</strong> <span id="modal-duration"></span> tháng</p>
-        <h4 class="text-end text-danger mt-3">Tổng tiền: <span id="modal-total"></span> VNĐ</h4>
+        <table class="table table-borderless">
+            <tr>
+                <td class="fw-bold w-25">Ngày lập:</td>
+                <td id="modal-date"></td>
+            </tr>
+            <tr>
+                <td class="fw-bold">Thu ngân:</td>
+                <td id="modal-staff"></td>
+            </tr>
+            <tr>
+                <td class="fw-bold">Khách hàng:</td>
+                <td id="modal-member"></td>
+            </tr>
+            <tr class="border-top">
+                <td class="fw-bold">Dịch vụ:</td>
+                <td id="modal-package"></td>
+            </tr>
+            <tr>
+                <td class="fw-bold">Thời hạn:</td>
+                <td><span id="modal-duration"></span> tháng</td>
+            </tr>
+        </table>
+        <div class="alert alert-success text-center m-0">
+            <h4 class="mb-0 fw-bold">TỔNG: <span id="modal-total"></span> VNĐ</h4>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary">In phiếu</button>
       </div>
     </div>
   </div>
