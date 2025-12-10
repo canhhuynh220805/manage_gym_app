@@ -206,8 +206,6 @@ def load_members(kw=None):
         query = query.filter(Member.name.contains(kw) | Member.phone.contains(kw))
     return query.limit(10).all()
 
-
-
 def load_packages():
     return Package.query.all()
 
