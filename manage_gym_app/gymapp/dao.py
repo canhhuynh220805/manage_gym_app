@@ -77,6 +77,20 @@ def add_package_registration(user_id, package_id):
     try:
         db.session.add_all([new_invoice_pending,new_registration])
         db.session.commit()
+        invoice = Invoice.query.get(new_invoice_pending.id)
+        member_package = MemberPackage.query.get(new_registration.id)
+        new_invoice_detail = InvoiceDetail(
+            invoice_id=invoice.id,
+            amount=invoice.total_amount,
+            member_package_id=member_package.id
+        )
+
+        try:
+            db.session.add(new_invoice_detail)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return False, str(e)
         return True, "Đăng ký thành công, vui lòng đến phòng gym để thanh toán và kích hoạt tài khoản!"
     except Exception as e:
         db.session.rollback()
@@ -223,6 +237,23 @@ def get_invoices(kw=None, from_date=None, to_date=None):
 
     return q.order_by(Invoice.payment_date.desc()).all()
 
+def get_invoice_from_cur_user(cur_user_id):
+    return Invoice.query.filter_by(member_id=cur_user_id).order_by(Invoice.payment_date.desc()).all()
+
+
+def get_package_name_by_invoice(invoice_id):
+    try:
+        detail = InvoiceDetail.query.filter_by(invoice_id=invoice_id).first()
+        if detail:
+            mem_pack = MemberPackage.query.get(detail.member_package_id)
+            if mem_pack:
+                pack = Package.query.get(mem_pack.package_id)
+                if pack:
+                    return pack.name
+    except Exception as e:
+        print(e)
+
+    return "Không đăng kí gói nào"
 
 def get_invoice_detail(invoice_id):
     return Invoice.query.get(invoice_id)

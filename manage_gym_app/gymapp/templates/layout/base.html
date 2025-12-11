@@ -16,7 +16,11 @@
 <body>
 
 {% block header %}
+{% if current_user.is_authenticated %}
+{% include 'member/header_member.html' %}
+{% else %}
 {% include 'layout/header.html' %}
+{%endif%}
 {% endblock %}
 
 <section class="container">
