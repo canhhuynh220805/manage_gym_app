@@ -1,4 +1,6 @@
 
+import math
+
 from flask import render_template, request, redirect, url_for, jsonify, session
 from flask_login import logout_user, login_user, current_user
 
@@ -7,10 +9,11 @@ from gymapp.decorators import login_required
 from gymapp.models import UserRole, StatusInvoice
 
 
+
 @app.route('/')
 def index():
     packages = dao.load_package()
-    return render_template('index.html',packages=packages)
+    return render_template('index.html', packages=packages)
 
 
 ###################### VIEW ############################
@@ -44,7 +47,6 @@ def workout_plans_create():
 @app.route('/api/workout-exercises', methods=['POST'])
 @login_required(UserRole.COACH)
 def add_exercise_to_plan():
-
     plan = session.get('workout-plan')
     if not plan:
         plan = {}
@@ -185,11 +187,42 @@ def direct_pay():
         return jsonify({'status': 400, 'msg': 'Lỗi xử lý! Vui lòng kiểm tra lại thông tin.'})
 
 
+#############RECEPTIONIST##################
+
 @app.route('/receptionist')
 @login_required(UserRole.RECEPTIONIST)
 def receptionist_view():
     return render_template('receptionist/index_receptionist.html')
 
+
+@app.route('/receptionist/members')
+@login_required(UserRole.RECEPTIONIST)
+def receptionist_members_view():
+    page = int(request.args.get('page', 1))
+    packages = dao.get_members_for_receptionist(page=page, kw=request.args.get('kw'))
+    coaches = dao.get_all_coach()
+
+    return render_template('receptionist/members_receptionist.html', packages=packages, coaches=coaches,
+                           pages=math.ceil(dao.count_members_for_receptionist() / app.config['MEMBER_RECEP']))
+
+
+
+@app.route('/api/member-packages/<package_id>/assign-coach', methods=['PATCH'])
+@login_required(UserRole.RECEPTIONIST)
+def assign_coach(package_id):
+    coach_id = request.json.get('coach_id')
+    updated_package = dao.assign_coach(package_id=package_id, coach_id=coach_id)
+    if updated_package:
+        new_coach_name=updated_package.coach.name
+
+        return jsonify({
+            'message': 'Gán HLV thành công!',
+            'coach_name': new_coach_name
+        }), 200
+    else:
+        return jsonify({'error': 'Lỗi: Không tìm thấy gói tập hoặc HLV!'}), 400
+
+##################################################
 
 @app.route('/login')
 def login_view():
@@ -233,7 +266,7 @@ def login_process():
     else:
         return redirect('/login')
     next = request.args.get('next')
-    if next:                                                                                                                                                                                                                                                                  
+    if next:
         return redirect(next)
     if u.user_role == UserRole.ADMIN:
         return redirect('/admin')
@@ -246,14 +279,17 @@ def login_process():
     else:
         return redirect('/')
 
+
 @app.route('/logout')
 def logout_process():
     logout_user()
     return redirect('/login')
 
+
 @login.user_loader
 def load_user(pk):
     return dao.get_user_by_id(pk)
+
 
 @app.route('/api/register_package', methods=['post'])
 def register_package():
@@ -271,6 +307,30 @@ def register_package():
     else:
         return jsonify({'status': 400, 'err_msg': message})
 
+@app.route('/payment_history')
+def payment_history_member():
+    invoice = dao.get_invoice_from_cur_user(current_user.id)
+    if invoice is None:
+        invoice = []
+    view_data = []
+
+    if invoice:
+        for inv in invoice:
+            pkg_name = dao.get_package_name_by_invoice(inv.id)
+
+            view_data.append({
+                'id': inv.id,
+                'invoice_day_create': inv.invoice_day_create,
+                'total_amount': inv.total_amount,
+                'status': inv.status,
+                'service_name': pkg_name
+            })
+
+    return render_template('member/payment_history_member.html',
+                           invoice=view_data,
+                           StatusInvoice=StatusInvoice)
+
 if __name__ == '__main__':
     from gymapp import admin
+
     app.run(debug=True)
