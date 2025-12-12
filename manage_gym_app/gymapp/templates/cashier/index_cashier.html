@@ -101,46 +101,4 @@
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="invoiceModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-secondary text-white">
-        <h5 class="modal-title">Hóa đơn #<span id="modal-id"></span></h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-borderless">
-            <tr>
-                <td class="fw-bold w-25">Ngày lập:</td>
-                <td id="modal-date"></td>
-            </tr>
-            <tr>
-                <td class="fw-bold">Thu ngân:</td>
-                <td id="modal-staff"></td>
-            </tr>
-            <tr>
-                <td class="fw-bold">Khách hàng:</td>
-                <td id="modal-member"></td>
-            </tr>
-            <tr class="border-top">
-                <td class="fw-bold">Dịch vụ:</td>
-                <td id="modal-package"></td>
-            </tr>
-            <tr>
-                <td class="fw-bold">Thời hạn:</td>
-                <td><span id="modal-duration"></span> tháng</td>
-            </tr>
-        </table>
-        <div class="alert alert-success text-center m-0">
-            <h4 class="mb-0 fw-bold">TỔNG: <span id="modal-total"></span> VNĐ</h4>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-        <button type="button" class="btn btn-primary">In phiếu</button>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}
