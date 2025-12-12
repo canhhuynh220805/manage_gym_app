@@ -1,15 +1,15 @@
-
 from flask import render_template, request, redirect, url_for, jsonify, session
 from flask_login import logout_user, login_user, current_user
 
 from gymapp import app, dao, login
 from gymapp.decorators import login_required
-from gymapp.models import UserRole
+from gymapp.models import UserRole, StatusInvoice
+
 
 @app.route('/')
 def index():
     packages = dao.load_package()
-    return render_template('index.html',packages=packages)
+    return render_template('index.html', packages=packages)
 
 
 ###################### VIEW ############################
@@ -43,7 +43,6 @@ def workout_plans_create():
 @app.route('/api/workout-exercises', methods=['POST'])
 @login_required(UserRole.COACH)
 def add_exercise_to_plan():
-
     plan = session.get('workout-plan')
     if not plan:
         plan = {}
@@ -156,6 +155,7 @@ def cashier_view():
     return render_template('cashier/index_cashier.html', members=members, packages=packages,
                            invoices=invoices)
 
+
 @app.route('/api/cashier/pay', methods=['post'])
 @login_required(UserRole.CASHIER)
 def cashier_pay_process():
@@ -180,7 +180,7 @@ def cashier_pay_process():
 def get_invoice_detail_api(invoice_id):
     try:
         invoice = dao.get_invoice_detail(invoice_id)
-        if invoice: #Quan trọng đáy, dùng để phòng ngừa invoice rỗng khi truy xuất
+        if invoice:  # Quan trọng đáy, dùng để phòng ngừa invoice rỗng khi truy xuất
             detail = invoice.invoice_details[0] if invoice.invoice_details else None
             pkg_name = detail.member_package.package.description if detail else "N/A"
             duration = detail.member_package.package.duration if detail else 0
@@ -249,7 +249,7 @@ def login_process():
     else:
         return redirect('/login')
     next = request.args.get('next')
-    if next:                                                                                                                                                                                                                                                                  
+    if next:
         return redirect(next)
     if u.user_role == UserRole.ADMIN:
         return redirect('/admin')
@@ -262,14 +262,17 @@ def login_process():
     else:
         return redirect('/')
 
+
 @app.route('/logout')
 def logout_process():
     logout_user()
     return redirect('/login')
 
+
 @login.user_loader
 def load_user(pk):
     return dao.get_user_by_id(pk)
+
 
 @app.route('/api/register_package', methods=['post'])
 def register_package():
@@ -287,6 +290,32 @@ def register_package():
     else:
         return jsonify({'status': 400, 'err_msg': message})
 
+
+@app.route('/payment_history')
+def payment_history_member():
+    invoice = dao.get_invoice_from_cur_user(current_user.id)
+    if invoice is None:
+        invoice = []
+    view_data = []
+
+    if invoice:
+        for inv in invoice:
+            pkg_name = dao.get_package_name_by_invoice(inv.id)
+
+            view_data.append({
+                'id': inv.id,
+                'invoice_day_create': inv.invoice_day_create,
+                'total_amount': inv.total_amount,
+                'status': inv.status,
+                'service_name': pkg_name
+            })
+
+    return render_template('member/payment_history_member.html',
+                           invoice=view_data,
+                           StatusInvoice=StatusInvoice)
+
+
 if __name__ == '__main__':
     from gymapp import admin
+
     app.run(debug=True)

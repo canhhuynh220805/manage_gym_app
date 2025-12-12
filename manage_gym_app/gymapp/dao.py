@@ -73,30 +73,41 @@ def add_package_registration(user_id, package_id):
     package = Package.query.get(package_id)
     if not package:
         return False, "Gói tập không tồn tại"
-    start_date = datetime.now()
-    duration = getattr(package, 'duration', 1)
-    end_date = start_date + relativedelta(months=duration)
 
+    #BỎ NGÀY BẮT ĐẦU VÀ NGÀY NGÀY KẾT THÚC KHI ĐĂNG KÍ#
     #########################
     new_invoice_pending = Invoice(
         member_id=member.id,
         status=StatusInvoice.PENDING,
-        total_amount=package.price
+        total_amount=package.price,
+        invoice_day_create=datetime.now()
     )
     _upgrade_user_to_member_force(user_id)
     ########################
     new_registration = MemberPackage(
         member_id=member.id,
         package_id=package.id,
-        startDate=start_date,
-        endDate=end_date,
-        status=StatusPackage.EXPIRED,
+        status=StatusPackage.PENDING,
         coach_id=None
     )
     ########################
     try:
         db.session.add_all([new_invoice_pending,new_registration])
         db.session.commit()
+        invoice = Invoice.query.get(new_invoice_pending.id)
+        member_package = MemberPackage.query.get(new_registration.id)
+        new_invoice_detail = InvoiceDetail(
+            invoice_id=invoice.id,
+            amount=invoice.total_amount,
+            member_package_id=member_package.id
+        )
+
+        try:
+            db.session.add(new_invoice_detail)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return False, str(e)
         return True, "Đăng ký thành công, vui lòng đến phòng gym để thanh toán và kích hoạt tài khoản!"
     except Exception as e:
         db.session.rollback()
@@ -237,6 +248,23 @@ def get_invoices(kw=None):
 
     return query.order_by(Invoice.id.desc()).all()
 
+def get_invoice_from_cur_user(cur_user_id):
+    return Invoice.query.filter_by(member_id=cur_user_id).order_by(Invoice.payment_date.desc()).all()
+
+
+def get_package_name_by_invoice(invoice_id):
+    try:
+        detail = InvoiceDetail.query.filter_by(invoice_id=invoice_id).first()
+        if detail:
+            mem_pack = MemberPackage.query.get(detail.member_package_id)
+            if mem_pack:
+                pack = Package.query.get(mem_pack.package_id)
+                if pack:
+                    return pack.name
+    except Exception as e:
+        print(e)
+
+    return "Không đăng kí gói nào"
 
 def get_invoice_detail(invoice_id):
     return Invoice.query.get(invoice_id)
