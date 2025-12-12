@@ -6,11 +6,12 @@ from flask_login import current_user
 from cloudinary import uploader #them uploader de up anh luc dang ki
 from gymapp import db, app
 from gymapp.models import (User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage,
-                           StatusInvoice,StatusPackage, Package, ExerciseSchedule, DayOfWeek,
-                           PlanDetail, WorkoutPlan, PackageBenefit)
+                           StatusInvoice, StatusPackage, Package, ExerciseSchedule, DayOfWeek,
+                           PlanDetail, WorkoutPlan, PackageBenefit, Coach)
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import text
+from sqlalchemy import text, func, extract
+
 
 def get_user_by_id(id):
     return User.query.get(id)
@@ -21,7 +22,26 @@ def auth_user(username, password):
     return User.query.filter(User.username == username.strip(),
                              User.password == password).first()
 
+def count_members():
+    return Member.query.count()
+def count_coaches():
+    return Coach.query.count()
+def count_packages():
+    return Package.query.count()
+def get_total_revenue_month():
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    result = db.session.query(func.sum(Invoice.total_amount))\
+             .filter(extract('month', Invoice.payment_date) == current_month,
+                     extract('year', Invoice.payment_date) == current_year,
+                     Invoice.status == StatusInvoice.PAID).scalar()
+    return result if result else 0
 
+def stats_package_usage():
+    return (db.session.query(Package.id, Package.name, func.count(MemberPackage.id))
+            .outerjoin(MemberPackage, MemberPackage.package_id == Package.id)
+            .group_by(Package.id, Package.name)
+            .order_by(Package.id).all())
 
 def add_member(name, username, password, avatar):
 
@@ -210,18 +230,12 @@ def load_packages():
     return Package.query.all()
 
 
-def get_invoices(kw=None, from_date=None, to_date=None):
-    q = Invoice.query
+def get_invoices(kw=None):
+    query = Invoice.query
     if kw:
-        q = q.join(Member).filter(Member.name.contains(kw) | Member.username.contains(kw))
+        query = query.join(Member).filter(Member.name.contains(kw))
 
-    if from_date:
-        q = q.filter(Invoice.payment_date >= from_date)
-
-    if to_date:
-        q = q.filter(Invoice.payment_date <= to_date)
-
-    return q.order_by(Invoice.payment_date.desc()).all()
+    return query.order_by(Invoice.id.desc()).all()
 
 
 def get_invoice_detail(invoice_id):
