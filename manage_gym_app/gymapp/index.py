@@ -1,3 +1,4 @@
+
 import math
 
 from flask import render_template, request, redirect, url_for, jsonify, session
@@ -5,7 +6,8 @@ from flask_login import logout_user, login_user, current_user
 
 from gymapp import app, dao, login
 from gymapp.decorators import login_required
-from gymapp.models import UserRole
+from gymapp.models import UserRole, StatusInvoice
+
 
 
 @app.route('/')
@@ -323,6 +325,28 @@ def register_package():
     else:
         return jsonify({'status': 400, 'err_msg': message})
 
+@app.route('/payment_history')
+def payment_history_member():
+    invoice = dao.get_invoice_from_cur_user(current_user.id)
+    if invoice is None:
+        invoice = []
+    view_data = []
+
+    if invoice:
+        for inv in invoice:
+            pkg_name = dao.get_package_name_by_invoice(inv.id)
+
+            view_data.append({
+                'id': inv.id,
+                'invoice_day_create': inv.invoice_day_create,
+                'total_amount': inv.total_amount,
+                'status': inv.status,
+                'service_name': pkg_name
+            })
+
+    return render_template('member/payment_history_member.html',
+                           invoice=view_data,
+                           StatusInvoice=StatusInvoice)
 
 if __name__ == '__main__':
     from gymapp import admin

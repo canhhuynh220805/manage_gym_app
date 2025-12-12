@@ -1,23 +1,25 @@
 import hashlib
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.model import InlineFormAdmin
 from flask_login import logout_user, current_user
 from flask import redirect
 from markupsafe import Markup
 
 from gymapp import app, db, dao
-from gymapp.models import UserRole, User, Member, Coach, Exercise, Package, Regulation
+from gymapp.models import UserRole, User, Member, Coach, Exercise, Package, Regulation, PackageBenefit
+
 
 class AdminView(ModelView):
 
-    def _list_thumbnail(view, context, model, name):
+    def list_thumbnail(view, context, model, name):
         if not model.avatar:
             return ''
         return Markup(
             f'<img src="{model.avatar}" width="40" height="40" class="rounded-circle" style="object-fit: cover;" />')
 
     column_formatters = {
-        'avatar': _list_thumbnail
+        'avatar': list_thumbnail
     }
 
     def on_model_change(self, form, model, is_created):
@@ -27,7 +29,6 @@ class AdminView(ModelView):
 
     def is_accessible(self) -> bool:
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
-
 
 class UserView(AdminView):
     column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar']
@@ -45,6 +46,8 @@ class MemberView(AdminView):
     form_columns = ['name', 'username', 'password', 'phone', 'gender' ,'avatar', 'dob']
     create_modal = True
     edit_modal = True
+    menu_icon_type = 'fa'
+    menu_icon_value = 'fa-user'
 
 
 class CoachView(AdminView):
@@ -52,47 +55,63 @@ class CoachView(AdminView):
     form_columns = ['name', 'username', 'password', 'phone', 'gender', 'avatar', 'dob']
     create_modal = True
     edit_modal = True
+    menu_icon_type = 'fa'
+    menu_icon_value = 'fa-dumbbell'
 
 class ExerciseView(AdminView):
     column_list = ['id', 'name', 'description', 'image']
     column_searchable_list = ['name']
     create_modal = True
     edit_modal = True
+    menu_icon_type = 'fa'
+    menu_icon_value = 'fa-running'
 
-    def _list_img(view, context, model, name):
+    def list_img(view, context, model, name):
         if not model.image:
             return ''
         return Markup(f'<img src="{model.image}" width="80" class="img-thumbnail" />')
 
     column_formatters = {
-        'image': _list_img
+        'image': list_img
     }
+
+class PackageBenefitInline(InlineFormAdmin):
+    form_label = 'Quyền lợi'
+    form_columns = ['id', 'detail']
 
 class PackageView(AdminView):
     column_list = ['name', 'duration', 'price', 'description', 'image']
     form_columns = ['name', 'duration', 'price', 'description', 'image']
+    inline_models = (PackageBenefitInline(PackageBenefit),)
     create_modal = True
     edit_modal = True
+    menu_icon_type = 'fa'
+    menu_icon_value = 'fa-box-open'
 
-    def _format_price(view, context, model, name):
+    def format_price(view, context, model, name):
         return "{:,.0f}".format(model.price)
 
-    def _list_img(view, context, model, name):
+    def list_img(view, context, model, name):
         if not model.image:
             return ''
         return Markup(f'<img src="{model.image}" width="50" />')
 
     column_formatters = {
-        'price': _format_price,
-        'image': _list_img
+        'price': format_price,
+        'image': list_img
     }
+
 
 class RegulationView(AdminView):
     column_list = ['name', 'value']
     can_create = False
     can_delete = False
+    menu_icon_type = 'fa'
+    menu_icon_value = 'fa-gavel'
 
 class LogoutView(BaseView):
+    menu_icon_type = 'fa'
+    menu_icon_value = 'fa-sign-out-alt'
     @expose('/')
     def index(self):
         logout_user()
@@ -102,6 +121,8 @@ class LogoutView(BaseView):
         return current_user.is_authenticated
 
 class StatsView(BaseView):
+    menu_icon_type = 'fa'
+    menu_icon_value = 'fa-chart-pie'
     @expose('/')
     def index(self):
         return self.render('admin/stats.html')
@@ -109,15 +130,26 @@ class StatsView(BaseView):
     def is_accessible(self) -> bool:
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
+
 class MyAdminIndexView(AdminIndexView):
     @expose('/')
     def index(self):
-        return self.render('admin/index.html')
+        cards_stats = {
+            'members': dao.count_members(),
+            'coaches': dao.count_coaches(),
+            'packages': dao.count_packages(),
+            'revenue': dao.get_total_revenue_month()
+        }
 
+        pkg_stats = dao.stats_package_usage()
+
+        return self.render('admin/index.html',
+                           stats=cards_stats,
+                           pkg_stats=pkg_stats)
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
-admin = Admin(app=app, name="GYM Management Admin",
+admin = Admin(app=app, name="GYM Management",
               template_mode='bootstrap4',
               index_view=MyAdminIndexView())
 

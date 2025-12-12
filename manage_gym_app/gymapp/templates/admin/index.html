@@ -1,23 +1,157 @@
 {% extends 'admin/master.html' %}
-
 {% block body %}
 
 {% if current_user.is_authenticated %}
-<h1 class="text-info">CHÀO MỪNG BẠN ĐẾN TRANG QUẢN TRỊ!</h1>
-<h2 class="text-success">Chào {{ current_user.name }}!</h2>
+<div class="container-fluid mt-4 px-4">
+    <h3 class="text-center text-secondary mb-4">QUẢN TRỊ HỆ THỐNG</h3>
+
+    <div class="row text-center">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card p-3 border-primary text-primary">
+                <h5>Hội viên</h5>
+                <h2 class="font-weight-bold">{{ stats.members }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card p-3 border-success text-success">
+                <h5>Huấn luyện viên</h5>
+                <h2 class="font-weight-bold">{{ stats.coaches }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card p-3 border-warning text-warning">
+                <h5>Gói dịch vụ</h5>
+                <h2 class="font-weight-bold">{{ stats.packages }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card p-3 border-danger text-danger">
+                <h5>Doanh thu tháng</h5>
+                <h3 class="font-weight-bold">{{ "{:,.0f}".format(stats.revenue) }}đ</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="text-secondary text-center mb-0">Thống kê Gói tập</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead class="thead-dark text-center">
+                            <tr>
+                                <th>Tên gói</th>
+                                <th>Số lượng đăng ký</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if pkg_stats %}
+                                {% for p in pkg_stats %}
+                                <tr>
+                                    <td class="text-center">{{ p[1] }}</td>
+
+                                    <td class="text-center font-weight-bold text-primary">{{ p[2] }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="2" class="text-center">Chưa có dữ liệu gói tập</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="text-secondary text-center mb-0">Tỷ lệ đăng ký</h5>
+                </div>
+                <div class="card-body">
+                    <div style="width: 80%; margin: 0 auto;">
+                        <canvas id="myChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let labels = [];
+    let data = [];
+
+    {% if pkg_stats %}
+        {% for p in pkg_stats %}
+            // p[1] là Tên, p[2] là Số lượng
+            labels.push('{{ p[1] }}');
+            data.push({{ p[2] }});
+        {% endfor %}
+    {% endif %}
+
+    window.onload = function() {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut', // Dùng biểu đồ Doughnut cho đẹp
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Số lượng',
+                    data: data,
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                        '#858796', '#5a5c69', '#6610f2', '#fd7e14', '#20c997'
+                    ],
+                    hoverOffset: 4,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12 }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Phân bổ người đăng ký'
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+<style>
+    .card {
+        border-radius: 5px;
+        border-width: 2px;
+        background-color: #fff;
+    }
+    .table th {
+        text-align: center;
+    }
+</style>
+
 {% else %}
-<h2 class="text-success text-center">ĐĂNG NHẬP QUẢN TRỊ</h2>
-<form method="post" action="/login?next=/admin">
-    <div class="form-group">
-        <label for="username">Tên đăng nhập:</label>
-        <input type="text" class="form-control" placeholder="Tên đăng nhập" id="username" name="username" required />
+<div class="container d-flex justify-content-center mt-5">
+    <div class="card p-4" style="width: 400px; border: 1px solid #ddd;">
+        <h4 class="text-center mb-3">Đăng nhập Admin</h4>
+        <form method="post" action="/login">
+            <div class="form-group mb-3">
+                <input type="text" class="form-control" name="username" placeholder="Tên đăng nhập" required>
+            </div>
+            <div class="form-group mb-3">
+                <input type="password" class="form-control" name="password" placeholder="Mật khẩu" required>
+            </div>
+            <button type="submit" class="btn btn-dark w-100">Đăng nhập</button>
+        </form>
     </div>
-    <div class="form-group">
-        <label for="pwd">Mật khẩu:</label>
-        <input type="password" class="form-control" placeholder="Mật khẩu" id="pwd" name="password" required />
-    </div>
-    <button type="submit" class="btn btn-primary">Đăng nhập</button>
-</form>
+</div>
 {% endif %}
 
 {% endblock %}
