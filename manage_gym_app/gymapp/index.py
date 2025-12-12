@@ -304,7 +304,7 @@ def payment_history_member():
 
             view_data.append({
                 'id': inv.id,
-                'payment_date': inv.payment_date,
+                'invoice_day_create': inv.invoice_day_create,
                 'total_amount': inv.total_amount,
                 'status': inv.status,
                 'service_name': pkg_name

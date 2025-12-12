@@ -53,24 +53,21 @@ def add_package_registration(user_id, package_id):
     package = Package.query.get(package_id)
     if not package:
         return False, "Gói tập không tồn tại"
-    start_date = datetime.now()
-    duration = getattr(package, 'duration', 1)
-    end_date = start_date + relativedelta(months=duration)
 
+    #BỎ NGÀY BẮT ĐẦU VÀ NGÀY NGÀY KẾT THÚC KHI ĐĂNG KÍ#
     #########################
     new_invoice_pending = Invoice(
         member_id=member.id,
         status=StatusInvoice.PENDING,
-        total_amount=package.price
+        total_amount=package.price,
+        invoice_day_create=datetime.now()
     )
     _upgrade_user_to_member_force(user_id)
     ########################
     new_registration = MemberPackage(
         member_id=member.id,
         package_id=package.id,
-        startDate=start_date,
-        endDate=end_date,
-        status=StatusPackage.EXPIRED,
+        status=StatusPackage.PENDING,
         coach_id=None
     )
     ########################

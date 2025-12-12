@@ -34,6 +34,7 @@ class StatusInvoice(enum.Enum):
 class StatusPackage(enum.Enum):
     ACTIVE = 1
     EXPIRED = 0
+    PENDING = 2
 
 # Ngày trong tuần
 class DayOfWeek(enum.Enum):
@@ -148,8 +149,8 @@ class MemberPackage(db.Model):
     member_id = Column(Integer, ForeignKey(Member.id), nullable=False)
     package_id = Column(Integer, ForeignKey(Package.id), nullable=False)
 
-    startDate = Column(DateTime, nullable=False)
-    endDate = Column(DateTime, nullable=False)
+    startDate = Column(DateTime, nullable=True)#CHO PHÉP NULLABLE NGÀY ĐĂNG KÍ
+    endDate = Column(DateTime, nullable=True)#CHO PHÉP NULLABLE NGÀY HẾT HẠN
     status = Column(Enum(StatusPackage), default=StatusPackage.ACTIVE)
 
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=True)
@@ -163,7 +164,8 @@ class Invoice(db.Model):
     member_id = Column(Integer, ForeignKey(Member.id), nullable=False)
     status = Column(Enum(StatusInvoice), default=StatusInvoice.PENDING)
     total_amount = Column(Double, nullable=False)
-    payment_date = Column(DateTime, default=datetime.now)
+    payment_date = Column(DateTime,nullable=True)
+    invoice_day_create = Column(DateTime, nullable=True)
 
     invoice_details = relationship('InvoiceDetail', backref='invoice', lazy=True)
 

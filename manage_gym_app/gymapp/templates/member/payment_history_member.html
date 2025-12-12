@@ -45,13 +45,13 @@
                     <tr>
                         <td class="ps-4 fw-bold text-primary">{{i.id}}</td>
                         <td>
-                            <div class="d-flex flex-column"><span class="fw-medium">{{i.payment_date}}</span></div>
+                            <div class="d-flex flex-column"><span class="fw-medium">{{i.invoice_day_create}}</span></div>
                         </td>
                         <td><span class="badge bg-light text-dark border bi bi-person me-1">{{ i.service_name }}</span>
                         </td>
                         <td class="text-end fw-bold text-dark">{{i.total_amount}}</td>
                         <td class="text-center">
-                            {% if i.status.name == 'SUCCESS' %}
+                            {% if i.status.name == 'PAID' %}
                             <span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3 py-2 text-white">{{ i.status.name }} </span>
                             {% elif i.status.name == 'PENDING' %}
                             <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning px-3 py-2 text-white">{{ i.status.name }}</span>
