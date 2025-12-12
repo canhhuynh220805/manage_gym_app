@@ -158,6 +158,9 @@ class MemberPackage(db.Model):
     invoice_details = relationship('InvoiceDetail', backref='member_package', lazy=True)
 
 
+
+
+
 class Invoice(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     member_id = Column(Integer, ForeignKey(Member.id), nullable=False)

@@ -1,10 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'layout/base.html' %}
 
-</body>
-</html>
+{% block header %}
+    {% include 'receptionist/header_receptionist.html' %}
+{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+<div class=" d-flex flex-column justify-content-center align-items-center">
+    <h1>TRANG CHỦ LỄ TÂN</h1>
+    <h2>Chào LỄ TÂN {{current_user.name}}</h2>
+</div>
+
+
+</section>
+{% endblock %}

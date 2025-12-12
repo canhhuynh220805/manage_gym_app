@@ -9,17 +9,6 @@ from gymapp import app, db, dao
 from gymapp.models import UserRole, User, Member, Coach, Exercise, Package, Regulation
 
 class AdminView(ModelView):
-    def is_accessible(self) -> bool:
-        return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
-
-
-class UserView(AdminView):
-    column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar']
-    column_searchable_list = ['name', 'username']
-    column_filters = ['user_role', 'gender']
-
-    create_modal = True
-    edit_modal = True
 
     def _list_thumbnail(view, context, model, name):
         if not model.avatar:
@@ -36,36 +25,33 @@ class UserView(AdminView):
         if raw_password:
             model.password = str(hashlib.md5(raw_password.strip().encode('utf-8')).hexdigest())
 
+    def is_accessible(self) -> bool:
+        return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
+
+
+class UserView(AdminView):
+    column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar']
+    form_columns = ['name', 'username', 'password','user_role', 'phone', 'gender' ,'avatar', 'dob']
+    column_searchable_list = ['name', 'username']
+    column_filters = ['user_role', 'gender']
+
+    create_modal = True
+    edit_modal = True
+
+
 class MemberView(AdminView):
     column_list = ['id', 'name', 'username', 'phone', 'gender', 'packages']
     column_searchable_list = ['name', 'phone']
+    form_columns = ['name', 'username', 'password', 'phone', 'gender' ,'avatar', 'dob']
     create_modal = True
     edit_modal = True
 
-    def _list_packages(view, context, model, name):
-        package_names = [mp.package.name for mp in model.packages if mp.package]
-        return ", ".join(package_names)
-
-    column_formatters = {
-        'packages': _list_packages
-    }
-
-    def on_model_change(self, form, model, is_created):
-        raw_password = form.password.data
-        if raw_password:
-            model.password = str(hashlib.md5(raw_password.strip().encode('utf-8')).hexdigest())
 
 class CoachView(AdminView):
     column_list = ['id', 'name', 'username', 'phone', 'gender']
+    form_columns = ['name', 'username', 'password', 'phone', 'gender', 'avatar', 'dob']
     create_modal = True
     edit_modal = True
-
-    def on_model_change(self, form, model, is_created):
-        raw_password = form.password.data
-        if raw_password:
-            model.password = str(hashlib.md5(raw_password.strip().encode('utf-8')).hexdigest())
-        if is_created:
-            model.user_role = UserRole.COACH
 
 class ExerciseView(AdminView):
     column_list = ['id', 'name', 'description', 'image']

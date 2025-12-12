@@ -1,0 +1,36 @@
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">GYM WEBSITE</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('receptionist_view') }}">Trang chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Xem gói tập</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Lập hóa đơn</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{url_for('receptionist_members_view')}}">Gán huấn luyện viên</a>
+                </li>
+
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link text-warning" href="#">
+                        <img src="{{ current_user.avatar }}" width="40" height="40" class="rounded-circle" style="object-fit: cover;" />
+                        Chào Lễ tân {{ current_user.username }}!
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-info" href="/logout">Đăng xuất</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
