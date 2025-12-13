@@ -1,55 +1,99 @@
-$(document).ready(function() {
-    $('#memberSelect').select2({ placeholder: "Tìm hội viên...", allowClear: true });
-    $('#packageSelect').select2({ placeholder: "Chọn gói tập..." });
-});
+function searchMembers() {
+    let kw = document.getElementById("memberSearch").value;
 
-function pay() {
-    const memberId = $('#memberSelect').val();
-    const packageId = $('#packageSelect').val();
-
-    if (!memberId || !packageId) {
-        alert("Vui lòng chọn đầy đủ HỘI VIÊN và GÓI TẬP!");
+    if (kw.length === 0) {
+        document.getElementById("memberResults").style.display = "none";
         return;
     }
 
-    if (confirm('Xác nhận lập hóa đơn và thu tiền gói này?')) {
-        fetch('/api/cashier/pay', {
-            method: 'post',
-            body: JSON.stringify({ 'member_id': memberId, 'package_id': packageId }),
-            headers: { 'Content-Type': 'application/json' }
+    fetch('/api/members', {
+        method: "post",
+        body: JSON.stringify({
+            "kw": kw
+        }),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(res => res.json()).then(data => {
+        let html = "";
+        for (let m of data) {
+            let phone = m.phone ? m.phone : "Chưa có SĐT";
+            html += `
+                <a href="javascript:;" class="dropdown-item" onclick="chooseMember(${m.id}, '${m.name}', '${phone}')">
+                    ${m.name} - ${phone}
+                </a>
+            `;
+        }
+        let d = document.getElementById("memberResults");
+        if (html === "") {
+            d.innerHTML = '<span class="dropdown-item text-muted">Không tìm thấy</span>';
+        } else {
+            d.innerHTML = html;
+        }
+        d.style.display = "block";
+    });
+}
+
+function chooseMember(id, name, phone) {
+    document.getElementById("memberSearch").value = name + " - " + phone;
+    document.getElementById("memberId").value = id;
+    document.getElementById("memberResults").style.display = "none";
+}
+
+function directPay() {
+    const memberId = document.getElementById('memberId').value;
+    const packageId = document.getElementById('packageId').value;
+
+    if (!memberId) {
+        alert("Vui lòng tìm và chọn khách hàng!");
+        return;
+    }
+    if (!packageId) {
+        alert("Vui lòng chọn gói tập!");
+        return;
+    }
+
+    if (confirm("Xác nhận đăng ký và thu tiền ngay lập tức?") === true) {
+        fetch('/api/cashier/direct-pay', {
+            method: 'POST',
+            body: JSON.stringify({
+                'member_id': memberId,
+                'package_id': packageId
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
         }).then(res => res.json()).then(data => {
             if (data.status === 200) {
-                alert('Lập hóa đơn thành công!');
+                alert(data.msg);
                 location.reload();
             } else {
-                alert('Lỗi: ' + data.err_msg);
+                alert("Lỗi: " + data.msg);
             }
         }).catch(err => {
             console.error(err);
-            alert('Lỗi kết nối server.');
+            alert("Lỗi hệ thống!");
         });
     }
 }
 
-function showInvoiceDetail(invoiceId) {
-    fetch(`/api/invoices/${invoiceId}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 200) {
-                const d = data.data;
-                document.getElementById('modal-id').innerText = d.id;
-                document.getElementById('modal-date').innerText = d.created_date;
-                document.getElementById('modal-staff').innerText = d.staff_name;
-                document.getElementById('modal-member').innerText = d.member_name;
-                document.getElementById('modal-package').innerText = d.package_name;
-                document.getElementById('modal-duration').innerText = d.duration;
-                document.getElementById('modal-total').innerText = new Intl.NumberFormat('vi-VN').format(d.total_amount);
-
-                const myModal = new bootstrap.Modal(document.getElementById('invoiceModal'));
-                myModal.show();
-            } else {
-                alert(data.msg);
+function processPending(invoiceId) {
+    if (confirm("Bạn có chắc chắn thu tiền hóa đơn này không?") === true) {
+        fetch('/api/cashier/process-pending', {
+            method: 'POST',
+            body: JSON.stringify({
+                'invoice_id': invoiceId
+            }),
+            headers: {
+                'Content-Type': 'application/json'
             }
-        })
-        .catch(err => console.error(err));
+        }).then(res => res.json()).then(data => {
+            if (data.status === 200) {
+                alert(data.msg);
+                location.reload();
+            } else {
+                alert("Lỗi: " + data.msg);
+            }
+        }).catch(err => console.error(err));
+    }
 }

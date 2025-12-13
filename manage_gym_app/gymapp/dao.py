@@ -1,16 +1,17 @@
 import hashlib
 from datetime import datetime, timedelta
-
+from sqlalchemy.orm import joinedload
 import cloudinary
 from flask_login import current_user
-from cloudinary import uploader #them uploader de up anh luc dang ki
+from cloudinary import uploader  # them uploader de up anh luc dang ki
 from gymapp import db, app
 from gymapp.models import (User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage,
-                           StatusInvoice,StatusPackage, Package, ExerciseSchedule, DayOfWeek,
-                           PlanDetail, WorkoutPlan, PackageBenefit)
+                           StatusInvoice, StatusPackage, Package, ExerciseSchedule, DayOfWeek,
+                           PlanDetail, WorkoutPlan, PackageBenefit, Coach)
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import text, func
+from sqlalchemy import text, func, extract
+
 
 def get_user_by_id(id):
     return User.query.get(id)
@@ -22,9 +23,36 @@ def auth_user(username, password):
                              User.password == password).first()
 
 
+def count_members():
+    return Member.query.count()
+
+
+def count_coaches():
+    return Coach.query.count()
+
+
+def count_packages():
+    return Package.query.count()
+
+
+def get_total_revenue_month():
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    result = db.session.query(func.sum(Invoice.total_amount)) \
+        .filter(extract('month', Invoice.payment_date) == current_month,
+                extract('year', Invoice.payment_date) == current_year,
+                Invoice.status == StatusInvoice.PAID).scalar()
+    return result if result else 0
+
+
+def stats_package_usage():
+    return (db.session.query(Package.id, Package.name, func.count(MemberPackage.id))
+            .outerjoin(MemberPackage, MemberPackage.package_id == Package.id)
+            .group_by(Package.id, Package.name)
+            .order_by(Package.id).all())
+
 
 def add_member(name, username, password, avatar):
-
     u = Member(name=name,
                username=username.strip(),
                password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()))
@@ -36,13 +64,16 @@ def add_member(name, username, password, avatar):
     db.session.add(u)
     db.session.commit()
 
+
 def load_package():
     query = Package.query.all()
     return query
 
+
 def load_package_benefit():
     query = Package.query.all()
     return query
+
 
 def add_package_registration(user_id, package_id):
     member = User.query.get(user_id)
@@ -72,7 +103,7 @@ def add_package_registration(user_id, package_id):
     )
     ########################
     try:
-        db.session.add_all([new_invoice_pending,new_registration])
+        db.session.add_all([new_invoice_pending, new_registration])
         db.session.commit()
         invoice = Invoice.query.get(new_invoice_pending.id)
         member_package = MemberPackage.query.get(new_registration.id)
@@ -95,6 +126,7 @@ def add_package_registration(user_id, package_id):
     finally:
         db.session.remove()
 
+
 def _upgrade_user_to_member_force(user_id):
     try:
         sql_insert = text("INSERT IGNORE INTO member (id) VALUES (:id)")
@@ -109,6 +141,7 @@ def _upgrade_user_to_member_force(user_id):
     except Exception as e:
         db.session.rollback()
 
+
 # HUẤN LUYỆN VIÊN
 def get_all_exercises():
     return Exercise.query.all()
@@ -122,10 +155,11 @@ def get_active_packages(coach_id, member_ids):
     if not member_ids:
         return []
     return db.session.query(MemberPackage).filter(
-                MemberPackage.member_id.in_(member_ids),
-                MemberPackage.coach_id == coach_id,
-                MemberPackage.status == StatusPackage.ACTIVE
-            ).all()
+        MemberPackage.member_id.in_(member_ids),
+        MemberPackage.coach_id == coach_id,
+        MemberPackage.status == StatusPackage.ACTIVE
+    ).all()
+
 
 def has_plan_assigned(coach_id, member_id):
     active_packages = get_active_packages(coach_id, [member_id])
@@ -133,6 +167,7 @@ def has_plan_assigned(coach_id, member_id):
         if pkg.workout_plans:
             return True
     return False
+
 
 def assign_existing_plan(coach_id, member_id, plan_id):
     plan = WorkoutPlan.query.get(plan_id)
@@ -145,8 +180,6 @@ def assign_existing_plan(coach_id, member_id, plan_id):
             return True
 
     return False
-
-
 
 
 def add_workout_plan(name, plan, member_ids):
@@ -184,31 +217,11 @@ def get_members_by_coach(coach_id):
 def get_plan_by_coach(coach_id):
     return WorkoutPlan.query.filter(WorkoutPlan.coach_id == coach_id).all()
 
+
 # CASHIER
 
 def get_payment_history():
     return Invoice.query.all()
-
-
-def process_payment(member_package_id):
-    mp = MemberPackage.query.get(member_package_id)
-
-    if mp:
-        bill = Invoice(member_id=mp.member_id, total_amount=mp.package.price, status=StatusInvoice.PAID,
-                       payment_date=datetime.now())
-        db.session.add(bill)
-
-        detail = InvoiceDetail(invoice=bill, member_package_id=mp.id, amount=mp.package.price)
-
-        db.session.add(detail)
-        mp.status = StatusPackage.ACTIVE
-        db.session.commit()
-        return bill
-    return None
-
-
-def get_invoice_detail(invoice_id):
-    return Invoice.query.get(invoice_id)
 
 
 def load_members(kw=None):
@@ -217,23 +230,22 @@ def load_members(kw=None):
         query = query.filter(Member.name.contains(kw) | Member.phone.contains(kw))
     return query.limit(10).all()
 
+
 def load_packages():
     return Package.query.all()
 
 
-def get_invoices(kw=None, from_date=None, to_date=None):
-    q = Invoice.query
+def get_invoices(kw=None, status=None):
+    query = Invoice.query
+
     if kw:
-        q = q.join(Member).filter(Member.name.contains(kw) | Member.username.contains(kw))
+        query = query.join(Member).filter(Member.name.contains(kw) | Member.phone.contains(kw))
 
-    if from_date:
-        q = q.filter(Invoice.payment_date >= from_date)
+    if status:
+        query = query.filter(Invoice.status == status)
 
-    if to_date:
-        q = q.filter(Invoice.payment_date <= to_date)
-
-    return q.order_by(Invoice.payment_date.desc()).all()
-
+    return query.order_by(Invoice.id.desc()).all()
+  
 def get_invoice_from_cur_user(user_id, date_filter=None, status_filter=None):
     query = Invoice.query.filter(Invoice.member_id == user_id)
 
@@ -262,30 +274,198 @@ def get_package_name_by_invoice(invoice_id):
 def get_invoice_detail(invoice_id):
     return Invoice.query.get(invoice_id)
 
+def calculate_package_dates(member_id, duration_months):
+    now = datetime.now()
+
+    last_active_package = MemberPackage.query.filter(MemberPackage.member_id == member_id, MemberPackage.status == StatusPackage.ACTIVE,
+                                                     MemberPackage.endDate > now).order_by(MemberPackage.endDate.desc()).first()
+
+    if last_active_package:
+        start_date = last_active_package.endDate
+    else:
+        start_date = now
+    end_date = start_date + relativedelta(months=duration_months)
+
+    return start_date, end_date
+
+
+def add_package_registration(user_id, package_id):
+    u = db.session.get(User, user_id)
+    p = db.session.get(Package, package_id)
+
+    if u and p:
+        try:
+            _upgrade_user_to_member_force(user_id)
+            start = datetime.now()
+            end = start + relativedelta(months=p.duration)
+
+            mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=start, endDate=end, status=StatusPackage.EXPIRED)
+            db.session.add(mp)
+
+            invoice = Invoice(member_id=u.id, total_amount=p.price, status=StatusInvoice.PENDING,invoice_day_create=datetime.now())
+            db.session.add(invoice)
+
+            d = InvoiceDetail(invoice=invoice, member_package=mp, amount=p.price)
+            db.session.add(d)
+
+            db.session.commit()
+            return True, "Đăng ký thành công! Vui lòng thanh toán tại quầy lễ tân."
+
+        except Exception as ex:
+            db.session.rollback()
+            return False, str(ex)
+
+    return False, "Thông tin người dùng hoặc gói tập không hợp lệ"
+
+def process_pending_invoice(invoice_id):
+    inv = db.session.get(Invoice, invoice_id)
+
+    if inv and inv.status == StatusInvoice.PENDING:
+        try:
+            inv.status = StatusInvoice.PAID
+            inv.payment_date = datetime.now()
+
+            for d in inv.invoice_details:
+                mp = d.member_package
+                s, e = calculate_package_dates(mp.member_id, mp.package.duration)
+
+                mp.startDate = s
+                mp.endDate = e
+                mp.status = StatusPackage.ACTIVE
+
+            db.session.commit()
+            return True, "Thanh toán thành công!"
+
+        except Exception as ex:
+            db.session.rollback()
+            return False, str(ex)
+
+    return False, "Hóa đơn không hợp lệ hoặc đã thanh toán"
+
 def add_member_package_and_pay(member_id, package_id):
-    pack = Package.query.get(package_id)
 
-    if pack:
-        start_date = datetime.now()
-        end_date = start_date + timedelta(days=pack.duration * 30)
+    p = db.session.get(Package, package_id)
+    u = db.session.get(User, member_id)
 
-        mp = MemberPackage(member_id=member_id, package_id=package_id, startDate=start_date, endDate=end_date,
-                           status=StatusPackage.ACTIVE)
-        db.session.add(mp)
+    if p and u:
+        try:
+            _upgrade_user_to_member_force(member_id)
 
-        bill = Invoice(member_id=member_id, total_amount=pack.price, status=StatusInvoice.PAID,
-                       payment_date=datetime.now())
-        db.session.add(bill)
+            s, e = calculate_package_dates(member_id, p.duration)
 
-        detail = InvoiceDetail(invoice=bill, member_package=mp, amount=pack.price)
-        db.session.add(detail)
+            mp = MemberPackage(member_id=u.id, package_id=p.id,
+                               startDate=s, endDate=e,
+                               status=StatusPackage.ACTIVE)
+            db.session.add(mp)
 
-        db.session.commit()
+            inv = Invoice(member_id=u.id, total_amount=p.price,
+                          status=StatusInvoice.PAID, payment_date=datetime.now())
+            db.session.add(inv)
 
-        return bill
+            d = InvoiceDetail(invoice=inv, member_package=mp, amount=p.price)
+            db.session.add(d)
 
+            db.session.commit()
+            return inv
+
+        except Exception as ex:
+            db.session.rollback()
+            return None
     return None
+#RECEPTIONIST
+def get_members_for_receptionist(kw=None, page=1):
+    # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)
+    query = MemberPackage.query.join(MemberPackage.member)\
+        .options(joinedload(MemberPackage.member))\
+        .options(joinedload(MemberPackage.coach)) \
+        .options(joinedload(MemberPackage.package))\
+        .filter(MemberPackage.status == StatusPackage.ACTIVE)
 
-if __name__ == '__main__':
-    with app.app_context():
-        print(get_members_by_coach(4))
+    if kw:
+        query = query.filter(Member.name.contains(kw))
+    if page:
+        start = (page - 1) * app.config['MEMBER_RECEP']
+        query = query.slice(start, start + app.config['MEMBER_RECEP'])
+
+    return query.all()
+
+def count_members_for_receptionist():
+    return MemberPackage.query\
+        .options(joinedload(MemberPackage.member))\
+        .options(joinedload(MemberPackage.coach)) \
+        .options(joinedload(MemberPackage.package)).count()
+
+def get_all_coach():
+    return Coach.query.all()
+
+def assign_coach(coach_id, package_id):
+    coach = Coach.query.get(coach_id)
+    package = MemberPackage.query.get(package_id)
+    if not package or not coach:
+        return None
+    package.coach = coach
+    try:
+        db.session.commit()
+        return package
+    except Exception as ex:
+        print(f"Lỗi khi gán HLV: {str(ex)}")
+        db.session.rollback()
+        return None
+
+
+
+# RECEPTIONIST
+def get_members_for_receptionist(kw=None, page=1):
+    # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)
+    query = MemberPackage.query.join(MemberPackage.member) \
+        .options(joinedload(MemberPackage.member)) \
+        .options(joinedload(MemberPackage.coach)) \
+        .options(joinedload(MemberPackage.package)) \
+        .filter(MemberPackage.status == StatusPackage.ACTIVE)
+
+    if kw:
+        query = query.filter(Member.name.contains(kw))
+    if page:
+        start = (page - 1) * app.config['MEMBER_RECEP']
+        query = query.slice(start, start + app.config['MEMBER_RECEP'])
+
+    return query.all()
+
+
+def count_members_for_receptionist():
+    return MemberPackage.query \
+        .options(joinedload(MemberPackage.member)) \
+        .options(joinedload(MemberPackage.coach)) \
+        .options(joinedload(MemberPackage.package)).count()
+
+
+def get_all_coach():
+    return Coach.query.all()
+
+
+def assign_coach(coach_id, package_id):
+    coach = Coach.query.get(coach_id)
+    package = MemberPackage.query.get(package_id)
+    if not package or not coach:
+        return None
+    package.coach = coach
+    try:
+        db.session.commit()
+        return package
+    except Exception as ex:
+        print(f"Lỗi khi gán HLV: {str(ex)}")
+        db.session.rollback()
+        return None
+
+
+# if __name__ == '__main__':
+#     with app.app_context():
+#         u_id = 1
+#         p_id = 1
+#
+#         success, msg = add_package_registration(u_id, p_id)
+#
+#         if success:
+#             print(f"{msg}")
+#         else:
+#             print(f" Lỗi: {msg}")

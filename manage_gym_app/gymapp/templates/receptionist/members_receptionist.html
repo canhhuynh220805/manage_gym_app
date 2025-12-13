@@ -1,0 +1,137 @@
+{% extends 'layout/base.html' %}
+
+{% block header %}
+{% include 'receptionist/header_receptionist.html' %}
+{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <div class=" d-flex flex-column justify-content-center align-items-center">
+        <h1>DANH SÁCH HỘI VIÊN</h1>
+        <form class="d-flex" method="get" action="/receptionist/members">
+            <input class="form-control me-2" type="text" placeholder="Tìm hội viên..." name="kw"/>
+            <button class="btn btn-primary" type="submit">Tìm</button>
+        </form>
+        {% if packages %}
+        <table class="table mt-2 border border-dark">
+            <thead>
+            <tr>
+                <th>
+                    ID
+                </th>
+                <th>
+                    Tên
+                </th>
+                <th>
+                    Avatar
+                </th>
+                <th>
+                    Huấn luyện viên
+                </th>
+                <th>
+                    Chức năng
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for p in packages %}
+            <tr>
+                <td>{{ p.id }}</td>
+                <td>{{ p.member.name }}</td>
+                <td><img src="{{ p.member.avatar }}"
+                         class="rounded-circle me-3"
+                         style="width: 80px; height: 80px; object-fit: cover;"
+                         alt="Avatar"></td>
+                <td>
+                    {% if p.coach %}
+                    <strong class="text-success">{{ p.coach.name }}</strong>
+                    <img src="{{ p.coach.avatar }}"
+                         class="rounded-circle me-3"
+                         style="width: 80px; height: 80px; object-fit: cover;"
+                         alt="Avatar">
+                    {% else %}
+                    <span class="text-muted">-- Chưa gán --</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if p.coach %}
+                    <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#myModal{{ p.id }}">
+                        + Đổi HLV
+                    </button>
+                    {% else %}
+                    <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#myModal{{ p.id }}">
+                        + Gán HLV
+                    </button>
+                    {% endif %}
+                    <div class="modal fade" id="myModal{{ p.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                            <div class="modal-content border-0 shadow-lg">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title fw-bold">
+                                        <i class="fa-solid fa-user-plus me-2"></i> Chọn Huấn Luyện Viên
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white"
+                                            data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body p-0" data-bs-spy="scroll" data-bs-target=".navbar"
+                                     data-bs-offset="50"> {% if coaches %}
+                                    <div class="list-group list-group-flush">
+                                        {% for c in coaches %}
+                                        <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                            <div class="d-flex align-items-center">
+                                                <img src="{{ c.avatar }}"
+                                                     class="rounded-circle me-3"
+                                                     style="width: 80px; height: 80px; object-fit: cover;"
+                                                     alt="Avatar">
+
+                                                <div>
+                                                    <h6 class="mb-0 fw-bold">{{ c.name }}</h6>
+                                                    <small class="text-muted" style="font-size: 0.85rem;">
+                                                        <i class="fa-solid fa-star text-warning"></i> Chuyên nghiệp
+                                                    </small>
+                                                </div>
+                                            </div>
+
+                                            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold btn-assign"
+                                                    onclick="preAssignCoach({{c.id}}, '{{c.name}}' ,{{p.id}})">
+                                                Gán <i class="fa-solid fa-check ms-1"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="fa-solid fa-user-slash fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted fw-bold">Hiện chưa có HLV nào khả dụng.</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="modal-footer bg-light">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class=" d-flex flex-column justify-content-center align-items-center">
+            <h1>Không có hội viên nào</h1>
+        </div>
+        {% endif %}
+        {% if pages > 1 %}
+        <ul class="pagination mt-2">
+            {% for i in range(1, pages + 1) %}
+            <li class="page-item"><a class="page-link" href="/receptionist/members?page={{i}}">{{ i }}</a></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
