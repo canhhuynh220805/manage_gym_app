@@ -363,7 +363,7 @@ def add_member_package_and_pay(member_id, package_id):
         except Exception as ex:
             db.session.rollback()
             return None
-     return None
+    return None
 #RECEPTIONIST
 def get_members_for_receptionist(kw=None, page=1):
     # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)
