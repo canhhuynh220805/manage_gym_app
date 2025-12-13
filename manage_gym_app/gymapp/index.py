@@ -290,12 +290,17 @@ def register_package():
     else:
         return jsonify({'status': 400, 'err_msg': message})
 
-
+@login_required
 @app.route('/payment_history')
 def payment_history_member():
-    invoice = dao.get_invoice_from_cur_user(current_user.id)
+    date_arg = request.args.get('date_filter')
+    status_arg = request.args.get('status_filter')
+
+    invoice = dao.get_invoice_from_cur_user(current_user.id,date_filter=date_arg,status_filter=status_arg)
+
     if invoice is None:
         invoice = []
+
     view_data = []
 
     if invoice:
@@ -311,8 +316,7 @@ def payment_history_member():
             })
 
     return render_template('member/payment_history_member.html',
-                           invoice=view_data,
-                           StatusInvoice=StatusInvoice)
+                           invoice=view_data,StatusInvoice=StatusInvoice,date_filter=date_arg,status_filter=status_arg)
 
 
 if __name__ == '__main__':

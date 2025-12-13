@@ -10,7 +10,7 @@ from gymapp.models import (User, Member, UserRole, Exercise, Invoice, InvoiceDet
                            PlanDetail, WorkoutPlan, PackageBenefit)
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import text
+from sqlalchemy import text, func
 
 def get_user_by_id(id):
     return User.query.get(id)
@@ -234,9 +234,16 @@ def get_invoices(kw=None, from_date=None, to_date=None):
 
     return q.order_by(Invoice.payment_date.desc()).all()
 
-def get_invoice_from_cur_user(cur_user_id):
-    return Invoice.query.filter_by(member_id=cur_user_id).order_by(Invoice.payment_date.desc()).all()
+def get_invoice_from_cur_user(user_id, date_filter=None, status_filter=None):
+    query = Invoice.query.filter(Invoice.member_id == user_id)
 
+    if date_filter:
+        query = query.filter(func.date(Invoice.invoice_day_create) == date_filter)
+
+    if status_filter:
+        query = query.filter(Invoice.status == status_filter)
+
+    return query.order_by(Invoice.id.desc()).all()
 
 def get_package_name_by_invoice(invoice_id):
     try:
@@ -278,9 +285,6 @@ def add_member_package_and_pay(member_id, package_id):
         return bill
 
     return None
-
-
-
 
 if __name__ == '__main__':
     with app.app_context():
