@@ -1,28 +1,37 @@
 
-
-
-
-function assignCoach(coach_id, package_id, member_id){
-    if(confirm("Bạn có chắc chắn muốn chọn HLV này") === true){
-        fetch(`/api/member-packages/${package_id}/assign-coach`,{
-            method: 'PATCH',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                'coach_id': coach_id,
-                'member_id': member_id
-            })
-        }).then(res => res.json()).then(data => {
-            if (data.error) {
-                alert('Có lỗi xảy ra: ' + data.error);
-            } else {
-                alert(data.message);
-                location.reload();
+function preAssignCoach(coachId, coachName, package_id) {
+    showConfirmDialog(
+        'Xác nhận chọn HLV',
+        `Bạn có chắc muốn gán HLV ${coachName} cho hội viên này không?`,
+        function() {
+            // Đây là "callback": Chỉ chạy khi người dùng bấm Đồng Ý
+            assignCoach(coachId, package_id);
         }
-        }).catch(err => {
-            console.error('Lỗi:', err);
-            alert('Lỗi kết nối server!');
-        });
-    }
+    );
+}
+
+function assignCoach(coach_id, package_id){
+    fetch(`/api/member-packages/${package_id}/assign-coach`,{
+        method: 'PATCH',
+        headers: {
+        'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            'coach_id': coach_id
+        })
+    }).then(res => {
+        if (res.ok) {
+            return res.json().then(data => {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1500);
+            });
+        } else {
+            return res.json().then(data => {
+                showToast(data.error || 'Có lỗi xảy ra', 'danger');
+            });
+        }
+    }).catch(err => {
+        console.error('Lỗi:', err);
+        showToast('Mất kết nối đến máy chủ!', 'danger');
+    });
 }
