@@ -1,0 +1,136 @@
+{% extends 'layout/base.html' %}
+
+{% block header %}
+{% include 'receptionist/header_receptionist.html' %}
+{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+
+    <form id="registrationForm" class="needs-validation" novalidate
+          action="/receptionist/issue_an_invoice_receptionist"
+          method="post" enctype="multipart/form-data">
+        <div class="row g-4">
+
+            <div class="col-lg-8">
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white text-primary fw-bold border-bottom py-3">
+                        <i class="fas fa-user-lock me-2"></i>THÔNG TIN TÀI KHOẢN
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="username" class="form-label fw-semibold">Tên đăng nhập <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" name="username"
+                                       placeholder="Nhập username" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="password" class="form-label fw-semibold">Mật khẩu <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                       placeholder="Nhập password" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white text-primary fw-bold border-bottom py-3">
+                        <i class="fas fa-address-card me-2"></i>THÔNG TIN CÁ NHÂN
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label fw-semibold">Họ và tên <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name"
+                                       placeholder="Nhập tên khách hàng" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label fw-semibold">Số điện thoại</label>
+                                <input type="tel" class="form-control" id="phone" name="phone"
+                                       placeholder="Nhập số điện thoại">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="gender" class="form-label fw-semibold">Giới tính</label>
+                                <select class="form-select" id="gender" name="gender">
+                                    <option value="MALE" selected>Nam</option>
+                                    <option value="FEMALE">Nữ</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="dob" class="form-label fw-semibold">Ngày sinh</label>
+                                <input type="date" class="form-control" id="dob" name="dob">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white text-primary fw-bold border-bottom py-3">
+                        <i class="fas fa-dumbbell me-2"></i>DỊCH VỤ ĐĂNG KÝ
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Chọn gói tập <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select" id="packageSelect" name="package_id" required>
+                                    <option value="" selected disabled>-- Chọn gói tập --</option>
+                                    <option value="1">Gói 1 Tháng (300.000đ)</option>
+                                    <option value="2">Gói 3 Tháng (800.000đ)</option>
+                                    <option value="3">Gói 1 Năm (2.500.000đ)</option>
+                                </select>
+                                <div class="invalid-feedback">Vui lòng chọn gói tập.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+
+                <div class="card border-0 shadow-sm text-center p-3 mb-4">
+                    <label class="form-label fw-bold text-secondary text-uppercase small">Ảnh đại diện</label>
+                    <div class="ratio ratio-1x1 w-50 mx-auto rounded-circle overflow-hidden border border-3 border-light mb-3 shadow-sm">
+                        <img src="https://via.placeholder.com/150" id="avatarPreview"
+                             class="w-100 h-100 object-fit-cover" alt="Avatar Preview">
+                    </div>
+                    <div class="form-floating mt-3 mb-3">
+                        <input type="file" class="form-control" id="avatar" name="avatar"/>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm position-sticky" style="top: 1rem; z-index: 10;">
+                    <div class="card-header bg-primary text-white fw-bold py-3 text-uppercase text-center">
+                        <i class="fas fa-receipt me-2"></i>Hoá đơn tạm tính
+                    </div>
+
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-4">
+                                <span class="text-muted">Giá gói tập</span>
+                                <span class="fw-bold" id="price-package">0 đ</span>
+                            </li>
+                            <li class="list-group-item bg-light d-flex justify-content-between align-items-center py-3 px-4 border-top border-bottom">
+                                <span class="h6 mb-0 text-success fw-bold">TỔNG CỘNG</span>
+                                <span class="h4 mb-0 text-success fw-bold" id="total-price">0 đ</span>
+                            </li>
+                        </ul>
+
+                        <button type="submit" class="btn btn-primary w-100 btn-lg fw-bold shadow-sm text-uppercase">
+                            <i class="fas fa-check-circle me-2"></i>Xác nhận đăng ký
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </form>
+
+</section>
+{% endblock %}

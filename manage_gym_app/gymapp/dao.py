@@ -51,6 +51,17 @@ def stats_package_usage():
             .group_by(Package.id, Package.name)
             .order_by(Package.id).all())
 
+def add_member_full_info(name, username, password, avatar,phone,gender,dob):
+    u = Member(name=name,
+               username=username.strip(),
+               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()),phone=phone,gender=gender,dob=dob)
+
+    if avatar:
+        res = cloudinary.uploader.upload(avatar)
+        u.avatar = res.get('secure_url')
+
+    db.session.add(u)
+    db.session.commit()
 
 def add_member(name, username, password, avatar):
     u = Member(name=name,

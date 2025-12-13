@@ -263,6 +263,31 @@ def assign_coach(package_id):
     else:
         return jsonify({'error': 'Lỗi: Không tìm thấy gói tập hoặc HLV!'}), 400
 
+
+@app.route('/receptionist/issue_an_invoice_receptionist')
+@login_required(UserRole.RECEPTIONIST)
+def issue_an_invoice_receptionist_view():
+    return render_template('receptionist/issue_an_invoice_receptionist.html')
+
+@app.route('/receptionist/issue_an_invoice_receptionist', methods=['post'])
+def issue_an_invoice_receptionist_process():
+    name = request.form.get('name')
+    username = request.form.get('username')
+    password = request.form.get('password')
+    phone = request.form.get('phone')
+    gender = request.form.get('gender')
+    dob = request.form.get('dob')
+
+    avatar = request.files.get('avatar')
+    try:
+        dao.add_member_full_info(avatar=avatar,
+                       name=name,
+                       username=username,
+                       password= password,phone=phone,gender=gender,dob=dob)
+    except Exception as ex:
+        return render_template('/receptionist/issue_an_invoice_receptionist.html', err_msg=str(ex))
+    return redirect('/payment_history')
+
 ##################################################
 
 @app.route('/login')

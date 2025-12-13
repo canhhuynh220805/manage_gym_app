@@ -35,3 +35,36 @@ function assignCoach(coach_id, package_id){
         showToast('Mất kết nối đến máy chủ!', 'danger');
     });
 }
+
+function setupAvatarPreview() {
+    const avatarInput = document.getElementById('avatar');
+    const avatarPreview = document.getElementById('avatarPreview');
+
+    if (!avatarInput || !avatarPreview)
+        return;
+
+    const defaultImageSrc = avatarPreview.src;
+
+    avatarInput.addEventListener('change', function (event) {
+        const file = event.target.files[0];
+
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Vui lòng chỉ chọn file hình ảnh!');
+                avatarInput.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                avatarPreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            avatarPreview.src = defaultImageSrc;
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    setupAvatarPreview('avatar', 'avatarPreview');
+});
