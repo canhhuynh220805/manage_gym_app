@@ -85,7 +85,7 @@ def add_package_registration(user_id, package_id):
     if not package:
         return False, "Gói tập không tồn tại"
 
-    # BỎ NGÀY BẮT ĐẦU VÀ NGÀY NGÀY KẾT THÚC KHI ĐĂNG KÍ#
+    #BỎ NGÀY BẮT ĐẦU VÀ NGÀY NGÀY KẾT THÚC KHI ĐĂNG KÍ#
     #########################
     new_invoice_pending = Invoice(
         member_id=member.id,
@@ -245,11 +245,9 @@ def get_invoices(kw=None, status=None):
         query = query.filter(Invoice.status == status)
 
     return query.order_by(Invoice.id.desc()).all()
-
-
+  
 def get_invoice_from_cur_user(cur_user_id):
     return Invoice.query.filter_by(member_id=cur_user_id).order_by(Invoice.payment_date.desc()).all()
-
 
 def get_package_name_by_invoice(invoice_id):
     try:
@@ -265,18 +263,14 @@ def get_package_name_by_invoice(invoice_id):
 
     return "Không đăng kí gói nào"
 
-
 def get_invoice_detail(invoice_id):
     return Invoice.query.get(invoice_id)
-
 
 def calculate_package_dates(member_id, duration_months):
     now = datetime.now()
 
-    last_active_package = MemberPackage.query.filter(MemberPackage.member_id == member_id,
-                                                     MemberPackage.status == StatusPackage.ACTIVE,
-                                                     MemberPackage.endDate > now).order_by(
-        MemberPackage.endDate.desc()).first()
+    last_active_package = MemberPackage.query.filter(MemberPackage.member_id == member_id, MemberPackage.status == StatusPackage.ACTIVE,
+                                                     MemberPackage.endDate > now).order_by(MemberPackage.endDate.desc()).first()
 
     if last_active_package:
         start_date = last_active_package.endDate
@@ -297,8 +291,7 @@ def add_package_registration(user_id, package_id):
             start = datetime.now()
             end = start + relativedelta(months=p.duration)
 
-            mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=start, endDate=end,
-                               status=StatusPackage.EXPIRED)
+            mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=start, endDate=end, status=StatusPackage.EXPIRED)
             db.session.add(mp)
 
             invoice = Invoice(member_id=u.id, total_amount=p.price, status=StatusInvoice.PENDING)
@@ -315,7 +308,6 @@ def add_package_registration(user_id, package_id):
             return False, str(ex)
 
     return False, "Thông tin người dùng hoặc gói tập không hợp lệ"
-
 
 def process_pending_invoice(invoice_id):
     inv = db.session.get(Invoice, invoice_id)
@@ -342,14 +334,15 @@ def process_pending_invoice(invoice_id):
 
     return False, "Hóa đơn không hợp lệ hoặc đã thanh toán"
 
-
 def add_member_package_and_pay(member_id, package_id):
+
     p = db.session.get(Package, package_id)
     u = db.session.get(User, member_id)
 
     if p and u:
         try:
             _upgrade_user_to_member_force(member_id)
+
             s, e = calculate_package_dates(member_id, p.duration)
 
             mp = MemberPackage(member_id=u.id, package_id=p.id,
@@ -370,7 +363,47 @@ def add_member_package_and_pay(member_id, package_id):
         except Exception as ex:
             db.session.rollback()
             return None
-    return None
+     return None
+#RECEPTIONIST
+def get_members_for_receptionist(kw=None, page=1):
+    # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)
+    query = MemberPackage.query.join(MemberPackage.member)\
+        .options(joinedload(MemberPackage.member))\
+        .options(joinedload(MemberPackage.coach)) \
+        .options(joinedload(MemberPackage.package))\
+        .filter(MemberPackage.status == StatusPackage.ACTIVE)
+
+    if kw:
+        query = query.filter(Member.name.contains(kw))
+    if page:
+        start = (page - 1) * app.config['MEMBER_RECEP']
+        query = query.slice(start, start + app.config['MEMBER_RECEP'])
+
+    return query.all()
+
+def count_members_for_receptionist():
+    return MemberPackage.query\
+        .options(joinedload(MemberPackage.member))\
+        .options(joinedload(MemberPackage.coach)) \
+        .options(joinedload(MemberPackage.package)).count()
+
+def get_all_coach():
+    return Coach.query.all()
+
+def assign_coach(coach_id, package_id):
+    coach = Coach.query.get(coach_id)
+    package = MemberPackage.query.get(package_id)
+    if not package or not coach:
+        return None
+    package.coach = coach
+    try:
+        db.session.commit()
+        return package
+    except Exception as ex:
+        print(f"Lỗi khi gán HLV: {str(ex)}")
+        db.session.rollback()
+        return None
+
 
 
 # RECEPTIONIST
