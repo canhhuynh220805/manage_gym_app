@@ -1,103 +1,116 @@
 {% extends 'layout/base.html' %}
 
-{% block header %}
-    {% include 'cashier/header_cashier.html' %}
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-{% endblock %}
-
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center text-primary mb-4 text-uppercase">Quản Lý Thu Ngân</h2>
+<h1 class="text-center text-danger mt-3">QUẢN LÝ THU NGÂN</h1>
 
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <div class="card border-primary"> <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-edit"></i> Lập hóa đơn</h5>
-                </div>
-                <div class="card-body bg-light">
-                    <div class="form-group mb-3">
-                        <label class="fw-bold mb-1">Chọn Khách hàng:</label>
-                        <select id="memberSelect" class="form-select">
-                            <option value="" selected disabled>-- Nhập tên hoặc SĐT --</option>
-                            {% for m in members %}
-                            <option value="{{ m.id }}">{{ m.name }} - {{ m.phone }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+<div class="row mt-4">
+    <div class="col-md-7 col-12">
+        <h3 class="text-info">Đơn Online Chờ Duyệt</h3>
 
-                    <div class="form-group mb-3">
-                        <label class="fw-bold mb-1">Chọn Gói tập:</label>
-                        <select id="packageSelect" class="form-select">
-                            <option value="" selected disabled>-- Chọn gói dịch vụ --</option>
-                            {% for p in packages %}
-                            <option value="{{ p.id }}">
-                                {{ p.name }} - {{ "{:,.0f}".format(p.price) }} VNĐ
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+        <form class="d-flex mb-3" action="{{ url_for('cashier_view') }}">
+            <input class="form-control me-2" type="text" name="kw"
+                   placeholder="Tìm tên hoặc SĐT..." value="{{ request.args.get('kw', '') }}" />
+            <button class="btn btn-primary" type="submit">Tìm</button>
+        </form>
 
-                    <hr>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-success">
+                    <tr>
+                        <th>Mã HĐ</th>
+                        <th>Khách hàng</th>
+                        <th>Gói tập</th>
+                        <th>Tổng tiền</th>
+                        <th>Tác vụ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if pending_invoices %}
+                        {% for i in pending_invoices %}
+                        <tr>
+                            <td>{{ i.id }}</td>
+                            <td>
+                                <b>{{ i.member.name }}</b><br>
+                                <small class="text-muted">
+                                    {{ i.member.phone if i.member.phone else '(Chưa có SĐT)' }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if i.invoice_details %}
+                                    <span class="badge bg-secondary">
+                                        {{ i.invoice_details[0].member_package.package.name }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-danger fw-bold">
+                                {{ "{:,.0f}".format(i.total_amount) }} VNĐ
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-success btn-sm" onclick="processPending({{ i.id }})">
+                                    Thu tiền
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">
+                                Không có đơn chờ xử lý.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-                    <button onclick="pay()" class="btn btn-success w-100 fw-bold">
-                        <i class="fas fa-money-bill-wave"></i> THANH TOÁN NGAY
-                    </button>
-                </div>
+    <div class="col-md-5 col-12">
+        <div class="card p-4 shadow-sm">
+            <h3 class="text-success text-center">Thanh Toán Tại Quầy</h3>
+
+            <div class="mb-3 mt-3 position-relative">
+                <label class="form-label fw-bold">Chọn khách hàng:</label>
+
+                <input type="text" class="form-control" id="memberSearch"
+                       placeholder="Gõ tên hoặc SĐT để tìm..." onkeyup="searchMembers()" autocomplete="off">
+
+                <input type="hidden" id="memberId">
+
+                <div id="memberResults" class="dropdown-menu w-100 shadow"
+                     style="max-height: 200px; overflow-y: auto;"></div>
             </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Chọn gói dịch vụ:</label>
+                <select class="form-select" id="packageId">
+                    <option value="" selected disabled>-- Chọn gói tập --</option>
+                    {% for p in packages %}
+                    <option value="{{ p.id }}">
+                        {{ p.name }} - {{ "{:,.0f}".format(p.price) }} VNĐ ({{ p.duration }} tháng)
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button class="btn btn-danger w-100 py-2" onclick="directPay()">
+                XÁC NHẬN THANH TOÁN
+            </button>
         </div>
 
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-dark"><i class="fas fa-list"></i> Lịch sử giao dịch trong ngày</h5>
-                    <button class="btn btn-sm btn-outline-dark" onclick="location.reload()">
-                        <i class="fas fa-sync"></i> Tải lại
-                    </button>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped mb-0">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th class="text-center" style="width: 50px;">ID</th>
-                                    <th>Khách hàng</th>
-                                    <th>Thời gian</th>
-                                    <th>Số tiền</th>
-                                    <th class="text-center" style="width: 80px;">Tác vụ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if invoices %}
-                                    {% for i in invoices %}
-                                    <tr>
-                                        <td class="text-center font-weight-bold">{{ i.id }}</td>
-                                        <td>{{ i.member.name if i.member else 'Khách lẻ' }}</td>
-                                        <td>{{ i.payment_date.strftime('%H:%M - %d/%m') }}</td>
-                                        <td class="text-danger fw-bold text-end">
-                                            {{ "{:,.0f}".format(i.total_amount) }} đ
-                                        </td>
-                                        <td class="text-center">
-                                            <button class="btn btn-sm btn-info text-white" onclick="showInvoiceDetail({{ i.id }})" title="Xem chi tiết">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-3">
-                                            Chưa phát sinh giao dịch nào.
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        <div class="mt-4">
+            <h5>Lịch sử vừa thu:</h5>
+            <ul class="list-group">
+                {% if paid_invoices %}
+                    {% for i in paid_invoices[:3] %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>HĐ #{{ i.id }} - {{ i.member.name }}</span>
+                        <span class="badge bg-success">{{ "{:,.0f}".format(i.total_amount) }}</span>
+                    </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="list-group-item text-muted">Chưa có giao dịch nào.</li>
+                {% endif %}
+            </ul>
         </div>
     </div>
 </div>

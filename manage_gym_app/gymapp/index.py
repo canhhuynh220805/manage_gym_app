@@ -150,15 +150,30 @@ def assign_workout_plan():
 def cashier_view():
     kw = request.args.get('kw')
 
-    members = dao.load_members(kw)
-    packages = dao.load_packages()
-
     pending_invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PENDING)
     paid_invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PAID)
+    packages = dao.load_packages()
 
-    return render_template('cashier/index_cashier.html', members=members, packages=packages,
-                           pending_invoices=pending_invoices, paid_invoices=paid_invoices)
+    return render_template('cashier/index_cashier.html', packages=packages, pending_invoices=pending_invoices,
+                           paid_invoices=paid_invoices)
 
+@app.route('/api/members', methods=['post'])
+@login_required(UserRole.CASHIER)
+def search_members_api():
+    data = request.json
+    kw = data.get('kw')
+    members = dao.load_members(kw)
+
+    result = []
+    for m in members:
+        result.append({
+            'id': m.id,
+            'name': m.name,
+            'phone': m.phone,
+            'avatar': m.avatar
+        })
+
+    return jsonify(result)
 
 @app.route('/api/cashier/process-pending', methods=['post'])
 @login_required(UserRole.CASHIER)
@@ -171,7 +186,6 @@ def process_pending():
         return jsonify({'status': 200, 'msg': msg})
     else:
         return jsonify({'status': 400, 'msg': msg})
-
 
 @app.route('/api/cashier/direct-pay', methods=['post'])
 @login_required(UserRole.CASHIER)
@@ -186,6 +200,26 @@ def direct_pay():
     else:
         return jsonify({'status': 400, 'msg': 'Lỗi xử lý! Vui lòng kiểm tra lại thông tin.'})
 
+@app.route('/payment_history')
+@login_required(UserRole.CASHIER)
+def payment_history_member():
+    invoice = dao.get_invoice_from_cur_user(current_user.id)
+    if invoice is None:
+        invoice = []
+    view_data = []
+
+    if invoice:
+        for inv in invoice:
+            pkg_name = dao.get_package_name_by_invoice(inv.id)
+            view_data.append({
+                'id': inv.id,
+                'invoice_day_create': inv.invoice_day_create,
+                'total_amount': inv.total_amount,
+                'status': inv.status,
+                'service_name': pkg_name
+            })
+
+    return render_template('member/payment_history_member.html', invoice=view_data, StatusInvoice=StatusInvoice)
 
 #############RECEPTIONIST##################
 
@@ -307,28 +341,6 @@ def register_package():
     else:
         return jsonify({'status': 400, 'err_msg': message})
 
-@app.route('/payment_history')
-def payment_history_member():
-    invoice = dao.get_invoice_from_cur_user(current_user.id)
-    if invoice is None:
-        invoice = []
-    view_data = []
-
-    if invoice:
-        for inv in invoice:
-            pkg_name = dao.get_package_name_by_invoice(inv.id)
-
-            view_data.append({
-                'id': inv.id,
-                'invoice_day_create': inv.invoice_day_create,
-                'total_amount': inv.total_amount,
-                'status': inv.status,
-                'service_name': pkg_name
-            })
-
-    return render_template('member/payment_history_member.html',
-                           invoice=view_data,
-                           StatusInvoice=StatusInvoice)
 
 if __name__ == '__main__':
     from gymapp import admin
