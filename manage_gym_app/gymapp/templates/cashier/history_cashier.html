@@ -1,0 +1,61 @@
+{% extends 'layout/base.html' %}
+{% block header %}
+{% include 'cashier/header_cashier.html' %}
+{% endblock %}
+{% block content %}
+<h1 class="text-center text-info mt-1">LỊCH SỬ THU NGÂN</h1>
+
+<div class="row justify-content-center mb-3">
+    <div class="col-md-6">
+        <form class="d-flex" action="{{ url_for('cashier_history_view') }}">
+            <input class="form-control me-2" type="text" name="kw"
+                   placeholder="Nhập tên khách hàng..."
+                   value="{{ request.args.get('kw', '') }}">
+            <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+        </form>
+    </div>
+</div>
+
+{% if invoices %}
+<table class="table">
+    <tr>
+        <th>Mã hóa đơn</th>
+        <th>Khách hàng</th>
+        <th>Ngày thanh toán</th>
+        <th>Tổng tiền</th>
+        <th>Trạng thái</th>
+    </tr>
+    {% for i in invoices %}
+    <tr>
+        <td>{{ i.id }}</td>
+        <td>
+            <span class="fw-bold">{{ i.member.name }}</span><br/>
+            <small class="text-muted">{{ i.member.phone }}</small>
+        </td>
+        <td>
+            {% if i.payment_date %}
+            {{ i.payment_date.strftime('%d/%m/%Y %H:%M') }}
+            {% else %}
+            N/A
+            {% endif %}
+        </td>
+        <td>{{ "{:,.0f}".format(i.total_amount) }} VNĐ</td>
+        <td>
+            <span class="badge bg-success">Đã thanh toán</span>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="alert alert-info mt-2">
+    <h3>Tổng doanh thu hiển thị: <span class="text-danger">
+        {% set total = invoices | sum(attribute='total_amount') %}
+        {{ "{:,.0f}".format(total) }} VNĐ
+    </span></h3>
+</div>
+
+{% else %}
+<div class="alert alert-info mt-1">KHÔNG có dữ liệu hóa đơn nào.</div>
+{% endif %}
+
+{% endblock %}

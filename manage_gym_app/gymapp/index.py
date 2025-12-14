@@ -157,6 +157,13 @@ def cashier_view():
     return render_template('cashier/index_cashier.html', packages=packages, pending_invoices=pending_invoices,
                            paid_invoices=paid_invoices)
 
+@app.route('/cashier/history')
+@login_required(UserRole.CASHIER)
+def cashier_history_view():
+    kw = request.args.get('kw')
+    invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PAID)
+
+    return render_template('cashier/history_cashier.html', invoices=invoices)
 
 @app.route('/api/cashier/process-pending', methods=['post'])
 @login_required(UserRole.CASHIER)
@@ -184,7 +191,7 @@ def direct_pay():
         return jsonify({'status': 400, 'msg': 'Lỗi xử lý! Vui lòng kiểm tra lại thông tin.'})
 
 @app.route('/payment_history')
-@login_required(UserRole.CASHIER)
+@login_required(UserRole.USER)
 def payment_history_member():
     invoice = dao.get_invoice_from_cur_user(current_user.id)
     if invoice is None:
