@@ -1,0 +1,42 @@
+{% extends 'layout/base.html' %}
+
+{% block header %}
+{% include 'receptionist/header_receptionist.html' %}
+{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-12">
+            <div class="card p-4 shadow-sm border-primary">
+                <h3 class="text-primary text-center text-uppercase">Đăng kí gói tập</h3>
+
+                <div class="mb-3 mt-4 position-relative">
+                    <label class="form-label fw-bold">Chọn khách hàng:</label>
+                    <input type="text" class="form-control" id="memberSearch"
+                           placeholder="Gõ tên hoặc SĐT để tìm..." onkeyup="searchMembers()" autocomplete="off">
+                    <input type="hidden" id="memberId">
+                    <div id="memberResults" class="dropdown-menu w-100 shadow"
+                         style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Chọn gói dịch vụ:</label>
+                    <select class="form-select" id="packageId">
+                        <option value="" selected disabled>-- Chọn gói tập --</option>
+                        {% for p in packages %}
+                        <option value="{{ p.id }}">
+                            {{ p.name }} - {{ "{:,.0f}".format(p.price) }} VNĐ ({{ p.duration }} tháng)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button class="btn btn-primary w-100 py-2 fw-bold" onclick="createInvoice()">
+                    <i class="fas fa-file-invoice-dollar"></i> TẠO HÓA ĐƠN
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
