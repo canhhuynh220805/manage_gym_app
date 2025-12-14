@@ -237,13 +237,10 @@ def load_packages():
 
 def get_invoices(kw=None, status=None):
     query = Invoice.query
-
     if kw:
         query = query.join(Member).filter(Member.name.contains(kw) | Member.phone.contains(kw))
-
     if status:
         query = query.filter(Invoice.status == status)
-
     return query.order_by(Invoice.id.desc()).all()
   
 def get_invoice_from_cur_user(cur_user_id):
