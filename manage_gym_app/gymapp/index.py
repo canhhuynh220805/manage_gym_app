@@ -157,23 +157,6 @@ def cashier_view():
     return render_template('cashier/index_cashier.html', packages=packages, pending_invoices=pending_invoices,
                            paid_invoices=paid_invoices)
 
-@app.route('/api/members', methods=['post'])
-@login_required(UserRole.CASHIER)
-def search_members_api():
-    data = request.json
-    kw = data.get('kw')
-    members = dao.load_members(kw)
-
-    result = []
-    for m in members:
-        result.append({
-            'id': m.id,
-            'name': m.name,
-            'phone': m.phone,
-            'avatar': m.avatar
-        })
-
-    return jsonify(result)
 
 @app.route('/api/cashier/process-pending', methods=['post'])
 @login_required(UserRole.CASHIER)
@@ -228,6 +211,23 @@ def payment_history_member():
 def receptionist_view():
     return render_template('receptionist/index_receptionist.html')
 
+@app.route('/api/members', methods=['post'])
+@login_required(UserRole.RECEPTIONIST)
+def search_members_api():
+    data = request.json
+    kw = data.get('kw')
+    members = dao.load_members(kw)
+
+    result = []
+    for m in members:
+        result.append({
+            'id': m.id,
+            'name': m.name,
+            'phone': m.phone,
+            'avatar': m.avatar
+        })
+
+    return jsonify(result)
 
 @app.route('/receptionist/members')
 @login_required(UserRole.RECEPTIONIST)
@@ -239,7 +239,11 @@ def receptionist_members_view():
     return render_template('receptionist/members_receptionist.html', packages=packages, coaches=coaches,
                            pages=math.ceil(dao.count_members_for_receptionist() / app.config['MEMBER_RECEP']))
 
-
+@app.route('/receptionist/create-invoice')
+@login_required(UserRole.RECEPTIONIST)
+def receptionist_create_invoice_view():
+    packages = dao.load_packages()
+    return render_template('receptionist/create_invoice.html', packages=packages)
 
 @app.route('/api/member-packages/<package_id>/assign-coach', methods=['PATCH'])
 @login_required(UserRole.RECEPTIONIST)
