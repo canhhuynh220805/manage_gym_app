@@ -51,6 +51,17 @@ def stats_package_usage():
             .group_by(Package.id, Package.name)
             .order_by(Package.id).all())
 
+def add_member_full_info(name, username, password, avatar,phone,gender,dob):
+    u = Member(name=name,
+               username=username.strip(),
+               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()),phone=phone,gender=gender,dob=dob)
+
+    if avatar:
+        res = cloudinary.uploader.upload(avatar)
+        u.avatar = res.get('secure_url')
+
+    db.session.add(u)
+    db.session.commit()
 
 def add_member(name, username, password, avatar):
     u = Member(name=name,
@@ -243,8 +254,16 @@ def get_invoices(kw=None, status=None):
         query = query.filter(Invoice.status == status)
     return query.order_by(Invoice.id.desc()).all()
   
-def get_invoice_from_cur_user(cur_user_id):
-    return Invoice.query.filter_by(member_id=cur_user_id).order_by(Invoice.payment_date.desc()).all()
+def get_invoice_from_cur_user(user_id, date_filter=None, status_filter=None):
+    query = Invoice.query.filter(Invoice.member_id == user_id)
+
+    if date_filter:
+        query = query.filter(func.date(Invoice.invoice_day_create) == date_filter)
+
+    if status_filter:
+        query = query.filter(Invoice.status == status_filter)
+
+    return query.order_by(Invoice.id.desc()).all()
 
 def get_package_name_by_invoice(invoice_id):
     try:
@@ -291,7 +310,7 @@ def add_package_registration(user_id, package_id):
             mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=start, endDate=end, status=StatusPackage.EXPIRED)
             db.session.add(mp)
 
-            invoice = Invoice(member_id=u.id, total_amount=p.price, status=StatusInvoice.PENDING)
+            invoice = Invoice(member_id=u.id, total_amount=p.price, status=StatusInvoice.PENDING,invoice_day_create=datetime.now())
             db.session.add(invoice)
 
             d = InvoiceDetail(invoice=invoice, member_package=mp, amount=p.price)

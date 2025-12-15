@@ -153,7 +153,6 @@ def cashier_view():
     pending_invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PENDING)
     paid_invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PAID)
     packages = dao.load_packages()
-
     return render_template('cashier/index_cashier.html', packages=packages, pending_invoices=pending_invoices,
                            paid_invoices=paid_invoices)
 
@@ -193,14 +192,20 @@ def direct_pay():
 @app.route('/payment_history')
 @login_required(UserRole.USER)
 def payment_history_member():
-    invoice = dao.get_invoice_from_cur_user(current_user.id)
+    date_arg = request.args.get('date_filter')
+    status_arg = request.args.get('status_filter')
+
+    invoice = dao.get_invoice_from_cur_user(current_user.id,date_filter=date_arg,status_filter=status_arg)
+
     if invoice is None:
         invoice = []
+
     view_data = []
 
     if invoice:
         for inv in invoice:
             pkg_name = dao.get_package_name_by_invoice(inv.id)
+
             view_data.append({
                 'id': inv.id,
                 'invoice_day_create': inv.invoice_day_create,
@@ -209,7 +214,8 @@ def payment_history_member():
                 'service_name': pkg_name
             })
 
-    return render_template('member/payment_history_member.html', invoice=view_data, StatusInvoice=StatusInvoice)
+    return render_template('member/payment_history_member.html',
+                           invoice=view_data,StatusInvoice=StatusInvoice,date_filter=date_arg,status_filter=status_arg)
 
 #############RECEPTIONIST##################
 
@@ -266,6 +272,31 @@ def assign_coach(package_id):
         }), 200
     else:
         return jsonify({'error': 'Lỗi: Không tìm thấy gói tập hoặc HLV!'}), 400
+
+
+@app.route('/receptionist/issue_an_invoice_receptionist')
+@login_required(UserRole.RECEPTIONIST)
+def issue_an_invoice_receptionist_view():
+    return render_template('receptionist/issue_an_invoice_receptionist.html')
+
+@app.route('/receptionist/issue_an_invoice_receptionist', methods=['post'])
+def issue_an_invoice_receptionist_process():
+    name = request.form.get('name')
+    username = request.form.get('username')
+    password = request.form.get('password')
+    phone = request.form.get('phone')
+    gender = request.form.get('gender')
+    dob = request.form.get('dob')
+
+    avatar = request.files.get('avatar')
+    try:
+        dao.add_member_full_info(avatar=avatar,
+                       name=name,
+                       username=username,
+                       password= password,phone=phone,gender=gender,dob=dob)
+    except Exception as ex:
+        return render_template('/receptionist/issue_an_invoice_receptionist.html', err_msg=str(ex))
+    return redirect('/payment_history')
 
 ##################################################
 
