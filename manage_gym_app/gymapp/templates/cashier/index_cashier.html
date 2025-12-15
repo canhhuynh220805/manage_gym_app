@@ -1,4 +1,7 @@
 {% extends 'layout/base.html' %}
+{% block header %}
+{% include 'cashier/header_cashier.html' %}
+{% endblock %}
 
 {% block content %}
 <h1 class="text-center text-danger mt-3">QUẢN LÝ THU NGÂN</h1>
@@ -65,43 +68,11 @@
     </div>
 
     <div class="col-md-5 col-12">
-        <div class="card p-4 shadow-sm">
-            <h3 class="text-success text-center">Thanh Toán Tại Quầy</h3>
-
-            <div class="mb-3 mt-3 position-relative">
-                <label class="form-label fw-bold">Chọn khách hàng:</label>
-
-                <input type="text" class="form-control" id="memberSearch"
-                       placeholder="Gõ tên hoặc SĐT để tìm..." onkeyup="searchMembers()" autocomplete="off">
-
-                <input type="hidden" id="memberId">
-
-                <div id="memberResults" class="dropdown-menu w-100 shadow"
-                     style="max-height: 200px; overflow-y: auto;"></div>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label fw-bold">Chọn gói dịch vụ:</label>
-                <select class="form-select" id="packageId">
-                    <option value="" selected disabled>-- Chọn gói tập --</option>
-                    {% for p in packages %}
-                    <option value="{{ p.id }}">
-                        {{ p.name }} - {{ "{:,.0f}".format(p.price) }} VNĐ ({{ p.duration }} tháng)
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <button class="btn btn-danger w-100 py-2" onclick="directPay()">
-                XÁC NHẬN THANH TOÁN
-            </button>
-        </div>
-
         <div class="mt-4">
             <h5>Lịch sử vừa thu:</h5>
             <ul class="list-group">
                 {% if paid_invoices %}
-                    {% for i in paid_invoices[:3] %}
+                    {% for i in paid_invoices[:5] %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <span>HĐ #{{ i.id }} - {{ i.member.name }}</span>
                         <span class="badge bg-success">{{ "{:,.0f}".format(i.total_amount) }}</span>
