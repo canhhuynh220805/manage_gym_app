@@ -1,26 +1,28 @@
 function register_package(userId, packageId) {
-    if (confirm('Xác nhận đăng kí gói tập này?')) {
-        fetch('/api/register_package', {
-            method: 'post',
-            body: JSON.stringify({
-                "user_id": userId,
-                "package_id": packageId,
-            }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(res) {
-            return res.json();
-        }).then(function(data) {
-            if (data.status === 200) {
-                alert(data.msg);
-                location.reload();
-            } else {
-                alert('Lỗi: ' + data.err_msg);
-            }
-        }).catch(function(err) {
-            console.error(err);
-            alert('Đã có lỗi hệ thống xảy ra!');
-        });
-    }
+    showConfirmDialog(
+        "Xác nhận đăng kí gói này",
+        "Bạn có chắc chắn đăng kí gói này không?",
+        function() {
+            fetch('/api/register_package', {
+                method: 'POST',
+                body: JSON.stringify({
+                     "user_id": userId,
+                     "package_id": packageId,
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(res => res.json()).then(data => {
+                if (data.status === 200) {
+                    showToast(data.msg, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast("Lỗi: " + data.msg, 'danger');
+                }
+            }).catch(err => {
+                console.error(err);
+                showToast("Đã có lỗi hệ thống xảy ra!", 'danger');
+            });
+        }
+    );
 }

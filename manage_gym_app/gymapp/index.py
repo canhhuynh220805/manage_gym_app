@@ -4,7 +4,7 @@ import math
 from flask import render_template, request, redirect, url_for, jsonify, session
 from flask_login import logout_user, login_user, current_user
 
-from gymapp import app, dao, login
+from gymapp import app, dao, login, db
 from gymapp.decorators import login_required
 from gymapp.models import UserRole, StatusInvoice
 
@@ -277,9 +277,10 @@ def assign_coach(package_id):
 @app.route('/receptionist/issue_an_invoice_receptionist')
 @login_required(UserRole.RECEPTIONIST)
 def issue_an_invoice_receptionist_view():
-    return render_template('receptionist/issue_an_invoice_receptionist.html')
+    pakages = dao.load_package()
+    return render_template('receptionist/issue_an_invoice_receptionist.html',pakages=pakages)
 
-@app.route('/receptionist/issue_an_invoice_receptionist', methods=['post'])
+@app.route('/api/receptionist/issue_an_invoice_receptionist', methods=['post'])
 def issue_an_invoice_receptionist_process():
     name = request.form.get('name')
     username = request.form.get('username')
@@ -287,16 +288,31 @@ def issue_an_invoice_receptionist_process():
     phone = request.form.get('phone')
     gender = request.form.get('gender')
     dob = request.form.get('dob')
+    package_id = request.form.get('package_id')
+    if not package_id:
+        return jsonify({'status': 400, 'err_msg': 'Vui lòng chọn gói tập!'})
+
+    if not dob:
+        dob = None
 
     avatar = request.files.get('avatar')
     try:
-        dao.add_member_full_info(avatar=avatar,
+        member = dao.add_member_full_info(avatar=avatar,
                        name=name,
                        username=username,
                        password= password,phone=phone,gender=gender,dob=dob)
+
+        dao.add_package_registration(user_id=member.id,package_id=package_id)
+        return jsonify({
+            'status': 200,
+            'msg': 'Tạo hóa đơn thành công! Vui lòng báo khách qua quầy thu ngân.'
+        })
     except Exception as ex:
-        return render_template('/receptionist/issue_an_invoice_receptionist.html', err_msg=str(ex))
-    return redirect('/payment_history')
+        print(str(ex))
+        return jsonify({
+            'status': 500,
+            'err_msg': 'đã có tài username này rồi'
+        })
 
 ##################################################
 
