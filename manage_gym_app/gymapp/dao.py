@@ -62,6 +62,7 @@ def add_member_full_info(name, username, password, avatar,phone,gender,dob):
 
     db.session.add(u)
     db.session.commit()
+    return u
 
 def add_member(name, username, password, avatar):
     u = Member(name=name,
