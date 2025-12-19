@@ -267,17 +267,9 @@ def get_invoice_from_cur_user(user_id, date_filter=None, status_filter=None):
     return query.order_by(Invoice.id.desc()).all()
 
 def get_package_name_by_invoice(invoice_id):
-    try:
-        detail = InvoiceDetail.query.filter_by(invoice_id=invoice_id).first()
-        if detail:
-            mem_pack = MemberPackage.query.get(detail.member_package_id)
-            if mem_pack:
-                pack = Package.query.get(mem_pack.package_id)
-                if pack:
-                    return pack.name
-    except Exception as e:
-        print(e)
-
+    inv = Invoice.query.get(invoice_id)
+    if inv and inv.member_package:
+        return inv.member_package.package.name
     return "Không đăng kí gói nào"
 
 def get_invoice_detail(invoice_id):
@@ -297,7 +289,6 @@ def calculate_package_dates(member_id, duration_months):
 
     return start_date, end_date
 
-
 def add_package_registration(user_id, package_id):
     u = db.session.get(User, user_id)
     p = db.session.get(Package, package_id)
@@ -311,11 +302,8 @@ def add_package_registration(user_id, package_id):
             mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=start, endDate=end, status=StatusPackage.EXPIRED)
             db.session.add(mp)
 
-            invoice = Invoice(member_id=u.id, total_amount=p.price, status=StatusInvoice.PENDING,invoice_day_create=datetime.now())
+            invoice = Invoice(user_id=u.id, total_amount=p.price, status=StatusInvoice.PENDING,invoice_day_create=datetime.now(), member_package = mp)
             db.session.add(invoice)
-
-            d = InvoiceDetail(invoice=invoice, member_package=mp, amount=p.price)
-            db.session.add(d)
 
             db.session.commit()
             return True, "Đăng ký thành công! Vui lòng thanh toán tại quầy lễ tân."
@@ -334,10 +322,9 @@ def process_pending_invoice(invoice_id):
             inv.status = StatusInvoice.PAID
             inv.payment_date = datetime.now()
 
-            for d in inv.invoice_details:
-                mp = d.member_package
+            mp = inv.member_package
+            if mp:
                 s, e = calculate_package_dates(mp.member_id, mp.package.duration)
-
                 mp.startDate = s
                 mp.endDate = e
                 mp.status = StatusPackage.ACTIVE
@@ -465,6 +452,23 @@ def assign_coach(coach_id, package_id):
         print(f"Lỗi khi gán HLV: {str(ex)}")
         db.session.rollback()
         return None
+
+#VALIDATE
+
+def validate_invoice_payment(invoice_id):
+    if not invoice_id:
+        return False, "Mã hóa đơn không được để trống"
+
+    inv = db.session.get(Invoice, invoice_id)
+    if not inv:
+        return False, f"Hóa đơn mã {invoice_id} không tồn tại trong hệ thống"
+    if inv.status == StatusInvoice.PAID:
+        return False, "Hóa đơn đã được thanh toán trước đó"
+    if inv.status == StatusInvoice.FAILED:
+        return False, "Hóa đơn đã bị hủy hoặc lỗi"
+
+    return True, inv
+
 
 
 # if __name__ == '__main__':

@@ -169,6 +169,11 @@ def cashier_history_view():
 def process_pending():
     data = request.json
     invoice_id = data.get('invoice_id')
+
+    is_valid, result = dao.validate_invoice_payment(invoice_id)
+    if not is_valid:
+        return jsonify({'status': 400, 'msg': result})
+
     success, msg = dao.process_pending_invoice(invoice_id)
 
     if success:

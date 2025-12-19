@@ -158,27 +158,15 @@ class MemberPackage(db.Model):
                                  backref=backref('member_package', lazy=True))
     invoice_details = relationship('InvoiceDetail', backref='member_package', lazy=True)
 
-
-
-
-
 class Invoice(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     member_id = Column(Integer, ForeignKey(Member.id), nullable=False)
+    member_package_id = Column(Integer, ForeignKey(MemberPackage.id), nullable=False)
     status = Column(Enum(StatusInvoice), default=StatusInvoice.PENDING)
     total_amount = Column(Double, nullable=False)
-    payment_date = Column(DateTime,nullable=True)
+    payment_date = Column(DateTime, nullable=True)
     invoice_day_create = Column(DateTime, nullable=True)
-
-    invoice_details = relationship('InvoiceDetail', backref='invoice', lazy=True)
-
-class InvoiceDetail(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    invoice_id = Column(Integer, ForeignKey(Invoice.id), nullable=False)
-    amount = Column(Double, nullable=False)
-    # quantity = Column(Integer, default=1)
-    member_package_id = Column(Integer, ForeignKey(MemberPackage.id), nullable=False)
+    member_package = relationship('MemberPackage', backref='invoice', lazy=True)
 
 if __name__ == '__main__':
     with app.app_context():
