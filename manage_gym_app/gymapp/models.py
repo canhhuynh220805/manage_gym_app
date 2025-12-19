@@ -156,12 +156,12 @@ class MemberPackage(db.Model):
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=True)
     workout_plans = relationship(WorkoutPlan, secondary=package_plan_assignment, lazy='subquery',
                                  backref=backref('member_package', lazy=True))
-    invoice_details = relationship('InvoiceDetail', backref='member_package', lazy=True)
+
 
 class Invoice(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     member_id = Column(Integer, ForeignKey(Member.id), nullable=False)
-    member_package_id = Column(Integer, ForeignKey(MemberPackage.id), nullable=False)
+    member_package_id = Column(Integer, ForeignKey('member_package.id'), nullable=False)
     status = Column(Enum(StatusInvoice), default=StatusInvoice.PENDING)
     total_amount = Column(Double, nullable=False)
     payment_date = Column(DateTime, nullable=True)

@@ -5,7 +5,7 @@ import cloudinary
 from flask_login import current_user
 from cloudinary import uploader  # them uploader de up anh luc dang ki
 from gymapp import db, app
-from gymapp.models import (User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage,
+from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPackage,
                            StatusInvoice, StatusPackage, Package, ExerciseSchedule, DayOfWeek,
                            PlanDetail, WorkoutPlan, PackageBenefit, Coach)
 
@@ -89,7 +89,6 @@ def load_package_benefit():
 
 def add_package_registration(user_id, package_id):
     member = User.query.get(user_id)
-
     if not member:
         return False, "User không tồn tại"
 
@@ -97,46 +96,32 @@ def add_package_registration(user_id, package_id):
     if not package:
         return False, "Gói tập không tồn tại"
 
-    #BỎ NGÀY BẮT ĐẦU VÀ NGÀY NGÀY KẾT THÚC KHI ĐĂNG KÍ#
-    #########################
-    new_invoice_pending = Invoice(
-        member_id=member.id,
-        status=StatusInvoice.PENDING,
-        total_amount=package.price,
-        invoice_day_create=datetime.now()
-    )
-    _upgrade_user_to_member_force(user_id)
-    ########################
-    new_registration = MemberPackage(
-        member_id=member.id,
-        package_id=package.id,
-        status=StatusPackage.PENDING,
-        coach_id=None
-    )
-    ########################
     try:
-        db.session.add_all([new_invoice_pending, new_registration])
-        db.session.commit()
-        invoice = Invoice.query.get(new_invoice_pending.id)
-        member_package = MemberPackage.query.get(new_registration.id)
-        new_invoice_detail = InvoiceDetail(
-            invoice_id=invoice.id,
-            amount=invoice.total_amount,
-            member_package_id=member_package.id
-        )
+        _upgrade_user_to_member_force(user_id)
 
-        try:
-            db.session.add(new_invoice_detail)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return False, str(e)
+        new_registration = MemberPackage(
+            member=member,
+            package=package,
+            status=StatusPackage.PENDING,
+            coach_id=None
+        )
+        db.session.add(new_registration)
+
+        new_invoice_pending = Invoice(
+            member=member,
+            status=StatusInvoice.PENDING,
+            total_amount=package.price,
+            invoice_day_create=datetime.now(),
+            member_package=new_registration
+        )
+        db.session.add(new_invoice_pending)
+        db.session.commit()
+
         return True, "Đăng ký thành công, vui lòng đến phòng gym để thanh toán và kích hoạt tài khoản!"
+
     except Exception as e:
         db.session.rollback()
         return False, str(e)
-    finally:
-        db.session.remove()
 
 
 def _upgrade_user_to_member_force(user_id):
@@ -267,9 +252,12 @@ def get_invoice_from_cur_user(user_id, date_filter=None, status_filter=None):
     return query.order_by(Invoice.id.desc()).all()
 
 def get_package_name_by_invoice(invoice_id):
-    inv = Invoice.query.get(invoice_id)
-    if inv and inv.member_package:
-        return inv.member_package.package.name
+    try:
+        inv = db.session.get(Invoice, invoice_id)
+        if inv and inv.member_package:
+            return inv.member_package.package.name
+    except Exception as e:
+        print(e)
     return "Không đăng kí gói nào"
 
 def get_invoice_detail(invoice_id):
@@ -321,7 +309,6 @@ def process_pending_invoice(invoice_id):
         try:
             inv.status = StatusInvoice.PAID
             inv.payment_date = datetime.now()
-
             mp = inv.member_package
             if mp:
                 s, e = calculate_package_dates(mp.member_id, mp.package.duration)
@@ -331,7 +318,6 @@ def process_pending_invoice(invoice_id):
 
             db.session.commit()
             return True, "Thanh toán thành công!"
-
         except Exception as ex:
             db.session.rollback()
             return False, str(ex)
@@ -357,9 +343,6 @@ def add_member_package_and_pay(member_id, package_id):
             inv = Invoice(member_id=u.id, total_amount=p.price,
                           status=StatusInvoice.PAID, payment_date=datetime.now())
             db.session.add(inv)
-
-            d = InvoiceDetail(invoice=inv, member_package=mp, amount=p.price)
-            db.session.add(d)
 
             db.session.commit()
             return inv
