@@ -86,7 +86,6 @@ def load_package_benefit():
     query = Package.query.all()
     return query
 
-
 def add_package_registration(user_id, package_id):
     member = User.query.get(user_id)
     if not member:
@@ -260,8 +259,6 @@ def get_package_name_by_invoice(invoice_id):
         print(e)
     return "Không đăng kí gói nào"
 
-def get_invoice_detail(invoice_id):
-    return Invoice.query.get(invoice_id)
 
 def calculate_package_dates(member_id, duration_months):
     now = datetime.now()
@@ -346,11 +343,26 @@ def add_member_package_and_pay(member_id, package_id):
 
             db.session.commit()
             return inv
-
         except Exception as ex:
             db.session.rollback()
             return None
     return None
+
+def cancel_pending_invoice(invoice_id):
+    inv = db.session.get(Invoice, invoice_id)
+    if inv and inv.status == StatusInvoice.PENDING:
+        try:
+            inv.status = StatusInvoice.FAILED
+            mp = inv.member_package
+            if mp:
+                mp.status = StatusPackage.EXPIRED
+            db.session.commit()
+            return True, "Đã hủy hóa đơn và bản đăng ký thành công."
+        except Exception as ex:
+            db.session.rollback()
+        return False, str(ex)
+    return False, "Hóa đơn không hợp lệ hoặc đã được xử lý trước đó."
+
 #RECEPTIONIST
 def get_members_for_receptionist(kw=None, page=1):
     # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)

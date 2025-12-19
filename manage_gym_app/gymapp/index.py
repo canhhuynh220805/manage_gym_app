@@ -194,6 +194,23 @@ def direct_pay():
     else:
         return jsonify({'status': 400, 'msg': 'Lỗi xử lý! Vui lòng kiểm tra lại thông tin.'})
 
+
+@app.route('/api/cashier/cancel-invoice', methods=['post'])
+@login_required(UserRole.CASHIER)
+def cancel_invoice():
+    data = request.json
+    invoice_id = data.get('invoice_id')
+
+    if not invoice_id:
+        return jsonify({'status': 400, 'msg': 'Mã hóa đơn không hợp lệ!'})
+
+    success, msg = dao.cancel_pending_invoice(invoice_id)
+
+    if success:
+        return jsonify({'status': 200, 'msg': msg})
+    else:
+        return jsonify({'status': 400, 'msg': msg})
+
 @app.route('/payment_history')
 @login_required(UserRole.USER)
 def payment_history_member():
