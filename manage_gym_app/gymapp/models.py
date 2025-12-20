@@ -83,7 +83,7 @@ class User(BaseModel, UserMixin):
 class Member(User):
     id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
     packages = relationship('MemberPackage', backref='member', lazy=True, cascade="all, delete-orphan")
-    invoices = relationship('Invoice', backref='member', lazy=True)
+    invoices = relationship('Invoice', backref='member', lazy=True, cascade="all, delete-orphan")
     __mapper_args__ = {
         'polymorphic_identity': 'member',
     }
