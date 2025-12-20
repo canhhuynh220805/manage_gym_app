@@ -167,20 +167,12 @@ def cashier_history_view():
 @app.route('/api/cashier/process-pending', methods=['post'])
 @login_required(UserRole.CASHIER)
 def process_pending():
-    data = request.json
-    invoice_id = data.get('invoice_id')
-
-    is_valid, result = dao.validate_cashier(invoice_id)
-    if not is_valid:
-        return jsonify({'status': 400, 'msg': result})
-
+    invoice_id = request.json.get('invoice_id')
     success, msg = dao.process_pending_invoice(invoice_id)
 
-    if success:
-        return jsonify({'status': 200, 'msg': msg})
-    else:
-        return jsonify({'status': 400, 'msg': msg})
-
+    return jsonify({'status': 200 if success else 400,
+                    'msg': msg
+    })
 @app.route('/api/cashier/direct-pay', methods=['post'])
 @login_required(UserRole.CASHIER)
 def direct_pay():
