@@ -23,18 +23,14 @@ def auth_user(username, password):
     return User.query.filter(User.username == username.strip(),
                              User.password == password).first()
 
-
 def count_members():
     return Member.query.count()
-
 
 def count_coaches():
     return Coach.query.count()
 
-
 def count_packages():
     return Package.query.count()
-
 
 def get_total_revenue_month():
     current_month = datetime.now().month
@@ -44,7 +40,6 @@ def get_total_revenue_month():
                 extract('year', Invoice.payment_date) == current_year,
                 Invoice.status == StatusInvoice.PAID).scalar()
     return result if result else 0
-
 
 def stats_package_usage():
     return (db.session.query(Package.id, Package.name, func.count(MemberPackage.id))
@@ -77,11 +72,9 @@ def add_member(name, username, password, avatar):
     db.session.add(u)
     db.session.commit()
 
-
 def load_package():
     query = Package.query.all()
     return query
-
 
 def load_package_benefit():
     query = Package.query.all()
@@ -123,7 +116,6 @@ def add_package_registration(user_id, package_id):
         db.session.rollback()
         return False, str(e)
 
-
 def _upgrade_user_to_member_force(user_id):
     try:
         sql_insert = text("INSERT IGNORE INTO member (id) VALUES (:id)")
@@ -137,7 +129,6 @@ def _upgrade_user_to_member_force(user_id):
         db.session.expire_all()
     except Exception as e:
         db.session.rollback()
-
 
 # HUẤN LUYỆN VIÊN
 def get_all_exercises():
@@ -157,14 +148,12 @@ def get_active_packages(coach_id, member_ids):
         MemberPackage.status == StatusPackage.ACTIVE
     ).all()
 
-
 def has_plan_assigned(coach_id, member_id):
     active_packages = get_active_packages(coach_id, [member_id])
     for pkg in active_packages:
         if pkg.workout_plans:
             return True
     return False
-
 
 def assign_existing_plan(coach_id, member_id, plan_id):
     plan = WorkoutPlan.query.get(plan_id)
@@ -177,7 +166,6 @@ def assign_existing_plan(coach_id, member_id, plan_id):
             return True
 
     return False
-
 
 def add_workout_plan(name, plan, member_ids):
     if plan:
@@ -202,7 +190,6 @@ def add_workout_plan(name, plan, member_ids):
 
         db.session.commit()
 
-
 def get_members_by_coach(coach_id):
     query = (db.session.query(Member)
              .join(MemberPackage, MemberPackage.member_id == Member.id)
@@ -210,16 +197,13 @@ def get_members_by_coach(coach_id):
 
     return query.all()
 
-
 def get_plan_by_coach(coach_id):
     return WorkoutPlan.query.filter(WorkoutPlan.coach_id == coach_id).all()
-
 
 # CASHIER
 
 def get_payment_history():
     return Invoice.query.all()
-
 
 def load_members(kw=None):
     query = Member.query
@@ -227,10 +211,8 @@ def load_members(kw=None):
         query = query.filter(Member.name.contains(kw) | Member.phone.contains(kw))
     return query.limit(10).all()
 
-
 def load_packages():
     return Package.query.all()
-
 
 def get_invoices(kw=None, status=None):
     query = Invoice.query
@@ -259,7 +241,6 @@ def get_package_name_by_invoice(invoice_id):
     except Exception as e:
         print(e)
     return "Không đăng kí gói nào"
-
 
 def calculate_package_dates(member_id, duration_months):
     now = datetime.now()
