@@ -11,6 +11,7 @@ from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPack
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text, func, extract
+from states import get_invoice_state
 
 
 def get_user_by_id(id):
@@ -275,26 +276,21 @@ def calculate_package_dates(member_id, duration_months):
     return start_date, end_date
 
 def process_pending_invoice(invoice_id):
-    inv = db.session.get(Invoice, invoice_id)
+    is_valid, result = validate_cashier(invoice_id)
+    if not is_valid:
+        return False, result
 
-    if inv and inv.status == StatusInvoice.PENDING:
-        try:
-            inv.status = StatusInvoice.PAID
-            inv.payment_date = datetime.now()
-            mp = inv.member_package
-            if mp:
-                s, e = calculate_package_dates(mp.member_id, mp.package.duration)
-                mp.startDate = s
-                mp.endDate = e
-                mp.status = StatusPackage.ACTIVE
+    inv = result
+    try:
+        state = get_invoice_state(inv)
+        success, msg = state.pay(calculate_date=calculate_package_dates)
 
+        if success:
             db.session.commit()
-            return True, "Thanh toán thành công!"
-        except Exception as ex:
-            db.session.rollback()
-            return False, str(ex)
-
-    return False, "Hóa đơn không hợp lệ hoặc đã thanh toán"
+        return success, msg
+    except Exception as ex:
+        db.session.rollback()
+        return False, str(ex)
 
 def add_member_package_and_pay(member_id, package_id):
 
@@ -324,19 +320,20 @@ def add_member_package_and_pay(member_id, package_id):
     return None
 
 def cancel_pending_invoice(invoice_id):
-    inv = db.session.get(Invoice, invoice_id)
-    if inv and inv.status == StatusInvoice.PENDING:
-        try:
-            inv.status = StatusInvoice.FAILED
-            mp = inv.member_package
-            if mp:
-                mp.status = StatusPackage.EXPIRED
+    is_valid, result = validate_cashier(invoice_id)
+    if not is_valid:
+        return False, result
+
+    inv = result
+    try:
+        state = get_invoice_state(inv)
+        success, msg = state.cancel()
+        if success:
             db.session.commit()
-            return True, "Đã hủy hóa đơn và bản đăng ký thành công."
-        except Exception as ex:
-            db.session.rollback()
+        return success, msg
+    except Exception as ex:
+        db.session.rollback()
         return False, str(ex)
-    return False, "Hóa đơn không hợp lệ hoặc đã được xử lý trước đó."
 
 #RECEPTIONIST
 def get_members_for_receptionist(kw=None, page=1):
