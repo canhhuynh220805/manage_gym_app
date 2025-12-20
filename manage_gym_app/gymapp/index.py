@@ -304,6 +304,7 @@ def issue_an_invoice_receptionist_process():
     gender = request.form.get('gender')
     dob = request.form.get('dob')
     package_id = request.form.get('package_id')
+    email = request.form.get('email')
     if not package_id:
         return jsonify({'status': 400, 'err_msg': 'Vui lòng chọn gói tập!'})
 
@@ -315,9 +316,10 @@ def issue_an_invoice_receptionist_process():
         member = dao.add_member_full_info(avatar=avatar,
                        name=name,
                        username=username,
-                       password= password,phone=phone,gender=gender,dob=dob)
+                       password= password,phone=phone,gender=gender,dob=dob,email = email)
 
         dao.add_package_registration(user_id=member.id,package_id=package_id)
+        dao.send_mail(member_id=member.id,package_id=package_id)
         return jsonify({
             'status': 200,
             'msg': 'Tạo hóa đơn thành công! Vui lòng báo khách qua quầy thu ngân.'
@@ -343,19 +345,22 @@ def register_view():
 
 @app.route('/register', methods=['post'])
 def register_process():
+    email = request.form.get('email')
     password = request.form.get('password')
     confirm = request.form.get('confirm')
 
     if password != confirm:
         err_msg = 'Mật khẩu KHÔNG khớp'
         return render_template('register.html', err_msg=err_msg)
-
+    if email is None:
+        err_msg = 'Vui lòng nhập Email'
+        return render_template('register.html', err_msg=err_msg)
     avatar = request.files.get('avatar')
     try:
         dao.add_member(avatar=avatar,
                        name=request.form.get('name'),
                        username=request.form.get('username'),
-                       password=request.form.get('password'))
+                       password=request.form.get('password'),email=email)
     except Exception as ex:
         return render_template('register.html', err_msg=str(ex))
 
@@ -410,6 +415,7 @@ def register_package():
     is_success, message = dao.add_package_registration(user_id, package_id)
 
     if is_success:
+        dao.send_mail(member_id=user_id,package_id=package_id)
         return jsonify({'status': 200, 'msg': message})
     else:
         return jsonify({'status': 400, 'err_msg': message})
