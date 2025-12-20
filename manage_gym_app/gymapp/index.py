@@ -291,8 +291,9 @@ def assign_coach(package_id):
 @app.route('/receptionist/issue_an_invoice_receptionist')
 @login_required(UserRole.RECEPTIONIST)
 def issue_an_invoice_receptionist_view():
+    selected_package_id = request.args.get('package_id', type=int)
     pakages = dao.load_package()
-    return render_template('receptionist/issue_an_invoice_receptionist.html',pakages=pakages)
+    return render_template('receptionist/issue_an_invoice_receptionist.html',pakages=pakages,selected_package_id=selected_package_id)
 
 @app.route('/api/receptionist/issue_an_invoice_receptionist', methods=['post'])
 def issue_an_invoice_receptionist_process():
@@ -413,6 +414,11 @@ def register_package():
     else:
         return jsonify({'status': 400, 'err_msg': message})
 
+
+@app.route('/view_package_receptionist')
+def view_package_receptionist():
+    packages = dao.load_package()
+    return render_template('receptionist/view_package.html', packages=packages)
 
 if __name__ == '__main__':
     from gymapp import admin

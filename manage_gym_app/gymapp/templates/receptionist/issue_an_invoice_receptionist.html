@@ -77,11 +77,13 @@
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Chọn gói tập <span
                                         class="text-danger">*</span></label>
-                                <select class="form-select" id="packageSelect" name="package_id" required
-                                        onchange="updatePackageForDisPlay()">
-                                    <option value="" selected disabled>-- Chọn gói tập --</option>
+                                <select class="form-select" id="packageSelect" name="package_id" required onchange="updatePackageForDisPlay()">
+                                    <option value="">--Chọn gói tập --</option>
                                     {% for p in pakages %}
-                                    <option value="{{ p.id }}" data-price="{{ p.price }}" data-name="{{ p.name }}">
+                                    <option value="{{ p.id }}" data-price="{{ p.price }}" data-name="{{ p.name }}"
+                                            {% if p.id == selected_package_id %}
+                                                selected
+                                            {% endif %}>
                                         {{ p.name }} - {{ "{:,.0f}".format(p.price) }} VNĐ
                                     </option>
                                     {% endfor %}
@@ -124,7 +126,8 @@
                             </li>
                         </ul>
 
-                        <button type="button" class="btn btn-primary w-100 btn-lg fw-bold shadow-sm text-uppercase" onclick="submitRegistrationForm(event)">
+                        <button type="button" class="btn btn-primary w-100 btn-lg fw-bold shadow-sm text-uppercase"
+                                onclick="submitRegistrationForm(event)">
                             <i class="fas fa-check-circle me-2"></i>Xác nhận đăng ký
                         </button>
                     </div>
