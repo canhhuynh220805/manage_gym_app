@@ -146,18 +146,12 @@ class MyAdminIndexView(AdminIndexView):
             'packages': dao.count_packages(),
             'revenue': dao.get_total_revenue_month()
         }
-
         pkg_stats = dao.stats_package_usage()
-
-        return self.render('admin/index.html',
-                           stats=cards_stats,
-                           pkg_stats=pkg_stats)
+        return self.render('admin/index.html', stats=cards_stats,pkg_stats=pkg_stats)
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
-admin = Admin(app=app, name="GYM Management",
-              template_mode='bootstrap4',
-              index_view=MyAdminIndexView())
+admin = Admin(app=app, name="GYM Management", template_mode='bootstrap4', index_view=MyAdminIndexView())
 
 admin.add_view(UserView(User, db.session, name='Tài khoản hệ thống', category='Quản lý người dùng'))
 admin.add_view(MemberView(Member, db.session, name='Hội viên', category='Quản lý người dùng'))

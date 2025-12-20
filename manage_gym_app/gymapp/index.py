@@ -170,7 +170,7 @@ def process_pending():
     data = request.json
     invoice_id = data.get('invoice_id')
 
-    is_valid, result = dao.validate_invoice_payment(invoice_id)
+    is_valid, result = dao.validate_cashier(invoice_id)
     if not is_valid:
         return jsonify({'status': 400, 'msg': result})
 
@@ -194,15 +194,15 @@ def direct_pay():
     else:
         return jsonify({'status': 400, 'msg': 'Lỗi xử lý! Vui lòng kiểm tra lại thông tin.'})
 
-
 @app.route('/api/cashier/cancel-invoice', methods=['post'])
 @login_required(UserRole.CASHIER)
 def cancel_invoice():
     data = request.json
     invoice_id = data.get('invoice_id')
 
-    if not invoice_id:
-        return jsonify({'status': 400, 'msg': 'Mã hóa đơn không hợp lệ!'})
+    is_valid, result = dao.validate_cashier(invoice_id)
+    if not is_valid:
+        return jsonify({'status': 400, 'msg': result})
 
     success, msg = dao.cancel_pending_invoice(invoice_id)
 

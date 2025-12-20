@@ -274,31 +274,6 @@ def calculate_package_dates(member_id, duration_months):
 
     return start_date, end_date
 
-def add_package_registration(user_id, package_id):
-    u = db.session.get(User, user_id)
-    p = db.session.get(Package, package_id)
-
-    if u and p:
-        try:
-            _upgrade_user_to_member_force(user_id)
-            start = datetime.now()
-            end = start + relativedelta(months=p.duration)
-
-            mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=start, endDate=end, status=StatusPackage.EXPIRED)
-            db.session.add(mp)
-
-            invoice = Invoice(user_id=u.id, total_amount=p.price, status=StatusInvoice.PENDING,invoice_day_create=datetime.now(), member_package = mp)
-            db.session.add(invoice)
-
-            db.session.commit()
-            return True, "Đăng ký thành công! Vui lòng thanh toán tại quầy lễ tân."
-
-        except Exception as ex:
-            db.session.rollback()
-            return False, str(ex)
-
-    return False, "Thông tin người dùng hoặc gói tập không hợp lệ"
-
 def process_pending_invoice(invoice_id):
     inv = db.session.get(Invoice, invoice_id)
 
@@ -450,17 +425,29 @@ def assign_coach(coach_id, package_id):
 
 #VALIDATE
 
-def validate_invoice_payment(invoice_id):
+def validate_cashier(invoice_id):
     if not invoice_id:
         return False, "Mã hóa đơn không được để trống"
 
-    inv = db.session.get(Invoice, invoice_id)
+    inv = db.session.query(Invoice).filter(Invoice.id == invoice_id).with_for_update().first() #pessimistic locking
     if not inv:
         return False, f"Hóa đơn mã {invoice_id} không tồn tại trong hệ thống"
-    if inv.status == StatusInvoice.PAID:
-        return False, "Hóa đơn đã được thanh toán trước đó"
-    if inv.status == StatusInvoice.FAILED:
-        return False, "Hóa đơn đã bị hủy hoặc lỗi"
+    if inv.status != StatusInvoice.PENDING:
+        return False, "Hóa đơn đã được thanh toán trước hoặc đã bị hủy"
+    if not inv.member_package:
+        return False, "Hóa đơn không có gói tập đi kèm"
+    if not inv.member:
+        return False, "Không tìm thấy thông tin hội viên của hóa đơn"
+    if not inv.member_package.package:
+        return False, "Gói tập đã bị xóa khỏi hệ thống"
+    if inv.total_amount <= 0:
+        return False, "Số tiền không hợp lệ"
+    if inv.invoice_day_create:
+        expired_day = 7
+        expired_date = inv.invoice_day_create + timedelta(days = expired_day)
+        if datetime.now() > expired_date:
+            return False, "Hóa đơn đã quá hạn thanh toán"
+
 
     return True, inv
 
