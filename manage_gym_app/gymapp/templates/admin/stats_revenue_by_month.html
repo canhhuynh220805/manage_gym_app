@@ -3,9 +3,7 @@
 {% block body %}
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 shadow-sm rounded border-left-primary">
-        <h3 class="text-secondary font-weight-bold mb-0">
-            <i class="fa fa-chart-bar text-primary"></i> DOANH THU PHÒNG GYM NĂM {{ datetime.now().year if datetime else 2025 }}
-        </h3>
+        <h3 class="text-secondary font-weight-bold mb-0">DOANH THU PHÒNG GYM NĂM </h3>
     </div>
 
     <div class="row mb-4">
@@ -65,10 +63,6 @@
     <div class="row">
         <div class="col-lg-8 mb-4">
             <div class="card shadow">
-                <div class="card-header py-3 bg-dark d-flex justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-white text-uppercase">Biểu đồ doanh thu 12 tháng</h6>
-                    <small class="text-white-50">Đơn vị: VNĐ</small>
-                </div>
                 <div class="card-body">
                     <div style="height: 350px;">
                         <canvas id="monthChart"></canvas>

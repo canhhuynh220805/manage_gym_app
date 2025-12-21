@@ -54,15 +54,12 @@ def stats_revenue_by_month(time="month", year=datetime.now().year):
    query =  (db.session.query(func.extract(time, Invoice.payment_date), func.sum(Invoice.total_amount))
             .join(MemberPackage, Invoice.member_package_id == MemberPackage.id)
             .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year)
-            .group_by(func.extract(time, Invoice.payment_date))
-            .order_by(func.extract(time, Invoice.payment_date))).all()
+            .group_by(func.extract(time, Invoice.payment_date))).all()
    return query
 
 def count_members_by_time(year=datetime.now().year):
     query = (db.session.query(func.extract('month', User.join_date),func.count(User.id.distinct())).join(MemberPackage, User.id == MemberPackage.member_id)
-           .filter(func.extract('year', User.join_date) == year,MemberPackage.status == 'active').group_by(func.extract('month', User.join_date))
-           .order_by(func.extract('month', User.join_date)).all())
-
+           .filter(func.extract('year', User.join_date) == year,MemberPackage.status == 'active').group_by(func.extract('month', User.join_date))).all()
     return query
 
 def stats_by_quarter(year=datetime.now().year):
