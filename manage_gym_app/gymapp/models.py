@@ -173,7 +173,6 @@ class MemberPackage(db.Model):
 
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=True)
     workout_plans = relationship(PlanAssignment, lazy='subquery', backref='member_package')
-    invoice_details = relationship('InvoiceDetail', backref='member_packages', lazy=True)
 
 
 class Invoice(db.Model):

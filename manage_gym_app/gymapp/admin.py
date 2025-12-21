@@ -59,17 +59,10 @@ class CoachView(AdminView):
     menu_icon_value = 'fa-dumbbell'
 
     def on_model_change(self, form, model, is_created):
-<<<<<<< HEAD
         if is_created:
             model.user_role = UserRole.COACH
+        super().on_model_change(form, model, is_created)
 
-        super().on_model_change(form, model, is_created)
-=======
-        super().on_model_change(form, model, is_created)
-        if is_created:
-            model.user_role = UserRole.COACH
-            model.type = 'trainer'
->>>>>>> 2f228751d7a18cdd2bbc98d1c294dc77b384dfbe
 
 class ExerciseView(AdminView):
     column_list = ['id', 'name', 'description', 'image']
