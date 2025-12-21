@@ -1,0 +1,40 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container mt-3">
+    <h1>KẾ HOẠCH TẬP LUYỆN {{workout_plan.name}}</h1>
+    <div><a href="/workout-plans" class="btn btn-primary mb-2">Về danh sách kế hoạch</a></div>
+    <div class="d-flex align-items-stretch overflow-auto pb-3" style="gap: 10px;">
+        {% for day_name, exercises in schedule.items() %}
+        <div class="card border-0 shadow-sm flex-grow-1" style="min-width: 160px; flex-basis: 0;">
+            <div class="card-header text-center text-white fw-bold bg-primary">
+                {{ day_name }}
+            </div>
+
+            <div class="card-body bg-light p-2">
+                {% if exercises %}
+                {% for ex in exercises %}
+                <div class="card position-relative exercise-item mb-2 shadow-sm" style="width: 150px;">
+                    <div class="image-wrapper position-relative exercise-card">
+                        <img class="card-img-top w-100 h-100"
+                             src="{{ ex.image }}"
+                             alt="{{ ex.name }}"
+                             style=" object-fit: cover;">
+                    </div>
+                    <div class="card-body exercise-name p-1">
+                        <strong class="card-title d-block text-primary mb-0 text-truncate" style="height: 20px">{{ ex.name }}</strong>
+                        <div class="small text-muted mt-1">
+                            {{ ex.sets }} hiệp x {{ ex.reps }} cái
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                Nghỉ
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

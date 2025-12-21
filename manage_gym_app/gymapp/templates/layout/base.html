@@ -24,6 +24,12 @@
 {% endblock %}
 
 <section class="container">
+    {% if err_msg %}
+    <div class="alert alert-danger">{{ err_msg }}</div>
+    {% endif %}
+    {% if msg %}
+    <div class="alert alert-success">{{ msg }}</div>
+    {% endif %}
     {% block content %}
     {% endblock %}
 </section>

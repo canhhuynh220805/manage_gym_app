@@ -8,6 +8,9 @@
 {% if err_msg %}
 <div class="alert alert-danger">{{ err_msg }}</div>
 {% endif %}
+{% if msg %}
+<div class="alert alert-success">{{ msg }}</div>
+{% endif %}
 
 <form method="post" action="/register" enctype="multipart/form-data">
 

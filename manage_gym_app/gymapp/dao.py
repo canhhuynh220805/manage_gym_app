@@ -9,7 +9,7 @@ from cloudinary import uploader  # them uploader de up anh luc dang ki
 from gymapp import db, app, mail
 from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPackage,
                            StatusInvoice, StatusPackage, Package, ExerciseSchedule, DayOfWeek,
-                           PlanDetail, WorkoutPlan, PackageBenefit, Coach)
+                           PlanDetail, WorkoutPlan, PackageBenefit, Coach, PlanAssignment)
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text, func, extract
@@ -75,6 +75,18 @@ def add_member(name, username, password, email, avatar):
     db.session.add(u)
     db.session.commit()
 
+def get_workout_plan_by_member_id(member_id):
+    return (db.session.query(PlanAssignment) \
+            .join(MemberPackage, MemberPackage.id == PlanAssignment.member_package_id) \
+            .filter(MemberPackage.member_id == member_id)\
+            .order_by(PlanAssignment.start_date.desc())\
+            .all())
+def get_workout_plan_by_coach_id(coach_id):
+    return WorkoutPlan.query.filter(WorkoutPlan.coach_id == coach_id).all()
+
+def get_detail_workout_plan_by_id(workout_plan_id):
+    return WorkoutPlan.query.get(workout_plan_id)
+
 def load_package():
     query = Package.query.all()
     return query
@@ -139,7 +151,7 @@ def get_all_exercises():
 
 
 def get_all_day_of_week():
-    return [e.name for e in DayOfWeek]
+    return [e.value for e in DayOfWeek]
 
 
 def get_active_packages(coach_id, member_ids):
@@ -158,33 +170,65 @@ def has_plan_assigned(coach_id, member_id):
             return True
     return False
 
-def assign_existing_plan(coach_id, member_id, plan_id):
+
+def get_latest_assignment_end_date(member_id):
+    latest_assignment = (db.session.query(PlanAssignment)
+                         .join(MemberPackage, MemberPackage.id == PlanAssignment.member_package_id)
+                         .filter(MemberPackage.member_id == member_id)
+                         .order_by(PlanAssignment.end_date.desc())
+                         .first())
+
+    if latest_assignment:
+        return latest_assignment.end_date
+    return None
+
+def assign_existing_plan(coach_id, member_id, plan_id, start_date, end_date):
     plan = WorkoutPlan.query.get(plan_id)
 
     if plan and plan.coach_id == coach_id:
         packages = get_active_packages(coach_id, [member_id])
-        if packages:
-            plan.member_packages.extend(packages)
-            db.session.commit()
-            return True
+        if not packages:
+            return False
+        for pkg in packages:
+            assignment = PlanAssignment(
+                workout_plan=plan,
+                member_package=pkg,
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+            db.session.add(assignment)
+        db.session.commit()
+        return True
 
     return False
 
-def add_workout_plan(name, plan, member_ids):
+
+def add_workout_plan(name, plan, member_ids, start_date=None, end_date=None):
+
     if plan:
         p = WorkoutPlan(name=name, coach=current_user)
         db.session.add(p)
 
-        if member_ids:
+        if member_ids and start_date:
             packages = get_active_packages(coach_id=current_user.id, member_ids=member_ids)
-            p.member_packages.extend(packages)
+            for pkg in packages:
+                assignment = PlanAssignment(
+                    workout_plan = p,
+                    member_package = pkg,
+                    start_date=start_date,
+                    end_date=end_date
+                )
+
+                db.session.add(assignment)
+
 
         for ex in plan.values():
             pd = PlanDetail(exercise_id=ex['id'], reps=ex['reps'], sets=ex['sets'], workout_plan=p)
             db.session.add(pd)
 
             for day in ex['days']:
-                day_enum = DayOfWeek[day]
+                day_enum = DayOfWeek(day)
                 d = ExerciseSchedule(
                     day=day_enum,
                     plan_detail=pd
@@ -259,6 +303,7 @@ def calculate_package_dates(member_id, duration_months):
 
     return start_date, end_date
 
+
 def process_pending_invoice(invoice_id):
     is_valid, result = validate_cashier(invoice_id)
 
@@ -274,7 +319,6 @@ def process_pending_invoice(invoice_id):
                 db.session.rollback()
                 return False, f"Lỗi khi tự động hủy đơn quá hạn: {str(ex)}"
         return False, result
-
     inv = result
     try:
         state = get_invoice_state(inv)
@@ -309,6 +353,7 @@ def add_member_package_and_pay(member_id, package_id):
             db.session.rollback()
             return None
     return None
+
 
 def cancel_pending_invoice(invoice_id):
     is_valid, result = validate_cashier(invoice_id)
@@ -445,14 +490,15 @@ def send_mail(member_id, package_id):
                 f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
     mail.send(msg)
 
-# if __name__ == '__main__':
-#     with app.app_context():
-#         u_id = 1
-#         p_id = 1
-#
-#         success, msg = add_package_registration(u_id, p_id)
-#
-#         if success:
-#             print(f"{msg}")
-#         else:
-#             print(f" Lỗi: {msg}")
+if __name__ == '__main__':
+    with app.app_context():
+        # u_id = 1
+        # p_id = 1
+        #
+        # success, msg = add_package_registration(u_id, p_id)
+        #
+        # if success:
+        #     print(f"{msg}")
+        # else:
+        #     print(f" Lỗi: {msg}")
+        pass
