@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import render_template, request, redirect, url_for, jsonify, session
 from flask_login import logout_user, login_user, current_user
 
-from gymapp import app, dao, login
+from gymapp import app, dao, login, db
 from gymapp.decorators import login_required
 from gymapp.models import UserRole, StatusInvoice, DayOfWeek
 
@@ -264,15 +264,11 @@ def cashier_history_view():
 @app.route('/api/cashier/process-pending', methods=['post'])
 @login_required(UserRole.CASHIER)
 def process_pending():
-    data = request.json
-    invoice_id = data.get('invoice_id')
+    invoice_id = request.json.get('invoice_id')
     success, msg = dao.process_pending_invoice(invoice_id)
-
-    if success:
-        return jsonify({'status': 200, 'msg': msg})
-    else:
-        return jsonify({'status': 400, 'msg': msg})
-
+    return jsonify({'status': 200 if success else 400,
+                    'msg': msg
+    })
 
 @app.route('/api/cashier/direct-pay', methods=['post'])
 @login_required(UserRole.CASHIER)
@@ -286,6 +282,23 @@ def direct_pay():
         return jsonify({'status': 200, 'msg': 'Đăng ký và thanh toán thành công!'})
     else:
         return jsonify({'status': 400, 'msg': 'Lỗi xử lý! Vui lòng kiểm tra lại thông tin.'})
+
+@app.route('/api/cashier/cancel-invoice', methods=['post'])
+@login_required(UserRole.CASHIER)
+def cancel_invoice():
+    data = request.json
+    invoice_id = data.get('invoice_id')
+
+    is_valid, result = dao.validate_cashier(invoice_id)
+    if not is_valid:
+        return jsonify({'status': 400, 'msg': result})
+
+    success, msg = dao.cancel_pending_invoice(invoice_id)
+
+    if success:
+        return jsonify({'status': 200, 'msg': msg})
+    else:
+        return jsonify({'status': 400, 'msg': msg})
 
 
 @app.route('/payment_history')
@@ -380,10 +393,12 @@ def assign_coach(package_id):
 @app.route('/receptionist/issue_an_invoice_receptionist')
 @login_required(UserRole.RECEPTIONIST)
 def issue_an_invoice_receptionist_view():
-    return render_template('receptionist/issue_an_invoice_receptionist.html')
+    selected_package_id = request.args.get('package_id', type=int)
+    pakages = dao.load_package()
+    return render_template('receptionist/issue_an_invoice_receptionist.html',pakages=pakages,selected_package_id=selected_package_id)
 
-
-@app.route('/receptionist/issue_an_invoice_receptionist', methods=['post'])
+@app.route('/api/receptionist/issue_an_invoice_receptionist', methods=['post'])
+@login_required(UserRole.RECEPTIONIST)
 def issue_an_invoice_receptionist_process():
     name = request.form.get('name')
     username = request.form.get('username')
@@ -391,16 +406,33 @@ def issue_an_invoice_receptionist_process():
     phone = request.form.get('phone')
     gender = request.form.get('gender')
     dob = request.form.get('dob')
+    package_id = request.form.get('package_id')
+    email = request.form.get('email')
+    if not package_id:
+        return jsonify({'status': 400, 'err_msg': 'Vui lòng chọn gói tập!'})
+
+    if not dob:
+        dob = None
 
     avatar = request.files.get('avatar')
     try:
-        dao.add_member_full_info(avatar=avatar,
-                                 name=name,
-                                 username=username,
-                                 password=password, phone=phone, gender=gender, dob=dob)
+        member = dao.add_member_full_info(avatar=avatar,
+                       name=name,
+                       username=username,
+                       password= password,phone=phone,gender=gender,dob=dob,email = email)
+
+        dao.add_package_registration(user_id=member.id,package_id=package_id)
+        dao.send_mail(member_id=member.id,package_id=package_id)
+        return jsonify({
+            'status': 200,
+            'msg': 'Tạo hóa đơn thành công! Vui lòng báo khách qua quầy thu ngân.'
+        })
     except Exception as ex:
-        return render_template('/receptionist/issue_an_invoice_receptionist.html', err_msg=str(ex))
-    return redirect('/payment_history')
+        print(str(ex))
+        return jsonify({
+            'status': 500,
+            'err_msg': 'đã có tài username này rồi'
+        })
 
 
 ##################################################
@@ -441,23 +473,24 @@ def workout_plan_detail(plan_id):
 
 @app.route('/register', methods=['post'])
 def register_process():
+    email = request.form.get('email')
     password = request.form.get('password')
     confirm = request.form.get('confirm')
 
     if password != confirm:
         err_msg = 'Mật khẩu KHÔNG khớp'
         return render_template('register.html', err_msg=err_msg)
-
+    if email is None:
+        err_msg = 'Vui lòng nhập Email'
+        return render_template('register.html', err_msg=err_msg)
     avatar = request.files.get('avatar')
     try:
         dao.add_member(avatar=avatar,
                        name=request.form.get('name'),
                        username=request.form.get('username'),
-                       password=request.form.get('password'))
-        return render_template('login.html', msg="Đăng ký thành công")
+                       password=request.form.get('password'),email=email)
     except Exception as ex:
         return render_template('register.html', err_msg=str(ex))
-
     return redirect('/login')
 
 
@@ -508,10 +541,16 @@ def register_package():
     is_success, message = dao.add_package_registration(user_id, package_id)
 
     if is_success:
+        dao.send_mail(member_id=user_id,package_id=package_id)
         return jsonify({'status': 200, 'msg': message})
     else:
         return jsonify({'status': 400, 'err_msg': message})
 
+
+@app.route('/view_package_receptionist')
+def view_package_receptionist():
+    packages = dao.load_package()
+    return render_template('receptionist/view_package.html', packages=packages)
 
 if __name__ == '__main__':
     from gymapp import admin

@@ -59,10 +59,17 @@ class CoachView(AdminView):
     menu_icon_value = 'fa-dumbbell'
 
     def on_model_change(self, form, model, is_created):
+<<<<<<< HEAD
         if is_created:
             model.user_role = UserRole.COACH
 
         super().on_model_change(form, model, is_created)
+=======
+        super().on_model_change(form, model, is_created)
+        if is_created:
+            model.user_role = UserRole.COACH
+            model.type = 'trainer'
+>>>>>>> 2f228751d7a18cdd2bbc98d1c294dc77b384dfbe
 
 class ExerciseView(AdminView):
     column_list = ['id', 'name', 'description', 'image']
@@ -146,18 +153,12 @@ class MyAdminIndexView(AdminIndexView):
             'packages': dao.count_packages(),
             'revenue': dao.get_total_revenue_month()
         }
-
         pkg_stats = dao.stats_package_usage()
-
-        return self.render('admin/index.html',
-                           stats=cards_stats,
-                           pkg_stats=pkg_stats)
+        return self.render('admin/index.html', stats=cards_stats,pkg_stats=pkg_stats)
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
-admin = Admin(app=app, name="GYM Management",
-              template_mode='bootstrap4',
-              index_view=MyAdminIndexView())
+admin = Admin(app=app, name="GYM Management", template_mode='bootstrap4', index_view=MyAdminIndexView())
 
 admin.add_view(UserView(User, db.session, name='Tài khoản hệ thống', category='Quản lý người dùng'))
 admin.add_view(MemberView(Member, db.session, name='Hội viên', category='Quản lý người dùng'))

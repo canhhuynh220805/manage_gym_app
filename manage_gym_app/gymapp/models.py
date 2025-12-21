@@ -73,6 +73,7 @@ class User(BaseModel, UserMixin):
     join_date = Column(DateTime, default=datetime.now)
     dob = Column(DateTime, nullable=True)
     phone = Column(String(20), nullable=True)
+    email = Column(String(100),nullable=True)
     gender = Column(Enum(Gender), default=Gender.MALE)
 
     type = Column(String(50), nullable=False)
@@ -88,7 +89,7 @@ class User(BaseModel, UserMixin):
 class Member(User):
     id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
     packages = relationship('MemberPackage', backref='member', lazy=True, cascade="all, delete-orphan")
-    invoices = relationship('Invoice', backref='member', lazy=True)
+    invoices = relationship('Invoice', backref='member', lazy=True, cascade="all, delete-orphan")
     __mapper_args__ = {
         'polymorphic_identity': 'member',
     }
@@ -166,7 +167,6 @@ class MemberPackage(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     member_id = Column(Integer, ForeignKey(Member.id), nullable=False)
     package_id = Column(Integer, ForeignKey(Package.id), nullable=False)
-
     startDate = Column(DateTime, nullable=True)  # CHO PHÉP NULLABLE NGÀY ĐĂNG KÍ
     endDate = Column(DateTime, nullable=True)  # CHO PHÉP NULLABLE NGÀY HẾT HẠN
     status = Column(Enum(StatusPackage), default=StatusPackage.ACTIVE)
@@ -179,24 +179,20 @@ class MemberPackage(db.Model):
 class Invoice(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     member_id = Column(Integer, ForeignKey(Member.id), nullable=False)
+    member_package_id = Column(Integer, ForeignKey('member_package.id'), nullable=False)
     status = Column(Enum(StatusInvoice), default=StatusInvoice.PENDING)
     total_amount = Column(Double, nullable=False)
     payment_date = Column(DateTime, nullable=True)
     invoice_day_create = Column(DateTime, nullable=True)
+    member_package = relationship('MemberPackage', backref='invoice', lazy=True)
 
-    invoice_details = relationship('InvoiceDetail', backref='invoice', lazy=True)
-
-
-class InvoiceDetail(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    invoice_id = Column(Integer, ForeignKey(Invoice.id), nullable=False)
-    amount = Column(Double, nullable=False)
-    # quantity = Column(Integer, default=1)
-    member_package_id = Column(Integer, ForeignKey(MemberPackage.id), nullable=False)
 
 
 if __name__ == '__main__':
+    from sqlalchemy import text
+    from datetime import datetime, timedelta
+    from dateutil.relativedelta import relativedelta
+
     with app.app_context():
         db.create_all()
         # u = User(name='admin', username='admin', password = str(hashlib.md5("1".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
@@ -399,3 +395,71 @@ if __name__ == '__main__':
         # db.session.add(member_package)
         # db.session.commit()
         # pass
+
+        # u_admin = User(name='admin', username='admin',
+        #                password=str(hashlib.md5("1".encode('utf-8')).hexdigest()),
+        #                user_role=UserRole.ADMIN, type='user')
+        #
+        # u_cashier = User(name='canh huynh', username='canh',
+        #                  password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+        #                  user_role=UserRole.CASHIER, type='user')
+        #
+        # db.session.add_all([u_admin, u_cashier])
+        #
+        # c1 = Coach(name='đăng béo', username='dangbeo',
+        #            password=str(hashlib.md5("123".encode('utf-8')).hexdigest()),
+        #            user_role=UserRole.COACH)
+        # c2 = Coach(name='hợi gym', username='hoigym',
+        #            password=str(hashlib.md5("123".encode('utf-8')).hexdigest()),
+        #            user_role=UserRole.COACH)
+        # db.session.add_all([c1, c2])
+        #
+        # m1 = Member(name='cozgdeptrai', username='cozg',
+        #             password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+        #             user_role=UserRole.USER)
+        # m2 = Member(name='ronaldo', username='ronaldo',
+        #             password=str(hashlib.md5("123".encode('utf-8')).hexdigest()),
+        #             user_role=UserRole.USER)
+        # m3 = Member(name='messi', username='messi',
+        #             password=str(hashlib.md5("123".encode('utf-8')).hexdigest()),
+        #             user_role=UserRole.USER)
+        # db.session.add_all([m1, m2, m3])
+        #
+        # p1 = Package(name="CLASSIC", duration=1, price=300000, description="Gói cơ bản.",
+        #              image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157775/dong_uwvxli.png")
+        # p2 = Package(name="CLASSIC-PLUS", duration=1, price=500000, description="Gói nâng cấp.",
+        #              image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157774/bac_ljtnva.png")
+        # p3 = Package(name="ROYAL", duration=1, price=1500000, description="Gói cao cấp.",
+        #              image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157775/vang_igx7ax.png")
+        # p4 = Package(name="SIGNATURE", duration=1, price=5000000, description="Gói VIP.",
+        #              image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157775/vip_xsz4c4.png")
+        # db.session.add_all([p1, p2, p3, p4])
+        #
+        # e1 = Exercise(name="Pull up", description="vào lưng",
+        #               image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172002_mjx9mg.png")
+        # e2 = Exercise(name="Dumbbel Press", description="vào ngực",
+        #               image="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764990983/Screenshot_2025-11-30_172013_x4kl3z.png")
+        # db.session.add_all([e1, e2])
+        #
+        # mp = MemberPackage(
+        #     member=m3,
+        #     package=p1,
+        #     startDate=datetime.now(),
+        #     endDate=datetime.now() + relativedelta(months=1),
+        #     status=StatusPackage.ACTIVE,
+        #     coach=c2
+        # )
+        # db.session.add(mp)
+        #
+        # inv = Invoice(
+        #     member=m3,
+        #     total_amount=p1.price,
+        #     status=StatusInvoice.PAID,
+        #     payment_date=datetime.now(),
+        #     invoice_day_create=datetime.now(),
+        #     member_package=mp
+        # )
+        # db.session.add(inv)
+        # db.session.commit()
+        # pass
+

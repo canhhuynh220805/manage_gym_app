@@ -56,7 +56,37 @@ function setupAvatarPreview() {
     });
 }
 
+function updatePackageForDisPlay() {
+    const packageSelect = document.getElementById('packageSelect');
+    const nameDisplay = document.getElementById('package-name-display');
+    const priceDisplay = document.getElementById('price-package');
+    const totalDisplay = document.getElementById('total-price');
+
+    const selectedOption = packageSelect.options[packageSelect.selectedIndex];
+
+    const name = selectedOption.getAttribute('data-name');
+    const price = selectedOption.getAttribute('data-price');
+
+    if (name && price) {
+        const formattedPrice = new Intl.NumberFormat('vi-VN', {
+            style: 'currency', currency: 'VND'
+        }).format(price);
+
+        nameDisplay.textContent = name;
+
+        priceDisplay.textContent = formattedPrice;
+        totalDisplay.textContent = formattedPrice;
+    } else {
+        nameDisplay.textContent = "Gói tập";
+        nameDisplay.classList.add("text-muted");
+        nameDisplay.classList.remove("fw-bold", "text-dark");
+
+        priceDisplay.textContent = "0 VND";
+        totalDisplay.textContent = "0 đ";
+    }
+}
 document.addEventListener('DOMContentLoaded', function () {
+    updatePackageForDisPlay();
     setupAvatarPreview('avatar', 'avatarPreview');
 });
 
@@ -143,3 +173,42 @@ function createInvoice() {
         }
     );
 }
+
+function submitRegistrationForm(event) {
+    event.preventDefault();
+    const form = document.getElementById('registrationForm');
+
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        showToast("Vui lòng điền đầy đủ thông tin bắt buộc!", "warning");
+        return;
+    }
+
+    showConfirmDialog(
+        "Xác nhận đăng ký",
+        "Bạn có chắc chắn muốn tạo tài khoản và lập hóa đơn cho khách hàng này không?",
+        function() {
+
+            const formData = new FormData(form);
+
+            fetch('/api/receptionist/issue_an_invoice_receptionist', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 200) {
+                    form.reset();
+                    showToast(data.msg);
+                } else {
+                    showToast((data.err_msg || "Có lỗi xảy ra"), 'danger');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("Lỗi hệ thống!", 'danger');
+            });
+        }
+    );
+}
+

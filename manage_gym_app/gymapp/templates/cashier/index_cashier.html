@@ -8,7 +8,7 @@
 
 <div class="row mt-4">
     <div class="col-md-7 col-12">
-        <h3 class="text-info">Đơn Online Chờ Duyệt</h3>
+        <h3 class="text-info">Đơn Chờ Duyệt</h3>
 
         <form class="d-flex mb-3" action="{{ url_for('cashier_view') }}">
             <input class="form-control me-2" type="text" name="kw"
@@ -52,6 +52,7 @@
                                 <button class="btn btn-success btn-sm" onclick="processPending({{ i.id }})">
                                     Thu tiền
                                 </button>
+                                <button class="btn btn-danger btn-sm" onclick="cancelInvoice({{ i.id }})">Hủy</button>
                             </td>
                         </tr>
                         {% endfor %}

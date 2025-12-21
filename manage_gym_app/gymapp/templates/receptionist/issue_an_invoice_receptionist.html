@@ -7,9 +7,7 @@
 {% block content %}
 <section class="container mt-5">
 
-    <form id="registrationForm" class="needs-validation" novalidate
-          action="/receptionist/issue_an_invoice_receptionist"
-          method="post" enctype="multipart/form-data">
+    <form id="registrationForm" class="needs-validation" novalidate enctype="multipart/form-data">
         <div class="row g-4">
 
             <div class="col-lg-8">
@@ -49,21 +47,29 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="phone" class="form-label fw-semibold">Số điện thoại</label>
+                                <label for="phone" class="form-label fw-semibold">Số điện thoại <span
+                                        class="text-danger">*</span></label>
                                 <input type="tel" class="form-control" id="phone" name="phone"
-                                       placeholder="Nhập số điện thoại">
+                                       placeholder="Nhập số điện thoại" required>
+                            </div>
+
+                             <div class="col-md-6">
+                                <label for="email" class="form-label fw-semibold">Email <span
+                                        class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                       placeholder="Nhập email" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label for="gender" class="form-label fw-semibold">Giới tính</label>
-                                <select class="form-select" id="gender" name="gender">
+                                <select class="form-select" id="gender" name="gender" required>
                                     <option value="MALE" selected>Nam</option>
                                     <option value="FEMALE">Nữ</option>
                                 </select>
                             </div>
 
-                            <div class="col-md-6">
-                                <label for="dob" class="form-label fw-semibold">Ngày sinh</label>
+                            <div>
+                                <label for="dob" class="form-label fw-semibold" required>Ngày sinh</label>
                                 <input type="date" class="form-control" id="dob" name="dob">
                             </div>
                         </div>
@@ -79,11 +85,16 @@
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Chọn gói tập <span
                                         class="text-danger">*</span></label>
-                                <select class="form-select" id="packageSelect" name="package_id" required>
-                                    <option value="" selected disabled>-- Chọn gói tập --</option>
-                                    <option value="1">Gói 1 Tháng (300.000đ)</option>
-                                    <option value="2">Gói 3 Tháng (800.000đ)</option>
-                                    <option value="3">Gói 1 Năm (2.500.000đ)</option>
+                                <select class="form-select" id="packageSelect" name="package_id" required onchange="updatePackageForDisPlay()">
+                                    <option value="">--Chọn gói tập --</option>
+                                    {% for p in pakages %}
+                                    <option value="{{ p.id }}" data-price="{{ p.price }}" data-name="{{ p.name }}"
+                                            {% if p.id == selected_package_id %}
+                                                selected
+                                            {% endif %}>
+                                        {{ p.name }} - {{ "{:,.0f}".format(p.price) }} VNĐ
+                                    </option>
+                                    {% endfor %}
                                 </select>
                                 <div class="invalid-feedback">Vui lòng chọn gói tập.</div>
                             </div>
@@ -113,8 +124,9 @@
                     <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-4">
-                                <span class="text-muted">Giá gói tập</span>
-                                <span class="fw-bold" id="price-package">0 đ</span>
+                                <span class="text-muted" id="package-name-display">Gói tập</span>
+
+                                <span class="fw-bold" id="price-package">0 VND</span>
                             </li>
                             <li class="list-group-item bg-light d-flex justify-content-between align-items-center py-3 px-4 border-top border-bottom">
                                 <span class="h6 mb-0 text-success fw-bold">TỔNG CỘNG</span>
@@ -122,7 +134,8 @@
                             </li>
                         </ul>
 
-                        <button type="submit" class="btn btn-primary w-100 btn-lg fw-bold shadow-sm text-uppercase">
+                        <button type="button" class="btn btn-primary w-100 btn-lg fw-bold shadow-sm text-uppercase"
+                                onclick="submitRegistrationForm(event)">
                             <i class="fas fa-check-circle me-2"></i>Xác nhận đăng ký
                         </button>
                     </div>

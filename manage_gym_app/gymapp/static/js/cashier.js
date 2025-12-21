@@ -25,3 +25,30 @@ function processPending(invoiceId) {
         }
     );
 }
+function cancelInvoice(invoiceId) {
+    showConfirmDialog(
+        "Xác nhận hủy hóa đơn",
+        "Bạn có chắc chắn muốn hủy hóa đơn này không?",
+        function() {
+            fetch('/api/cashier/cancel-invoice', {
+                method: 'post',
+                body: JSON.stringify({
+                    "invoice_id": invoiceId
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(res => res.json()).then(data => {
+                if (data.status === 200) {
+                    showToast(data.msg, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast("Lỗi: " + data.msg, 'danger');
+                }
+            }).catch(err => {
+                console.error(err);
+                showToast("Đã có lỗi hệ thống xảy ra!", 'danger');
+            });
+        }
+    );
+}
