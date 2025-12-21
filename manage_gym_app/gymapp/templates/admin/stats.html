@@ -1,0 +1,88 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<h1 class="text-center text-dark my-4">THỐNG KÊ HỘI VIÊN ĐANG HOẠT ĐỘNG</h1>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card shadow-sm p-3">
+                <form>
+                    <div class="input-group mb-3">
+                        <input type="text" name="kw" placeholder="Tìm tên gói tập..." class="form-control" />
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="submit">Lọc</button>
+                        </div>
+                    </div>
+                </form>
+                <table class="table table-hover">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Tên gói tập</th>
+                            <th>Số lượng hội viên</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in active_stats %}
+                        <tr>
+                            <td>{{ s[1] }}</td>
+                            <td class="text-primary font-weight-bold">{{ s[2] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card shadow-sm p-3">
+                <canvas id="activeBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let labels = [], data = [];
+        {% for s in active_stats %}
+            labels.push('{{ s[1] }}');
+            data.push({{ s[2] }});
+        {% endfor %}
+
+        const ctx = document.getElementById('activeBarChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Số lượng hội viên đang hoạt động',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    barThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

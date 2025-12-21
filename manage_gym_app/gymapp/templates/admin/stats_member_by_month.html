@@ -1,55 +1,34 @@
 {% extends 'admin/master.html' %}
 
 {% block body %}
-<div class="container-fluid mt-4">
-    <div class="mb-4 bg-white p-3 shadow-sm rounded border-left-success">
-        <h3 class="text-secondary font-weight-bold mb-0">Thống kê thành viên năm</h3>
-    </div>
+<h2 class="text-center my-4 text-uppercase font-weight-bold">Thống kê hội viên trong năm</h2>
 
-    <div class="row mb-4">
+<div class="container-fluid">
+    <div class="row">
         <div class="col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Tổng hội viên mới năm nay
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ member_stats|sum }} Người</div>
-                        </div>
-                    </div>
+            <div class="card p-3 shadow-sm border-0 border-left-success" style="border-left: 5px solid #28a745 !important;">
+                <div class="text-uppercase small font-weight-bold text-muted">Tổng hội viên mới</div>
+                <div class="h4 font-weight-bold text-success">
+                    {{ member_stats|map(attribute=1)|sum if member_stats else 0 }} Người
                 </div>
             </div>
         </div>
-
         <div class="col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Trung bình đăng ký mỗi tháng
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ ((member_stats|sum) / 12) | round | int }} Người/Tháng
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+            <div class="card p-3 shadow-sm border-0 border-left-info" style="border-left: 5px solid #17a2b8 !important;">
+                <div class="text-uppercase small font-weight-bold text-muted">Trung bình đăng ký tháng</div>
+                <div class="h4 font-weight-bold text-info">
+                    {{ ((member_stats|map(attribute=1)|sum / 12) | round | int) if member_stats else 0 }} Người/Tháng
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-12 mb-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <div style="height: 450px;">
-                        <canvas id="memberChart"></canvas>
-                    </div>
+        <div class="col-12">
+            <div class="card shadow-sm p-3 border-0">
+                <h5 class="font-weight-bold text-dark mb-3">Biểu đồ thống kê hội viên</h5>
+                <div style="position: relative; height: 400px; width: 100%;">
+                    <canvas id="memberBarChart"></canvas>
                 </div>
             </div>
         </div>
@@ -58,34 +37,34 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('memberChart').getContext('2d');
+    document.addEventListener("DOMContentLoaded", function() {
+        let labels = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+        let data = new Array(12).fill(0);
 
+        {% for s in member_stats %}
+            data[{{ s[0]|int - 1 }}] = {{ s[1] }};
+        {% endfor %}
+
+        const ctx = document.getElementById('memberBarChart').getContext('2d');
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-                         'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
+                labels: labels,
                 datasets: [{
-                    label: 'Số lượng hội viên',
-                    data: {{ member_stats | tojson }},
-                    borderWidth: 1
+                    label: 'Hội viên trong năm theo tháng',
+                    data: data
                 }]
             },
             options: {
+                responsive: true,
                 maintainAspectRatio: false,
-                legend: {
-                    display: true,
-                    position: 'top'
-                },
                 scales: {
-                    yAxes: [{
+                    y: {
+                        beginAtZero: true,
                         ticks: {
-                            beginAtZero: true,
-                            stepSize: 1,
-                            padding: 10
+                            stepSize: 1
                         }
-                    }]
+                    }
                 }
             }
         });
