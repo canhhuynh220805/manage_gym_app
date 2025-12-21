@@ -490,6 +490,17 @@ def send_mail(member_id, package_id):
                 f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
     mail.send(msg)
 
+
+#Thong ke
+
+def active_member_stats(kw=None):
+    query = db.session.query(Package.id, Package.name, func.count(MemberPackage.id))\
+                      .join(MemberPackage, MemberPackage.package_id.__eq__(Package.id))\
+                      .filter(MemberPackage.status.__eq__(StatusPackage.ACTIVE))
+    if kw:
+        query = query.filter(Package.name.contains(kw))
+    return query.group_by(Package.id, Package.name).all()
+
 if __name__ == '__main__':
     with app.app_context():
         # u_id = 1

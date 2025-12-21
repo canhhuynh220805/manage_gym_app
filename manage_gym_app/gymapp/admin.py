@@ -3,10 +3,11 @@ from flask_admin import Admin, BaseView, expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.model import InlineFormAdmin
 from flask_login import logout_user, current_user
-from flask import redirect
+from flask import redirect, request
 from markupsafe import Markup
 
 from gymapp import app, db, dao
+from gymapp.dao import active_member_stats
 from gymapp.models import UserRole, User, Member, Coach, Exercise, Package, Regulation, PackageBenefit
 
 
@@ -23,16 +24,16 @@ class AdminView(ModelView):
     }
 
     def on_model_change(self, form, model, is_created):
-        raw_password = form.password.data
-        if raw_password:
+        if hasattr(form, 'password') and form.password.data:
+            raw_password = form.password.data
             model.password = str(hashlib.md5(raw_password.strip().encode('utf-8')).hexdigest())
 
     def is_accessible(self) -> bool:
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
 class UserView(AdminView):
-    column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar']
-    form_columns = ['name', 'username', 'password','user_role', 'phone', 'gender' ,'avatar', 'dob']
+    column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar', 'email']
+    form_columns = ['name', 'username', 'password','user_role', 'phone', 'email', 'gender' ,'avatar', 'dob']
     column_searchable_list = ['name', 'username']
     column_filters = ['user_role', 'gender']
 
@@ -108,7 +109,7 @@ class PackageView(AdminView):
     }
 
 class RegulationView(AdminView):
-    column_list = ['name', 'value']
+    column_list = ['name', 'value', 'code']
     can_create = True
     can_delete = True
     menu_icon_type = 'fa'
@@ -130,7 +131,10 @@ class StatsView(BaseView):
     menu_icon_value = 'fa-chart-pie'
     @expose('/')
     def index(self):
-        return self.render('admin/stats.html')
+        kw = request.args.get('kw')
+        stats = dao.active_member_stats(kw=kw)
+
+        return self.render('admin/stats.html', active_stats = stats)
 
     def is_accessible(self) -> bool:
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
