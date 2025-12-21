@@ -528,7 +528,7 @@ def logout_process():
 def load_user(pk):
     return dao.get_user_by_id(pk)
 
-
+#################
 @app.route('/api/register_package', methods=['post'])
 def register_package():
     data = request.json
