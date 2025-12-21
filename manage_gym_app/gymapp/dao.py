@@ -306,7 +306,18 @@ def calculate_package_dates(member_id, duration_months):
 
 def process_pending_invoice(invoice_id):
     is_valid, result = validate_cashier(invoice_id)
+
     if not is_valid:
+        if result == "Hóa đơn đã quá hạn thanh toán":
+            try:
+                inv = db.session.get(Invoice, invoice_id)
+                if inv:
+                    inv.status = StatusInvoice.FAILED
+                    db.session.commit()
+                    return False, "Hóa đơn này đã quá hạn 7 ngày"
+            except Exception as ex:
+                db.session.rollback()
+                return False, f"Lỗi khi tự động hủy đơn quá hạn: {str(ex)}"
         return False, result
     inv = result
     try:
@@ -330,11 +341,8 @@ def add_member_package_and_pay(member_id, package_id):
 
             s, e = calculate_package_dates(member_id, p.duration)
 
-            mp = MemberPackage(member_id=u.id, package_id=p.id,
-                               startDate=s, endDate=e,
-                               status=StatusPackage.ACTIVE)
+            mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
             db.session.add(mp)
-
             inv = Invoice(member_id=u.id, total_amount=p.price,
                           status=StatusInvoice.PAID, payment_date=datetime.now())
             db.session.add(inv)
@@ -403,12 +411,54 @@ def assign_coach(coach_id, package_id):
         db.session.rollback()
         return None
 
+# RECEPTIONIST
+def get_members_for_receptionist(kw=None, page=1):
+    # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)
+    query = MemberPackage.query.join(MemberPackage.member) \
+        .options(joinedload(MemberPackage.member)) \
+        .options(joinedload(MemberPackage.coach)) \
+        .options(joinedload(MemberPackage.package)) \
+        .filter(MemberPackage.status == StatusPackage.ACTIVE)
+
+    if kw:
+        query = query.filter(Member.name.contains(kw))
+    if page:
+        start = (page - 1) * app.config['MEMBER_RECEP']
+        query = query.slice(start, start + app.config['MEMBER_RECEP'])
+
+    return query.all()
+
+
+def count_members_for_receptionist():
+    return MemberPackage.query \
+        .options(joinedload(MemberPackage.member)) \
+        .options(joinedload(MemberPackage.coach)) \
+        .options(joinedload(MemberPackage.package)).count()
+
+
+def get_all_coach():
+    return Coach.query.all()
+
+
+def assign_coach(coach_id, package_id):
+    coach = Coach.query.get(coach_id)
+    package = MemberPackage.query.get(package_id)
+    if not package or not coach:
+        return None
+    package.coach = coach
+    try:
+        db.session.commit()
+        return package
+    except Exception as ex:
+        print(f"Lỗi khi gán HLV: {str(ex)}")
+        db.session.rollback()
+        return None
+
 #VALIDATE
 
 def validate_cashier(invoice_id):
     if not invoice_id:
         return False, "Mã hóa đơn không được để trống"
-
     inv = db.session.query(Invoice).filter(Invoice.id == invoice_id).with_for_update().first() #pessimistic locking
     if not inv:
         return False, f"Hóa đơn mã {invoice_id} không tồn tại trong hệ thống"
@@ -427,8 +477,6 @@ def validate_cashier(invoice_id):
         expired_date = inv.invoice_day_create + timedelta(days = expired_day)
         if datetime.now() > expired_date:
             return False, "Hóa đơn đã quá hạn thanh toán"
-
-
     return True, inv
 
 def send_mail(member_id, package_id):
