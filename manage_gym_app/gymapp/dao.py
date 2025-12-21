@@ -13,7 +13,7 @@ from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPack
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text, func, extract
-from states import get_invoice_state
+from gymapp.states import get_invoice_state
 
 
 
