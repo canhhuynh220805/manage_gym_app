@@ -1,62 +1,71 @@
 {% extends 'admin/master.html' %}
+
 {% block body %}
-
 {% if current_user.is_authenticated %}
-<div class="container-fluid mt-4 px-4">
-    <h3 class="text-center text-secondary mb-4">QUẢN TRỊ HỆ THỐNG</h3>
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-secondary font-weight-bold">BẢNG ĐIỀU KHIỂN QUẢN TRỊ</h3>
+    </div>
 
-    <div class="row text-center">
-        <div class="col-md-3 col-6 mb-3">
-            <div class="card p-3 border-primary text-primary">
-                <h5>Hội viên</h5>
-                <h2 class="font-weight-bold">{{ stats.members }}</h2>
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary  h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Hội viên</div>
+                    <div class="h5 mb-0 font-weight-bold ">{{ stats.members }}</div>
+                </div>
             </div>
         </div>
-        <div class="col-md-3 col-6 mb-3">
-            <div class="card p-3 border-success text-success">
-                <h5>Huấn luyện viên</h5>
-                <h2 class="font-weight-bold">{{ stats.coaches }}</h2>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success  h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Huấn luyện viên</div>
+                    <div class="h5 mb-0 font-weight-bold ">{{ stats.coaches }}</div>
+                </div>
             </div>
         </div>
-        <div class="col-md-3 col-6 mb-3">
-            <div class="card p-3 border-warning text-warning">
-                <h5>Gói dịch vụ</h5>
-                <h2 class="font-weight-bold">{{ stats.packages }}</h2>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning  h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Gói dịch vụ</div>
+                    <div class="h5 mb-0 font-weight-bold ">{{ stats.packages }}</div>
+                </div>
             </div>
         </div>
-        <div class="col-md-3 col-6 mb-3">
-            <div class="card p-3 border-danger text-danger">
-                <h5>Doanh thu tháng</h5>
-                <h3 class="font-weight-bold">{{ "{:,.0f}".format(stats.revenue) }}đ</h3>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger  h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Doanh thu tháng</div>
+                    <div class="h5 mb-0 font-weight-bold text-danger">{{ "{:,.0f}".format(stats.revenue) }}đ</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="text-secondary text-center mb-0">Thống kê Gói tập</h5>
+    <div class="row mt-2">
+        <div class="col-lg-7 mb-4">
+            <div class="card ">
+                <div class="card-header py-3 bg-dark">
+                    <h6 class="m-0 font-weight-bold text-white">Thống kê Gói tập</h6>
                 </div>
                 <div class="card-body p-0">
-                    <table class="table table-striped mb-0">
-                        <thead class="thead-dark text-center">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
                             <tr>
                                 <th>Tên gói</th>
-                                <th>Số lượng đăng ký</th>
+                                <th class="text-center">Số lượng</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% if pkg_stats %}
                                 {% for p in pkg_stats %}
                                 <tr>
-                                    <td class="text-center">{{ p[1] }}</td>
-
+                                    <td>{{ p[1] }}</td>
                                     <td class="text-center font-weight-bold text-primary">{{ p[2] }}</td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
-                                <tr><td colspan="2" class="text-center">Chưa có dữ liệu gói tập</td></tr>
+                                <tr><td colspan="2" class="text-center">Chưa có dữ liệu</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
@@ -64,15 +73,13 @@
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="text-secondary text-center mb-0">Tỷ lệ đăng ký</h5>
+        <div class="col-lg-5 mb-4">
+            <div class="card ">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-secondary">Tỷ lệ đăng ký</h6>
                 </div>
                 <div class="card-body">
-                    <div style="width: 80%; margin: 0 auto;">
-                        <canvas id="myChart"></canvas>
-                    </div>
+                    <canvas id="myChart" style="max-height: 250px;"></canvas>
                 </div>
             </div>
         </div>
@@ -81,77 +88,44 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    let labels = [];
-    let data = [];
+    document.addEventListener('DOMContentLoaded', function() {
+        let labels = [];
+        let data = [];
+        {% if pkg_stats %}
+            {% for p in pkg_stats %}
+                labels.push('{{ p[1] }}');
+                data.push({{ p[2] }});
+            {% endfor %}
+        {% endif %}
 
-    {% if pkg_stats %}
-        {% for p in pkg_stats %}
-            // p[1] là Tên, p[2] là Số lượng
-            labels.push('{{ p[1] }}');
-            data.push({{ p[2] }});
-        {% endfor %}
-    {% endif %}
-
-    window.onload = function() {
         const ctx = document.getElementById('myChart').getContext('2d');
         new Chart(ctx, {
-            type: 'doughnut', // Dùng biểu đồ Doughnut cho đẹp
+            type: 'doughnut',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Số lượng',
                     data: data,
-                    backgroundColor: [
-                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
-                        '#858796', '#5a5c69', '#6610f2', '#fd7e14', '#20c997'
-                    ],
-                    hoverOffset: 4,
-                    borderWidth: 1
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
                 }]
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { boxWidth: 12 }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Phân bổ người đăng ký'
-                    }
-                }
-            }
+            options: { maintainAspectRatio: false }
         });
-    }
+    });
 </script>
-
-<style>
-    .card {
-        border-radius: 5px;
-        border-width: 2px;
-        background-color: #fff;
-    }
-    .table th {
-        text-align: center;
-    }
-</style>
-
 {% else %}
 <div class="container d-flex justify-content-center mt-5">
-    <div class="card p-4" style="width: 400px; border: 1px solid #ddd;">
-        <h4 class="text-center mb-3">Đăng nhập Admin</h4>
+    <div class="card p-4" style="width: 400px;">
+        <h4 class="text-center mb-4">Hệ Thống Admin</h4>
         <form method="post" action="/login">
-            <div class="form-group mb-3">
-                <input type="text" class="form-control" name="username" placeholder="Tên đăng nhập" required>
+            <div class="form-group">
+                <input type="text" class="form-control" name="username" placeholder="Tài khoản" required>
             </div>
-            <div class="form-group mb-3">
+            <div class="form-group">
                 <input type="password" class="form-control" name="password" placeholder="Mật khẩu" required>
             </div>
-            <button type="submit" class="btn btn-dark w-100">Đăng nhập</button>
+            <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
         </form>
     </div>
 </div>
 {% endif %}
-
 {% endblock %}

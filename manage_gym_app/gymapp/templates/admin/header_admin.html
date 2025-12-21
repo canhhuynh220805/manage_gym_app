@@ -1,49 +1,51 @@
-<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">GYM WEBSITE</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+        <a class="navbar-brand font-weight-bold" href="/">
+            <i class="fa fa-dumbbell text-warning"></i> GYM SYSTEM
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#adminNavbar">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="collapsibleNavbar">
-            <ul class="navbar-nav me-auto">
+
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin">Dashboard</a>
+                    <a class="nav-link" href="/admin"><i class="fa fa-home"></i> Dashboard</a>
                 </li>
+
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-bs-toggle="dropdown">
-                        Hệ thống
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/admin/user">Tài khoản</a></li>
-                        <li><a class="dropdown-item" href="/admin/member">Hội viên</a></li>
-                        <li><a class="dropdown-item" href="/admin/coach">Huấn luyện viên</a></li>
-                    </ul>
+                    <a class="nav-link dropdown-toggle" href="#" id="sysDrop" data-toggle="dropdown">Hệ thống</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="/admin/user">Tài khoản</a>
+                        <a class="dropdown-item" href="/admin/member">Hội viên</a>
+                        <a class="dropdown-item" href="/admin/coach">Huấn luyện viên</a>
+                    </div>
                 </li>
+
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbardrop2" data-bs-toggle="dropdown">
-                        Dịch vụ
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/admin/package">Gói tập</a></li>
-                        <li><a class="dropdown-item" href="/admin/exercise">Bài tập</a></li>
-                        <li><a class="dropdown-item" href="/admin/regulation">Quy định</a></li>
-                    </ul>
+                    <a class="nav-link dropdown-toggle" href="#" id="servDrop" data-toggle="dropdown">Dịch vụ</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="/admin/package">Gói tập</a>
+                        <a class="dropdown-item" href="/admin/exercise">Bài tập</a>
+                        <a class="dropdown-item" href="/admin/regulation">Quy định</a>
+                    </div>
                 </li>
+
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/statsview">Thống kê</a>
+                    <a class="nav-link" href="/admin/statsview"><i class="fa fa-chart-bar"></i> Thống kê</a>
                 </li>
             </ul>
 
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ml-auto">
                 {% if current_user.is_authenticated %}
                 <li class="nav-item">
-                    <a class="nav-link text-warning" href="#">
-                        <img src="{{ current_user.avatar }}" width="40" height="40" class="rounded-circle" style="object-fit: cover;" />
-                        Chào Admin {{ current_user.username }}!
-                    </a>
+                    <span class="nav-link text-warning">
+                        <img src="{{ current_user.avatar }}" width="30" height="30" class="rounded-circle mr-1" style="object-fit: cover;">
+                        Admin: {{ current_user.username }}
+                    </span>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-info" href="/logout">Đăng xuất</a>
+                    <a class="nav-link text-info" href="/logout"><i class="fa fa-sign-out-alt"></i> Thoát</a>
                 </li>
                 {% endif %}
             </ul>

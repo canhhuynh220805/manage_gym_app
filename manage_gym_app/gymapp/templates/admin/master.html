@@ -2,32 +2,22 @@
 
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_custom.css') }}">
-    <style>
-        /* Ví dụ: Đổi màu thanh navbar sang màu đen của phòng Gym */
-        .navbar-inverse { background-color: #1a1a1a; border: none; }
-        .admin-sidebar { background: #2c3e50; color: white; min-height: 100vh; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 {% endblock %}
 
 {% block page_body %}
-    <div class="container-fluid">
-        <div class="row">
-            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
-                <div class="sidebar-sticky">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin">Dashboard</a>
-                        </li>
-                        </ul>
-                </div>
-            </nav>
+    {% include 'admin/header_admin.html' %}
 
-            <main role="main" class="col-md-10 ml-sm-auto col-lg-10 px-4">
-                {% block body %}
-                    {{ super() }}
-                {% endblock %}
-            </main>
-        </div>
+    <div class="container-fluid admin-content-wrapper">
+        {% block messages %}
+            {{ super() }}
+        {% endblock %}
+        {% block body %}
+            {{ super() }}
+        {% endblock %}
     </div>
+{% endblock %}
+
+{% block tail %}
+    {{ super() }}
 {% endblock %}
