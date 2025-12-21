@@ -107,11 +107,10 @@ class PackageView(AdminView):
         'image': list_img
     }
 
-
 class RegulationView(AdminView):
     column_list = ['name', 'value']
-    can_create = False
-    can_delete = False
+    can_create = True
+    can_delete = True
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-gavel'
 
