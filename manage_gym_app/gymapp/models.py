@@ -98,8 +98,7 @@ class Coach(User):
         'polymorphic_identity': 'trainer',
     }
 
-
-# Tập luyện
+# Tập luyện c5
 
 class Exercise(BaseModel):
     description = Column(String(100), nullable=False)

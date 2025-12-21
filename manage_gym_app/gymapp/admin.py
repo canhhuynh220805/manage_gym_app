@@ -151,7 +151,7 @@ class MyAdminIndexView(AdminIndexView):
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
-admin = Admin(app=app, name="GYM Management", template_mode='bootstrap4', index_view=MyAdminIndexView())
+admin = Admin(app=app, name="GYM Management", template_mode='bootstrap4', index_view=MyAdminIndexView(), base_template='admin/master.html',)
 
 admin.add_view(UserView(User, db.session, name='Tài khoản hệ thống', category='Quản lý người dùng'))
 admin.add_view(MemberView(Member, db.session, name='Hội viên', category='Quản lý người dùng'))

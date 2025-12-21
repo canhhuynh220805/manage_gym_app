@@ -13,7 +13,7 @@ from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPack
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text, func, extract
-from states import get_invoice_state
+from gymapp.states import get_invoice_state
 
 
 
@@ -261,14 +261,24 @@ def calculate_package_dates(member_id, duration_months):
 
 def process_pending_invoice(invoice_id):
     is_valid, result = validate_cashier(invoice_id)
+
     if not is_valid:
+        if result == "Hóa đơn đã quá hạn thanh toán":
+            try:
+                inv = db.session.get(Invoice, invoice_id)
+                if inv:
+                    inv.status = StatusInvoice.FAILED
+                    db.session.commit()
+                    return False, "Hóa đơn này đã quá hạn 7 ngày"
+            except Exception as ex:
+                db.session.rollback()
+                return False, f"Lỗi khi tự động hủy đơn quá hạn: {str(ex)}"
         return False, result
 
     inv = result
     try:
         state = get_invoice_state(inv)
         success, msg = state.pay(calculate_date=calculate_package_dates)
-
         if success:
             db.session.commit()
         return success, msg
@@ -287,11 +297,8 @@ def add_member_package_and_pay(member_id, package_id):
 
             s, e = calculate_package_dates(member_id, p.duration)
 
-            mp = MemberPackage(member_id=u.id, package_id=p.id,
-                               startDate=s, endDate=e,
-                               status=StatusPackage.ACTIVE)
+            mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
             db.session.add(mp)
-
             inv = Invoice(member_id=u.id, total_amount=p.price,
                           status=StatusInvoice.PAID, payment_date=datetime.now())
             db.session.add(inv)
@@ -359,8 +366,6 @@ def assign_coach(coach_id, package_id):
         db.session.rollback()
         return None
 
-
-
 # RECEPTIONIST
 def get_members_for_receptionist(kw=None, page=1):
     # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)
@@ -409,7 +414,6 @@ def assign_coach(coach_id, package_id):
 def validate_cashier(invoice_id):
     if not invoice_id:
         return False, "Mã hóa đơn không được để trống"
-
     inv = db.session.query(Invoice).filter(Invoice.id == invoice_id).with_for_update().first() #pessimistic locking
     if not inv:
         return False, f"Hóa đơn mã {invoice_id} không tồn tại trong hệ thống"
@@ -428,8 +432,6 @@ def validate_cashier(invoice_id):
         expired_date = inv.invoice_day_create + timedelta(days = expired_day)
         if datetime.now() > expired_date:
             return False, "Hóa đơn đã quá hạn thanh toán"
-
-
     return True, inv
 
 def send_mail(member_id, package_id):
