@@ -68,6 +68,7 @@ class User(BaseModel, UserMixin):
     join_date = Column(DateTime, default=datetime.now)
     dob = Column(DateTime, nullable=True)
     phone = Column(String(20), nullable=True)
+    email = Column(String(100),nullable=True)
     gender = Column(Enum(Gender), default=Gender.MALE)
 
     type = Column(String(50), nullable=False)

@@ -1,10 +1,12 @@
 import hashlib
 from datetime import datetime, timedelta
+from flask_mail import Message
+
 from sqlalchemy.orm import joinedload
 import cloudinary
 from flask_login import current_user
 from cloudinary import uploader  # them uploader de up anh luc dang ki
-from gymapp import db, app
+from gymapp import db, app, mail
 from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPackage,
                            StatusInvoice, StatusPackage, Package, ExerciseSchedule, DayOfWeek,
                            PlanDetail, WorkoutPlan, PackageBenefit, Coach)
@@ -12,6 +14,7 @@ from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPack
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text, func, extract
 from states import get_invoice_state
+
 
 
 def get_user_by_id(id):
@@ -47,10 +50,10 @@ def stats_package_usage():
             .group_by(Package.id, Package.name)
             .order_by(Package.id).all())
 
-def add_member_full_info(name, username, password, avatar,phone,gender,dob):
+def add_member_full_info(name, username, password, avatar,phone,gender,dob, email):
     u = Member(name=name,
                username=username.strip(),
-               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()),phone=phone,gender=gender,dob=dob)
+               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()),phone=phone,gender=gender,dob=dob,email=email)
 
     if avatar:
         res = cloudinary.uploader.upload(avatar)
@@ -60,10 +63,10 @@ def add_member_full_info(name, username, password, avatar,phone,gender,dob):
     db.session.commit()
     return u
 
-def add_member(name, username, password, avatar):
+def add_member(name, username, password, email, avatar):
     u = Member(name=name,
                username=username.strip(),
-               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()))
+               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()),email = email)
 
     if avatar:
         res = cloudinary.uploader.upload(avatar)
@@ -429,7 +432,16 @@ def validate_cashier(invoice_id):
 
     return True, inv
 
+def send_mail(member_id, package_id):
+    member = User.query.get(member_id)
+    package = Package.query.get(package_id)
 
+    msg = Message("Email xác nhận đăng kí thành công", recipients=[member.email])
+    formatted_price = "{:,.0f}".format(package.price)
+
+    msg.body = (f"Chào {member.name}, bạn đã đăng kí thành công gói {package.name}!\n" 
+                f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
+    mail.send(msg)
 
 # if __name__ == '__main__':
 #     with app.app_context():
