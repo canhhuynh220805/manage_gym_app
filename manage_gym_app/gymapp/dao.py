@@ -9,7 +9,7 @@ from cloudinary import uploader  # them uploader de up anh luc dang ki
 from gymapp import db, app, mail
 from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPackage,
                            StatusInvoice, StatusPackage, Package, ExerciseSchedule, DayOfWeek,
-                           PlanDetail, WorkoutPlan, PackageBenefit, Coach, PlanAssignment)
+                           PlanDetail, WorkoutPlan, PackageBenefit, Coach, PlanAssignment, Regulation)
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text, func, extract
@@ -500,6 +500,12 @@ def active_member_stats(kw=None):
     if kw:
         query = query.filter(Package.name.contains(kw))
     return query.group_by(Package.id, Package.name).all()
+
+def count_active_members():
+    return MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE).count()
+
+def get_gym_rules():
+    return Regulation.query.filter(Regulation.code.like('GYM_RULE_%')).all()
 
 if __name__ == '__main__':
     with app.app_context():
