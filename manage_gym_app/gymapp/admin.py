@@ -126,16 +126,38 @@ class LogoutView(BaseView):
     def is_accessible(self) -> bool:
         return current_user.is_authenticated
 
-class StatsView(BaseView):
-    menu_icon_type = 'fa'
-    menu_icon_value = 'fa-chart-pie'
+class StatsRevenueViewByMonth(BaseView):
     @expose('/')
     def index(self):
-        return self.render('admin/stats.html')
+        revenue_times = dao.stats_revenue_by_month("month")
+        stats = [0] * 12
+        for sm in revenue_times:
+            stats[int(sm[0]) - 1] = float(sm[1])
+
+        revenue_quarters = dao.stats_by_quarter()
+        stats_quarters = [0] * 4
+        for sq in revenue_quarters:
+            stats_quarters[int(sq[0]) - 1] = float(sq[1])
+
+        return self.render('admin/stats_revenue_by_month.html', revenue_times=stats, quarterly_stats=stats_quarters)
 
     def is_accessible(self) -> bool:
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
+class StatsMemberViewByMonth(BaseView):
+    @expose('/')
+    def index(self):
+
+        members = dao.count_members_by_time()
+        member_stats = [0] * 12
+        for m in members:
+            member_stats[int(m[0]) - 1] = m[1]
+
+        return self.render('admin/stats_member_by_month.html',
+                           member_stats=member_stats)
+
+    def is_accessible(self) -> bool:
+        return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
 class MyAdminIndexView(AdminIndexView):
     @expose('/')
@@ -146,7 +168,7 @@ class MyAdminIndexView(AdminIndexView):
             'packages': dao.count_packages(),
             'revenue': dao.get_total_revenue_month()
         }
-        pkg_stats = dao.stats_package_usage()
+        pkg_stats = dao.stats_revenue_package_usage()
         return self.render('admin/index.html', stats=cards_stats,pkg_stats=pkg_stats)
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
@@ -159,5 +181,6 @@ admin.add_view(CoachView(Coach, db.session, name='Huấn luyện viên', categor
 admin.add_view(ExerciseView(Exercise, db.session, name='Bài tập'))
 admin.add_view(PackageView(Package, db.session, name='Gói dịch vụ'))
 admin.add_view(RegulationView(Regulation, db.session, name='Quy định'))
-admin.add_view(StatsView(name='Thống kê'))
+admin.add_view(StatsRevenueViewByMonth(name='Thống kê doanh thu theo tháng'))
+admin.add_view(StatsMemberViewByMonth(name='Thống kê hội viên theo tháng'))
 admin.add_view(LogoutView(name='Đăng xuất'))

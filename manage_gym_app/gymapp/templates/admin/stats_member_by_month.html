@@ -1,0 +1,100 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="mb-4 bg-white p-3 shadow-sm rounded border-left-success">
+        <h3 class="text-secondary font-weight-bold mb-0">
+            <i class="fa fa-users text-success"></i> XU HƯỚNG GIA TĂNG HỘI VIÊN NĂM {{ datetime.now().year if datetime else 2025 }}
+        </h3>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Tổng hội viên mới năm nay
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ member_stats|sum }} Người</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Trung bình đăng ký mỗi tháng
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ ((member_stats|sum) / 12) | round | int }} Người/Tháng
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-dark d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-white text-uppercase">Biểu đồ tăng trưởng hội viên</h6>
+                    <span class="badge badge-success">Dữ liệu hệ thống</span>
+                </div>
+                <div class="card-body">
+                    <div style="height: 450px;">
+                        <canvas id="memberChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('memberChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+                         'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
+                datasets: [{
+                    label: 'Số lượng hội viên',
+                    data: {{ member_stats | tojson }},
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            stepSize: 1,
+                            padding: 10
+                        }
+                    }]
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

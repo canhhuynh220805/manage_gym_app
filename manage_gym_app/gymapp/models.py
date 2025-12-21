@@ -192,7 +192,7 @@ if __name__ == '__main__':
     from dateutil.relativedelta import relativedelta
 
     with app.app_context():
-        # db.create_all()
+        db.create_all()
         # u = User(name='admin', username='admin', password = str(hashlib.md5("1".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
         #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
         # db.session.add(u)

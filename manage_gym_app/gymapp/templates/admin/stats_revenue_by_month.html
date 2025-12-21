@@ -1,0 +1,163 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 shadow-sm rounded border-left-primary">
+        <h3 class="text-secondary font-weight-bold mb-0">
+            <i class="fa fa-chart-bar text-primary"></i> DOANH THU PHÒNG GYM NĂM {{ datetime.now().year if datetime else 2025 }}
+        </h3>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tháng cao điểm nhất</div>
+                            <div id="maxMonthText" class="h5 mb-0 font-weight-bold text-gray-800">...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Tổng doanh thu năm</div>
+                            <div class="h5 mb-0 font-weight-bold text-danger">
+                                {{ "{:,.0f}".format(revenue_times|sum) }}đ
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Trung bình tháng</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ "{:,.0f}".format((revenue_times|sum) / 12) }}đ
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-bar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-dark d-flex justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-white text-uppercase">Biểu đồ doanh thu 12 tháng</h6>
+                    <small class="text-white-50">Đơn vị: VNĐ</small>
+                </div>
+                <div class="card-body">
+                    <div style="height: 350px;">
+                        <canvas id="monthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-primary">
+                    <h6 class="m-0 font-weight-bold text-white text-uppercase">Bảng doanh thu Quý</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0 text-center">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Quý</th>
+                                <th>Doanh thu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if quarterly_stats %}
+                                {% for q_val in quarterly_stats %}
+                                <tr>
+                                    <td class="font-weight-bold py-3">Quý {{ loop.index }}</td>
+                                    <td class="text-right pr-4 font-weight-bold text-primary py-3">
+                                        {{ "{:,.0f}".format(q_val) }}đ
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="2" class="text-muted py-4">Chưa có dữ liệu Quý</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                        <tfoot class="bg-light">
+                            <tr>
+                                <th class="py-3">TỔNG NĂM</th>
+                                <th class="text-right pr-4 text-danger font-weight-bold py-3">
+                                    {{ "{:,.0f}".format(revenue_times|sum) }}đ
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const revenueData = {{ revenue_times | tojson }};
+        const ctx = document.getElementById('monthChart').getContext('2d');
+
+        const maxVal = Math.max(...revenueData);
+        if (maxVal > 0) {
+            const maxMonth = revenueData.indexOf(maxVal) + 1;
+            document.getElementById('maxMonthText').innerText = "Tháng " + maxMonth + " (" + maxVal.toLocaleString() + "đ)";
+        } else {
+            document.getElementById('maxMonthText').innerText = "Chưa có dữ liệu";
+        }
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+                datasets: [{
+                    label: 'Doanh thu tháng',
+                    data: revenueData,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                legend: { display: true, position: 'top' },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            callback: (value) => value.toLocaleString() + 'đ'
+                        }
+                    }]
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
