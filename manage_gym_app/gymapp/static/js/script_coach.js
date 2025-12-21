@@ -66,31 +66,35 @@ function openListExercise(){
     listExercise.classList.remove("d-none")
 }
 
-
-function togglePlan(checkbox, id, name, description, image) {
+function togglePlan(checkbox, id, name) {
     if (checkbox.checked) {
-        addToPlan(id, name, description, image);
+        addToPlan(id, name);
     } else {
         removeFromPlan(id);
     }
 }
 
-function addToPlan(id, name, description, image){
+function addToPlan(id, name){
     fetch('/api/workout-exercises',{
         method: "post",
         body: JSON.stringify({
             'id': id,
             'name': name,
-            'description': description,
-            'image': image
         }),
         headers: {
             "Content-Type": "application/json"
         }
     }).then(res => res.json()).then(data => {
-        console.log(data)
-        renderTable(data)
-    })
+        if(data.status == 200){
+            showToast(data.msg, "success")
+            renderTable(data.data)
+        }
+        else
+            showToast(data.err_msg, "danger")
+    }).catch(err => {
+        console.error(err);
+        showToast("Đã có lỗi hệ thống xảy ra!", 'danger');
+    });
 }
 
 function renderTable(data){
@@ -101,7 +105,8 @@ function renderTable(data){
     for(let ex of data){
         let dayOptions = "";
         for (let d of days) {
-            dayOptions += `<option value="${d}">${d}</option>`;
+            const isSelected = (ex.days && ex.days.includes(d)) ? "selected" : "";
+            dayOptions += `<option value="${d}" ${isSelected}>${d}</option>`;
         }
         tbody.innerHTML += `
         <tr>
@@ -124,15 +129,31 @@ function renderTable(data){
 }
 
 function removeFromPlan(id){
-    const cb = document.getElementById(`cb-${id}`);
-    if (cb) {
-        cb.checked = false;
-    }
-    fetch(`/api/workout-exercises/${id}`, {
-        method: "delete"
-    })
-    .then(res => res.json())
-    .then(data => renderTable(data));
+    showConfirmDialog(
+        "Xóa bài tập",
+        "Bạn xác nhận xóa bài tập này khỏi danh sách tạm",
+         function(){
+            const cb = document.getElementById(`cb-${id}`);
+            if (cb) {
+                cb.checked = false;
+            }
+            fetch(`/api/workout-exercises/${id}`, {
+                method: "delete"
+            })
+            .then(res => res.json()).then(data => {
+                if(data.status == 200){
+                    showToast(data.msg, "success")
+                    renderTable(data.data)
+                }else{
+                    showToast(data.err_msg, 'danger')
+                    cb.checked = true
+                }
+            }).catch(err => {
+                console.error(err);
+                showToast("Đã có lỗi hệ thống xảy ra!", 'danger');
+            });
+        }
+    )
 }
 
 function updateExercise(id, obj){
@@ -148,40 +169,68 @@ function updateExercise(id, obj){
             "Content-type": "application/json"
         },
         body: JSON.stringify({ sets, reps , days})
-    }).then(res => res.json())
+    }).then(res => res.json()).then(data => {
+        if(data.status == 200){
+            showToast(data.msg, "success")
+        }
+        else{
+            showToast(data.err_msg, 'danger')
+        }
+    }).catch(err => {
+        console.error(err);
+        showToast("Đã có lỗi hệ thống xảy ra!", 'danger');
+    });
 }
 
 function createWorkoutPlan(){
-    if(confirm("Bạn có chắc chắn là tạo kế hoạch này") === true){
-        const namePlan = document.getElementById("name-plan").value
+    showConfirmDialog(
+        "Xác nhận tạo kế hoạch",
+        "Bạn có chắc chắn muốn tạo kế hoạch này!!",
+        function(){
+            const namePlan = document.getElementById("name-plan").value
 
-        const selectedDivs = document.querySelectorAll("#assigned-member div[data-id]");
-        const memberIds = Array.from(selectedDivs).map(div => div.dataset.id);
+            const startDate = new Date(document.getElementById("start-date").value);
+            const endDate   = new Date(document.getElementById("end-date").value);
 
-        if(!namePlan){
-            alert("Vui lòng nhập tên kế hoạch!");
-            return;
-        }
-
-        fetch('/api/workout-plans', {
-            method: 'post',
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "name-plan": namePlan,
-                "member_ids": memberIds
-            })
-        }).then(res => res.json()).then(data => {
-            if (data.status === 200) {
-                alert("Lưu thành công!");
-                location.reload();
-            } else {
-                alert("Lỗi: " + data.err_msg);
+            if (startDate >= endDate) {
+                showToast("Ngày bắt đầu phải nhỏ hơn ngày kết thúc", "danger");
             }
-        })
 
-    }
+            const selectedDivs = document.querySelectorAll("#assigned-member div[data-id]");
+            const memberIds = Array.from(selectedDivs).map(div => div.dataset.id);
+
+            if (memberIds.length > 0 && !startDate) {
+                showToast("Vui lòng chọn ngày bắt đầu cho hội viên!", "danger");
+                return;
+            }
+
+            fetch('/api/workout-plans', {
+                method: 'post',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "name-plan": namePlan,
+                    "member_ids": memberIds,
+                    "startDate": startDate,
+                    "endDate": endDate
+                })
+            }).then(res => res.json()).then(data => {
+                if(data.status == 200){
+                    showToast(data.msg, "success")
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                }
+                else{
+                    showToast(data.err_msg, "danger")
+                }
+            }).catch(err => {
+                console.error(err);
+                showToast("Đã có lỗi hệ thống xảy ra!", 'danger');
+            });
+        }
+    )
 }
 
 function searchExercise(){
@@ -198,26 +247,39 @@ function searchExercise(){
     }
 }
 
-function assignPlanToMember(plan_id, member_id){
-    if(confirm("Bạn muốn gán kế hoạch này cho hội viên?") === true){
-        fetch('/api/assign-existing-plan', {
-            method: 'post',
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "plan_id": plan_id,
-                "member_id": member_id
-            })
-        }).then(res => res.json()).then(data =>{
-            if(data.status == 200){
-               alert(data.msg);
-               location.reload();
-            }
-            else{
-                alert(data.err_msg);
-            }
-        });
+function assignPlanToMember(plan_id, member_id, prefix = ''){
+    const startDate = document.getElementById(prefix + "start_date_" + plan_id).value
+    const endDate = document.getElementById(prefix + "end_date_" + plan_id).value
 
-    }
+    showConfirmDialog(
+        "Xác nhận gán kế hoạch",
+        "Bạn có chắc chắn muốn gán kế hoạch này??",
+        function(){
+            fetch('/api/assign-existing-plan', {
+                method: 'post',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "plan_id": plan_id,
+                    "member_id": member_id,
+                    "start_date": startDate,
+                    "end_date": endDate
+                })
+            }).then(res => res.json()).then(data =>{
+                if(data.status == 200){
+                   showToast(data.msg, "success")
+                   setTimeout(() => {
+                        location.reload();
+                   }, 1500);
+                }
+                else{
+                    showToast(data.err_msg, "danger")
+                }
+            }).catch(err => {
+                console.error(err);
+                showToast("Đã có lỗi hệ thống xảy ra!", 'danger');
+            });
+        }
+    )
 }

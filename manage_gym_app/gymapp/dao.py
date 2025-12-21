@@ -7,7 +7,7 @@ from cloudinary import uploader  # them uploader de up anh luc dang ki
 from gymapp import db, app
 from gymapp.models import (User, Member, UserRole, Exercise, Invoice, InvoiceDetail, MemberPackage,
                            StatusInvoice, StatusPackage, Package, ExerciseSchedule, DayOfWeek,
-                           PlanDetail, WorkoutPlan, PackageBenefit, Coach)
+                           PlanDetail, WorkoutPlan, PackageBenefit, Coach, PlanAssignment)
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text, func, extract
@@ -75,6 +75,17 @@ def add_member(name, username, password, avatar):
     db.session.add(u)
     db.session.commit()
 
+def get_workout_plan_by_member_id(member_id):
+    return (db.session.query(PlanAssignment) \
+            .join(MemberPackage, MemberPackage.id == PlanAssignment.member_package_id) \
+            .filter(MemberPackage.member_id == member_id)\
+            .order_by(PlanAssignment.start_date.desc())\
+            .all())
+def get_workout_plan_by_coach_id(coach_id):
+    return WorkoutPlan.query.filter(WorkoutPlan.coach_id == coach_id).all()
+
+def get_detail_workout_plan_by_id(workout_plan_id):
+    return WorkoutPlan.query.get(workout_plan_id)
 
 def load_package():
     query = Package.query.all()
@@ -159,7 +170,7 @@ def get_all_exercises():
 
 
 def get_all_day_of_week():
-    return [e.name for e in DayOfWeek]
+    return [e.value for e in DayOfWeek]
 
 
 def get_active_packages(coach_id, member_ids):
@@ -180,34 +191,63 @@ def has_plan_assigned(coach_id, member_id):
     return False
 
 
-def assign_existing_plan(coach_id, member_id, plan_id):
+def get_latest_assignment_end_date(member_id):
+    latest_assignment = (db.session.query(PlanAssignment)
+                         .join(MemberPackage, MemberPackage.id == PlanAssignment.member_package_id)
+                         .filter(MemberPackage.member_id == member_id)
+                         .order_by(PlanAssignment.end_date.desc())
+                         .first())
+
+    if latest_assignment:
+        return latest_assignment.end_date
+    return None
+
+def assign_existing_plan(coach_id, member_id, plan_id, start_date, end_date):
     plan = WorkoutPlan.query.get(plan_id)
 
     if plan and plan.coach_id == coach_id:
         packages = get_active_packages(coach_id, [member_id])
-        if packages:
-            plan.member_packages.extend(packages)
-            db.session.commit()
-            return True
+        if not packages:
+            return False
+        for pkg in packages:
+            assignment = PlanAssignment(
+                workout_plan=plan,
+                member_package=pkg,
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+            db.session.add(assignment)
+        db.session.commit()
+        return True
 
     return False
 
 
-def add_workout_plan(name, plan, member_ids):
+def add_workout_plan(name, plan, member_ids, start_date=None, end_date=None):
     if plan:
         p = WorkoutPlan(name=name, coach=current_user)
         db.session.add(p)
 
-        if member_ids:
+        if member_ids and start_date:
             packages = get_active_packages(coach_id=current_user.id, member_ids=member_ids)
-            p.member_packages.extend(packages)
+            for pkg in packages:
+                assignment = PlanAssignment(
+                    workout_plan = p,
+                    member_package = pkg,
+                    start_date=start_date,
+                    end_date=end_date
+                )
+
+                db.session.add(assignment)
+
 
         for ex in plan.values():
             pd = PlanDetail(exercise_id=ex['id'], reps=ex['reps'], sets=ex['sets'], workout_plan=p)
             db.session.add(pd)
 
             for day in ex['days']:
-                day_enum = DayOfWeek[day]
+                day_enum = DayOfWeek(day)
                 d = ExerciseSchedule(
                     day=day_enum,
                     plan_detail=pd
@@ -313,7 +353,7 @@ def add_package_registration(user_id, package_id):
             invoice = Invoice(member_id=u.id, total_amount=p.price, status=StatusInvoice.PENDING,invoice_day_create=datetime.now())
             db.session.add(invoice)
 
-            d = InvoiceDetail(invoice=invoice, member_package=mp, amount=p.price)
+            d = InvoiceDetail(invoice=invoice, member_packages=mp, amount=p.price)
             db.session.add(d)
 
             db.session.commit()
@@ -334,7 +374,7 @@ def process_pending_invoice(invoice_id):
             inv.payment_date = datetime.now()
 
             for d in inv.invoice_details:
-                mp = d.member_package
+                mp = d.member_packages
                 s, e = calculate_package_dates(mp.member_id, mp.package.duration)
 
                 mp.startDate = s
@@ -370,7 +410,7 @@ def add_member_package_and_pay(member_id, package_id):
                           status=StatusInvoice.PAID, payment_date=datetime.now())
             db.session.add(inv)
 
-            d = InvoiceDetail(invoice=inv, member_package=mp, amount=p.price)
+            d = InvoiceDetail(invoice=inv, member_packages=mp, amount=p.price)
             db.session.add(d)
 
             db.session.commit()
@@ -380,45 +420,6 @@ def add_member_package_and_pay(member_id, package_id):
             db.session.rollback()
             return None
     return None
-#RECEPTIONIST
-def get_members_for_receptionist(kw=None, page=1):
-    # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)
-    query = MemberPackage.query.join(MemberPackage.member)\
-        .options(joinedload(MemberPackage.member))\
-        .options(joinedload(MemberPackage.coach)) \
-        .options(joinedload(MemberPackage.package))\
-        .filter(MemberPackage.status == StatusPackage.ACTIVE)
-
-    if kw:
-        query = query.filter(Member.name.contains(kw))
-    if page:
-        start = (page - 1) * app.config['MEMBER_RECEP']
-        query = query.slice(start, start + app.config['MEMBER_RECEP'])
-
-    return query.all()
-
-def count_members_for_receptionist():
-    return MemberPackage.query\
-        .options(joinedload(MemberPackage.member))\
-        .options(joinedload(MemberPackage.coach)) \
-        .options(joinedload(MemberPackage.package)).count()
-
-def get_all_coach():
-    return Coach.query.all()
-
-def assign_coach(coach_id, package_id):
-    coach = Coach.query.get(coach_id)
-    package = MemberPackage.query.get(package_id)
-    if not package or not coach:
-        return None
-    package.coach = coach
-    try:
-        db.session.commit()
-        return package
-    except Exception as ex:
-        print(f"Lỗi khi gán HLV: {str(ex)}")
-        db.session.rollback()
-        return None
 
 
 
@@ -466,14 +467,15 @@ def assign_coach(coach_id, package_id):
         return None
 
 
-# if __name__ == '__main__':
-#     with app.app_context():
-#         u_id = 1
-#         p_id = 1
-#
-#         success, msg = add_package_registration(u_id, p_id)
-#
-#         if success:
-#             print(f"{msg}")
-#         else:
-#             print(f" Lỗi: {msg}")
+if __name__ == '__main__':
+    with app.app_context():
+        # u_id = 1
+        # p_id = 1
+        #
+        # success, msg = add_package_registration(u_id, p_id)
+        #
+        # if success:
+        #     print(f"{msg}")
+        # else:
+        #     print(f" Lỗi: {msg}")
+        pass

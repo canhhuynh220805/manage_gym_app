@@ -6,11 +6,38 @@
 
 {% block content %}
 <section class="container mt-5">
-<div class=" d-flex flex-column justify-content-center align-items-center">
-    <h1>TRANG CHỦ HUẤN LUYỆN VIÊN</h1>
-    <h2>Chào mừng HLV {{current_user.name}}</h2>
-</div>
-
-
+    <div class=" d-flex flex-column justify-content-center align-items-center">
+        <h1>TRANG CHỦ HUẤN LUYỆN VIÊN</h1>
+        <h2>Chào mừng HLV {{current_user.name}}</h2>
+        <div class="d-flex align-item-center mt-2">
+            <h2 class="mb-0">Danh sách kế hoạch</h2>
+        </div>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; width: 100%">
+            {% if workout_plans %}
+            <table class="table mt-2">
+                <thead>
+                <th style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 1;">STT</th>
+                <th style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 1;">Tên kế hoạch</th>
+                <th style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 1;">Chức năng</th>
+                </thead>
+                <tbody id="exercise-table-body">
+                {% for workout in workout_plans %}
+                <tr>
+                    <td class="align-middle"><h4>{{loop.index}}</h4></td>
+                    <td class="align-middle"><h4>{{workout.name}}</h4></td>
+                    <td class="align-middle"><a class="btn btn-primary"
+                                                href="{{url_for('workout_plan_detail', plan_id=workout.id)}}">Xem chi
+                        tiết</a></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <strong><h1 class=" d-flex flex-column justify-content-center align-items-center">KHÔNG CÓ KẾ HOẠCH TẬP
+                LUYỆN</h1>
+            </strong>
+            {% endif %}
+        </div>
+    </div>
 </section>
 {% endblock %}

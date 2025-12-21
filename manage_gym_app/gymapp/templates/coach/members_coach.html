@@ -55,18 +55,80 @@
                         <button class="btn btn-success btn-sm w-100 py-0 disabled" style="opacity: 0.8;">
                             <i class="fas fa-check-circle"></i> Đã có KH
                         </button>
+                        <div class="btn-group w-100 dropup">
+                            <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle py-0"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-list"></i> Thêm kế hoạch mới
+                            </button>
+
+                            <ul class="dropdown-menu shadow">
+                                {% if plans %}
+                                {% for p in plans %}
+                                <li>
+                                    <button class="dropdown-item" type="button"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#createModal{{ p.id }}"> {{ p.name }}
+                                    </button>
+                                </li>
+                                {% endfor %}
+                                {% else %}
+                                <li><span class="dropdown-item text-muted">Chưa có kế hoạch nào</span></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        {% if plans %}
+                        {% for p in plans %}
+                        <div class="modal fade" id="createModal{{ p.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content border-success">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Thêm mới kế hoạch: {{ p.name }}</h5>
+                                        <button type="button" class="btn-close"
+                                                data-bs-dismiss="modal"></button>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Ngày bắt đầu</label>
+                                            <input type="date" id="new_start_date_{{ p.id }}"
+                                                   class="form-control">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Ngày kết thúc</label>
+                                            <input type="date" id="new_end_date_{{ p.id }}"
+                                                   class="form-control">
+                                        </div>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            Hủy
+                                        </button>
+
+                                        <button type="button" class="btn btn-success"
+                                                onclick="assignPlanToMember('{{ p.id }}', '{{ m.id }}', 'new_')">
+                                            <i class="fas fa-plus"></i> Thêm kế hoạch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
                         {% else %}
                         <div class="btn-group w-100 dropup">
                             <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle py-0"
                                     data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-list"></i> Gán có sẵn
                             </button>
-                            <ul class="dropdown-menu shadow">
+                            <ul class="dropdown-menu shadow" style="max-height: 300px; overflow-y: auto;">
                                 {% if plans %}
                                 {% for p in plans %}
                                 <li>
                                     <button class="dropdown-item" type="button"
-                                            onclick="assignPlanToMember('{{ p.id }}', '{{ m.id }}')">
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#assignModal{{ p.id }}">
                                         {{ p.name }}
                                     </button>
                                 </li>
@@ -76,6 +138,42 @@
                                 {% endif %}
                             </ul>
                         </div>
+
+
+                        {% if plans %}
+                        {% for p in plans %}
+                        <div class="modal fade" id="assignModal{{ p.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Gán giáo án: {{ p.name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Ngày bắt đầu</label>
+                                            <input type="date" id="start_date_{{ p.id }}" class="form-control">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Ngày kết thúc</label>
+                                            <input type="date" id="end_date_{{ p.id }}" class="form-control">
+                                        </div>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy
+                                        </button>
+                                        <button type="button" class="btn btn-primary"
+                                                onclick="assignPlanToMember('{{ p.id }}', '{{ m.id }}')">
+                                            Xác nhận gán
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
                         <a href="{{ url_for('workout_plans_create') }}"
                            class="btn btn-outline-primary btn-sm w-100 py-0">
                             <i class="fas fa-plus"></i> Tạo kế hoạch mới

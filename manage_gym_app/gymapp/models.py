@@ -24,27 +24,30 @@ class Regulation(BaseModel):
     def __str__(self):
         return self.code
 
-#trạng thái hóa đơn
+
+# trạng thái hóa đơn
 class StatusInvoice(enum.Enum):
     PENDING = 0
     PAID = 1
     FAILED = 2
 
-#trạng thái gói tập
+
+# trạng thái gói tập
 class StatusPackage(enum.Enum):
     ACTIVE = 1
     EXPIRED = 0
     PENDING = 2
 
+
 # Ngày trong tuần
 class DayOfWeek(enum.Enum):
-    MONDAY = "Monday"
-    TUESDAY = "Tuesday"
-    WEDNESDAY = "Wednesday"
-    THURSDAY = "Thursday"
-    FRIDAY = "Friday"
-    SATURDAY = "Saturday"
-    SUNDAY = "Sunday"
+    MONDAY = "Thứ 2"
+    TUESDAY = "Thứ 3"
+    WEDNESDAY = "Thứ 4"
+    THURSDAY = "Thứ 5"
+    FRIDAY = "Thứ 6"
+    SATURDAY = "Thứ 7"
+    SUNDAY = "Chủ nhật"
 
 
 # Người dùng
@@ -55,10 +58,12 @@ class UserRole(enum.Enum):
     RECEPTIONIST = 4
     CASHIER = 5
 
-#Giới tính
+
+# Giới tính
 class Gender(enum.Enum):
     MALE = 0
     FEMALE = 1
+
 
 class User(BaseModel, UserMixin):
     avatar = Column(String(150))
@@ -105,17 +110,22 @@ class Exercise(BaseModel):
     image = Column(String(150), nullable=False)
     workout_plans = relationship('PlanDetail', backref='exercise')
 
+
 class WorkoutPlan(BaseModel):
     exercises = relationship('PlanDetail', backref='workout_plan', cascade='all, delete-orphan', lazy=True)
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=False)
+    member_packages = relationship('PlanAssignment', backref='workout_plan', lazy=True)
+
+    def __str__(self):
+        return self.name
+
 
 class PlanDetail(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
-    workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id), nullable= False)
-    exercise_id = Column(Integer, ForeignKey(Exercise.id), nullable= False)
+    workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id), nullable=False)
+    exercise_id = Column(Integer, ForeignKey(Exercise.id), nullable=False)
     reps = Column(Integer, nullable=False)
     sets = Column(Integer, nullable=False)
-    note = Column(String(100), nullable=True)
     exercise_schedules = relationship('ExerciseSchedule', backref='plan_detail', lazy=True,
                                       cascade='all, delete-orphan')
 
@@ -127,39 +137,43 @@ class ExerciseSchedule(db.Model):
     day = Column(Enum(DayOfWeek), nullable=False)
 
 
-#Hóa đơn, gói tập
-package_plan_assignment = db.Table('package_plan_assignment',
-                                   Column('workout_plan_id', Integer, ForeignKey(WorkoutPlan.id), nullable=False),
-                                   Column('member_package_id', Integer, ForeignKey('member_package.id'), nullable=False))
+class PlanAssignment(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    workout_plan_id = Column(Integer, ForeignKey(WorkoutPlan.id), nullable=False)
+    member_package_id = Column(Integer, ForeignKey('member_package.id'), nullable=False)
+
+    start_date = Column(DateTime, default=datetime.now())
+    end_date = Column(DateTime, nullable=True)
+
 
 class Package(BaseModel):
     duration = Column(Integer, nullable=False)
     price = Column(Double, nullable=False)
     description = Column(Text, nullable=False)
-    members = relationship('MemberPackage', backref='package', lazy=True, cascade="all, delete-orphan") #Co the dung is_active de xoa an toan hon
+    members = relationship('MemberPackage', backref='package', lazy=True,
+                           cascade="all, delete-orphan")  # Co the dung is_active de xoa an toan hon
     benefits = db.relationship("PackageBenefit", backref="package", lazy=True, cascade="all, delete-orphan")
-    image =Column(String(100))
+    image = Column(String(100))
+
 
 class PackageBenefit(BaseModel):
     detail = Column(Text, nullable=True)
-    package_id = db.Column(db.Integer,db.ForeignKey(Package.id),nullable=False)
+    package_id = db.Column(db.Integer, db.ForeignKey(Package.id), nullable=False)
+
 
 class MemberPackage(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     member_id = Column(Integer, ForeignKey(Member.id), nullable=False)
     package_id = Column(Integer, ForeignKey(Package.id), nullable=False)
 
-    startDate = Column(DateTime, nullable=True)#CHO PHÉP NULLABLE NGÀY ĐĂNG KÍ
-    endDate = Column(DateTime, nullable=True)#CHO PHÉP NULLABLE NGÀY HẾT HẠN
+    startDate = Column(DateTime, nullable=True)  # CHO PHÉP NULLABLE NGÀY ĐĂNG KÍ
+    endDate = Column(DateTime, nullable=True)  # CHO PHÉP NULLABLE NGÀY HẾT HẠN
     status = Column(Enum(StatusPackage), default=StatusPackage.ACTIVE)
 
     coach_id = Column(Integer, ForeignKey(Coach.id), nullable=True)
-    workout_plans = relationship(WorkoutPlan, secondary=package_plan_assignment, lazy='subquery',
-                                 backref=backref('member_package', lazy=True))
-    invoice_details = relationship('InvoiceDetail', backref='member_package', lazy=True)
-
-
-
+    workout_plans = relationship(PlanAssignment, lazy='subquery', backref='member_package')
+    invoice_details = relationship('InvoiceDetail', backref='member_packages', lazy=True)
 
 
 class Invoice(db.Model):
@@ -167,10 +181,11 @@ class Invoice(db.Model):
     member_id = Column(Integer, ForeignKey(Member.id), nullable=False)
     status = Column(Enum(StatusInvoice), default=StatusInvoice.PENDING)
     total_amount = Column(Double, nullable=False)
-    payment_date = Column(DateTime,nullable=True)
+    payment_date = Column(DateTime, nullable=True)
     invoice_day_create = Column(DateTime, nullable=True)
 
     invoice_details = relationship('InvoiceDetail', backref='invoice', lazy=True)
+
 
 class InvoiceDetail(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -180,9 +195,9 @@ class InvoiceDetail(db.Model):
     # quantity = Column(Integer, default=1)
     member_package_id = Column(Integer, ForeignKey(MemberPackage.id), nullable=False)
 
+
 if __name__ == '__main__':
     with app.app_context():
-
         db.create_all()
         # u = User(name='admin', username='admin', password = str(hashlib.md5("1".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN,
         #          avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg")
@@ -382,6 +397,5 @@ if __name__ == '__main__':
         # p = Package.query.filter(Package.name.contains("Đồng")).first()
         # member_package = MemberPackage(member=member, package=p, startDate=datetime.now(), endDate=datetime.now() + timedelta(days=30), coach=coach)
         # db.session.add(member_package)
-        db.session.commit()
+        # db.session.commit()
         # pass
-
