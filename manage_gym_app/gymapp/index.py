@@ -438,6 +438,36 @@ def issue_an_invoice_receptionist_process():
 
 ##################################################
 
+#####ADMIN
+@app.route('/api/admin/exercises', methods=['POST'])
+@login_required(UserRole.ADMIN)
+def add_exercise_api():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'status': 400, 'err_msg': 'Dữ liệu không hợp lệ!'})
+
+        name = data.get('name', '').strip()
+        description = data.get('description', '').strip()
+        image = data.get('image', '').strip()
+        if len(name) < 3:
+            return jsonify({'status': 400, 'err_msg': 'Tên bài tập quá ngắn!'})
+
+        if not description:
+            return jsonify({'status': 400, 'err_msg': 'Thiếu mô tả bài tập!'})
+
+        if not image.startswith(('http://', 'https://')):
+            return jsonify({'status': 400, 'err_msg': 'URL ảnh không hợp lệ!'})
+
+        success, msg = dao.add_exercise(name, description, image)
+        if success:
+            return jsonify({'status': 200, 'msg': msg})
+
+        return jsonify({'status': 400, 'err_msg': msg})
+
+    except Exception as e:
+        return jsonify({'status': 500, 'err_msg': f'Lỗi hệ thống: {str(e)}'})
+
 @app.route('/login')
 def login_view():
     return render_template('login.html')

@@ -128,6 +128,8 @@ class PlanDetail(db.Model):
     sets = Column(Integer, nullable=False)
     exercise_schedules = relationship('ExerciseSchedule', backref='plan_detail', lazy=True,
                                       cascade='all, delete-orphan')
+    # def __str__(self):
+    #     return f'Giáo án {self.id}'
 
 
 class ExerciseSchedule(db.Model):

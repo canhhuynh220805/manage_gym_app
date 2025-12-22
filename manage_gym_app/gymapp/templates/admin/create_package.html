@@ -1,0 +1,89 @@
+{% import 'admin/static.html' as admin_static with context %}
+{% import 'admin/lib.html' as lib with context %}
+
+{% set render_ctx = h.resolve_ctx() %}
+
+{% block body %}
+
+<div class="modal-header bg-primary text-white">
+    <h5 class="modal-title"><i class="fa fa-box-open mr-2"></i> Thiết Lập Gói Tập (Tùy chỉnh)</h5>
+    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+
+{% call lib.form_tag(action=url_for('.create_view', url=return_url)) %}
+
+<div class="modal-body">
+    <div class="alert alert-info py-2">Nhập thông tin chi tiết cho gói dịch vụ.</div>
+
+    <div class="form-group">
+        <label class="font-weight-bold">Tên Gói Tập</label>
+        {{ form.name(class="form-control", placeholder="Ví dụ: Gói tập 6 tháng VIP") }}
+        {% if form.name.errors %}
+            <small class="text-danger">{% for error in form.name.errors %}{{ error }}{% endfor %}</small>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="font-weight-bold">Giá (VNĐ)</label>
+                {{ form.price(class="form-control") }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="font-weight-bold">Thời hạn (Tháng)</label>
+                {{ form.duration(class="form-control") }}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="font-weight-bold">Mô tả</label>
+        {{ form.description(class="form-control", rows="2") }}
+    </div>
+
+    <div class="form-group">
+        <label class="font-weight-bold">URL Ảnh minh họa</label>
+        {{ form.image(class="form-control") }}
+    </div>
+
+    {% if inline_form_definitions %}
+    <hr>
+    <div class="package-benefits-section">
+        <h6 class="font-weight-bold text-primary text-uppercase mb-3">
+            <i class="fa fa-list-check mr-2"></i>Quyền lợi của gói tập
+        </h6>
+
+        {% for inline in inline_form_definitions %}
+            <div id="{{ inline.name }}" class="inline-field-container">
+                {{ lib.render_inline_form(form, inline) }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% for field in form if field.widget.input_type == 'hidden' %}
+        {{ field() }}
+    {% endfor %}
+</div>
+
+<div class="modal-footer">
+    {{ lib.render_form_buttons(return_url, extra=None, is_modal=True) }}
+</div>
+{% endcall %}
+
+{% endblock %}
+
+{% block tail %}
+    <script src="{{ admin_static.url(filename='admin/js/bs4_modal.js', v='1.0.0') }}"></script>
+    <script type="text/javascript">
+        (function($) {
+            if (window.fa_helpers) {
+                window.fa_helpers.apply_render_inline_callbacks();
+            }
+        })(jQuery);
+    </script>
+{% endblock %}
