@@ -539,6 +539,23 @@ def add_exercise(name, description, image):
         return False, str(e)
 
 
+def add_package(name, price, duration, description, image, benefits):
+    try:
+        p = Package(name=name, price=float(price), duration=int(duration), description=description, image=image)
+        db.session.add(p)
+
+        for b in benefits:
+            if b.get('name'):
+                benefit = PackageBenefit(name=b['name'], detail=b.get('detail', ''), package=p)
+                db.session.add(benefit)
+
+        db.session.commit()
+        return True, "Thêm gói dịch vụ thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        return False, str(e)
+
 if __name__ == '__main__':
     with app.app_context():
         # u_id = 1
