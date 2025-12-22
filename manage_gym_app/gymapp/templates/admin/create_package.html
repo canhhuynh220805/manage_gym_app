@@ -1,89 +1,101 @@
-{% import 'admin/static.html' as admin_static with context %}
-{% import 'admin/lib.html' as lib with context %}
-
-{% set render_ctx = h.resolve_ctx() %}
-
-{% block body %}
-
 <div class="modal-header bg-primary text-white">
-    <h5 class="modal-title"><i class="fa fa-box-open mr-2"></i> Thiết Lập Gói Tập (Tùy chỉnh)</h5>
+    <h5 class="modal-title"><i class="fa fa-box-open mr-2"></i> Thêm Gói Tập Mới</h5>
     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
         <span aria-hidden="true">&times;</span>
     </button>
 </div>
 
-{% call lib.form_tag(action=url_for('.create_view', url=return_url)) %}
-
-<div class="modal-body">
-    <div class="alert alert-info py-2">Nhập thông tin chi tiết cho gói dịch vụ.</div>
-
-    <div class="form-group">
-        <label class="font-weight-bold">Tên Gói Tập</label>
-        {{ form.name(class="form-control", placeholder="Ví dụ: Gói tập 6 tháng VIP") }}
-        {% if form.name.errors %}
-            <small class="text-danger">{% for error in form.name.errors %}{{ error }}{% endfor %}</small>
-        {% endif %}
+<div class="modal-body text-dark">
+    <div class="mb-3">
+        <label class="fw-bold">Tên gói tập</label>
+        <input type="text" id="pkg_name" class="form-control" placeholder="Ví dụ: Gói VIP 6 tháng">
     </div>
-
     <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label class="font-weight-bold">Giá (VNĐ)</label>
-                {{ form.price(class="form-control") }}
-            </div>
+        <div class="col-md-6 mb-3">
+            <label class="fw-bold">Giá (VNĐ)</label>
+            <input type="number" id="pkg_price" class="form-control" placeholder="500000">
         </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label class="font-weight-bold">Thời hạn (Tháng)</label>
-                {{ form.duration(class="form-control") }}
-            </div>
+        <div class="col-md-6 mb-3">
+            <label class="fw-bold">Thời hạn (Tháng)</label>
+            <input type="number" id="pkg_duration" class="form-control" placeholder="6">
         </div>
     </div>
-
-    <div class="form-group">
-        <label class="font-weight-bold">Mô tả</label>
-        {{ form.description(class="form-control", rows="2") }}
+    <div class="mb-3">
+        <label class="fw-bold">Mô tả</label>
+        <textarea id="pkg_desc" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="fw-bold">Link ảnh minh họa</label>
+        <input type="text" id="pkg_image" class="form-control">
     </div>
 
-    <div class="form-group">
-        <label class="font-weight-bold">URL Ảnh minh họa</label>
-        {{ form.image(class="form-control") }}
-    </div>
-
-    {% if inline_form_definitions %}
     <hr>
-    <div class="package-benefits-section">
-        <h6 class="font-weight-bold text-primary text-uppercase mb-3">
-            <i class="fa fa-list-check mr-2"></i>Quyền lợi của gói tập
-        </h6>
-
-        {% for inline in inline_form_definitions %}
-            <div id="{{ inline.name }}" class="inline-field-container">
-                {{ lib.render_inline_form(form, inline) }}
-            </div>
-        {% endfor %}
+    <h6 class="fw-bold text-primary"><i class="fa fa-list mr-2"></i> Danh sách quyền lợi</h6>
+    <div id="benefit-container">
+        <div class="row mb-2 benefit-row">
+            <div class="col-5"><input type="text" class="form-control form-control-sm b-name" placeholder="Tên quyền lợi"></div>
+            <div class="col-6"><input type="text" class="form-control form-control-sm b-detail" placeholder="Chi tiết"></div>
+            <div class="col-1"><button class="btn btn-sm btn-outline-danger border-0" onclick="this.parentElement.parentElement.remove()">&times;</button></div>
+        </div>
     </div>
-    {% endif %}
-
-    {% for field in form if field.widget.input_type == 'hidden' %}
-        {{ field() }}
-    {% endfor %}
+    <button type="button" class="btn btn-sm btn-link text-decoration-none" onclick="addBenefitRow()">+ Thêm dòng</button>
 </div>
 
 <div class="modal-footer">
-    {{ lib.render_form_buttons(return_url, extra=None, is_modal=True) }}
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+    <button type="button" class="btn btn-primary px-4 fw-bold btn-save-ex" onclick="savePackage()">LƯU BÀI TẬP</button>
 </div>
-{% endcall %}
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+function addBenefitRow() {
+    const row = `<div class="row mb-2 benefit-row">
+        <div class="col-5"><input type="text" class="form-control form-control-sm b-name" placeholder="Tên quyền lợi"></div>
+        <div class="col-6"><input type="text" class="form-control form-control-sm b-detail" placeholder="Chi tiết"></div>
+        <div class="col-1"><button class="btn btn-sm btn-outline-danger border-0" onclick="this.parentElement.parentElement.remove()">&times;</button></div>
+    </div>`;
+    document.getElementById('benefit-container').insertAdjacentHTML('beforeend', row);
+}
 
-{% endblock %}
+function savePackage() {
+    const name = document.getElementById('pkg_name').value.trim();
+    const price = document.getElementById('pkg_price').value;
+    const duration = document.getElementById('pkg_duration').value;
+    const description = document.getElementById('pkg_desc').value.trim();
+    const image = document.getElementById('pkg_image').value.trim();
 
-{% block tail %}
-    <script src="{{ admin_static.url(filename='admin/js/bs4_modal.js', v='1.0.0') }}"></script>
-    <script type="text/javascript">
-        (function($) {
-            if (window.fa_helpers) {
-                window.fa_helpers.apply_render_inline_callbacks();
+    if (!name || !price || !duration || !description || !image) {
+        showToast("Vui lòng nhập đầy đủ", "danger");
+        return;
+    }
+
+    const benefits = [];
+    document.querySelectorAll('.benefit-row').forEach(row => {
+        const bName = row.querySelector('.b-name').value.trim();
+        if (bName) benefits.push({ name: bName, detail: row.querySelector('.b-detail').value.trim() });
+    });
+
+    showConfirmDialog("Xác nhận lưu", "Bạn chắc chắn muốn thêm gói dịch vụ này?", function() {
+        fetch('/api/admin/packages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, price, duration, description, image, benefits })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 200) {
+                showToast(data.msg, "success");
+
+                if (window.jQuery) { $('.modal.show').modal('hide'); }
+
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(data.err_msg, "danger");
             }
-        })(jQuery);
-    </script>
-{% endblock %}
+        })
+        .catch(err => {
+            console.error(err);
+            showToast("Lỗi hệ thống khi gửi dữ liệu!", "danger");
+        });
+    });
+}
+</script>

@@ -106,6 +106,9 @@ class PackageView(AdminView):
     edit_modal = True
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-box-open'
+    @expose('/new/')
+    def create_view(self):
+        return self.render('admin/create_package.html')
 
     def format_price(view, context, model, name):
         return "{:,.0f} VNĐ".format(model.price) if model.price else "0"
