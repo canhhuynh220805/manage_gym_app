@@ -12,7 +12,8 @@ from gymapp.models import UserRole, StatusInvoice, DayOfWeek
 @app.route('/')
 def index():
     packages = dao.load_package()
-    return render_template('index.html', packages=packages)
+    gym_rules = dao.get_gym_rules()
+    return render_template('index.html', packages=packages, gym_rules = gym_rules)
 
 
 ###################### VIEW ############################

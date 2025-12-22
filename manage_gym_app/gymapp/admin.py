@@ -141,8 +141,9 @@ class StatsView(BaseView):
     def index(self):
         kw = request.args.get('kw')
         stats = dao.active_member_stats(kw=kw)
+        total_active = dao.count_active_members()
 
-        return self.render('admin/stats.html', active_stats = stats)
+        return self.render('admin/stats.html', active_stats = stats, total_active = total_active)
 
     def is_accessible(self) -> bool:
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
