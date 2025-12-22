@@ -1,5 +1,7 @@
 import math
 from datetime import datetime
+import sys
+print("Python đang chạy ở:", sys.executable)
 
 from flask import render_template, request, redirect, url_for, jsonify, session
 from flask_login import logout_user, login_user, current_user
