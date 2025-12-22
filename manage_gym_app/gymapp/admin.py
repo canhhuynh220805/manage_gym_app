@@ -5,6 +5,7 @@ from flask_admin.model import InlineFormAdmin
 from flask_login import logout_user, current_user
 from flask import redirect, request
 from markupsafe import Markup
+from wtforms.validators import DataRequired, Length, URL
 
 from gymapp import app, db, dao
 from gymapp.dao import active_member_stats
@@ -66,12 +67,18 @@ class CoachView(AdminView):
 
 
 class ExerciseView(AdminView):
-    column_list = ['id', 'name', 'description', 'image']
+
+    column_list = ['name', 'description', 'image']
+    form_columns = ['name', 'description', 'image']
     column_searchable_list = ['name']
     create_modal = True
     edit_modal = True
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-running'
+
+    @expose('/new/', methods=('GET', 'POST'))
+    def create_view(self):
+        return self.render('admin/create_exercise.html')
 
     def list_img(view, context, model, name):
         if not model.image:
@@ -84,30 +91,34 @@ class ExerciseView(AdminView):
 
 class PackageBenefitInline(InlineFormAdmin):
     form_label = 'Quyền lợi'
-    form_columns = ['id', 'detail']
+    form_columns = ['name', 'detail']
+
 
 class PackageView(AdminView):
+    create_modal_template = 'admin/create_package.html'
+    edit_modal_template= 'admin/create_package.html'
+
     column_list = ['name', 'duration', 'price', 'description', 'image']
     form_columns = ['name', 'duration', 'price', 'description', 'image']
-    inline_models = (PackageBenefitInline(PackageBenefit),)
+    inline_models = [PackageBenefitInline(PackageBenefit)]
+
     create_modal = True
     edit_modal = True
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-box-open'
 
     def format_price(view, context, model, name):
-        return "{:,.0f}".format(model.price)
+        return "{:,.0f} VNĐ".format(model.price) if model.price else "0"
 
     def list_img(view, context, model, name):
         if not model.image:
             return ''
-        return Markup(f'<img src="{model.image}" width="50" />')
+        return Markup(f'<img src="{model.image}" width="50" class="img-thumbnail" />')
 
     column_formatters = {
         'price': format_price,
         'image': list_img
     }
-
 class RegulationView(AdminView):
     column_list = ['name', 'value', 'code']
     can_create = True

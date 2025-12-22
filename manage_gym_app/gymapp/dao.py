@@ -527,6 +527,18 @@ def count_active_members():
 def get_gym_rules():
     return Regulation.query.filter(Regulation.code.like('GYM_RULE_%')).all()
 
+#ADMIN
+def add_exercise(name, description, image):
+    try:
+        ex = Exercise(name=name, description=description, image=image)
+        db.session.add(ex)
+        db.session.commit()
+        return True, "Thêm bài tập thành công!"
+    except Exception as e:
+        db.session.rollback()
+        return False, str(e)
+
+
 if __name__ == '__main__':
     with app.app_context():
         # u_id = 1
