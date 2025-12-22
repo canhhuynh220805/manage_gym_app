@@ -44,11 +44,13 @@ def get_total_revenue_month():
                 Invoice.status == StatusInvoice.PAID).scalar()
     return result if result else 0
 
-def stats_package_usage():
+def stats_revenue_package_usage():
     return (db.session.query(Package.id, Package.name, func.count(MemberPackage.id))
             .outerjoin(MemberPackage, MemberPackage.package_id == Package.id)
             .group_by(Package.id, Package.name)
             .order_by(Package.id).all())
+
+
 
 def add_member_full_info(name, username, password, avatar,phone,gender,dob, email):
     u = Member(name=name,
@@ -501,6 +503,24 @@ def active_member_stats(kw=None):
         query = query.filter(Package.name.contains(kw))
     return query.group_by(Package.id, Package.name).all()
 
+def stats_revenue_by_month(time="month", year=datetime.now().year):
+   query =  (db.session.query(func.extract(time, Invoice.payment_date), func.sum(Invoice.total_amount))
+            .join(MemberPackage, Invoice.member_package_id == MemberPackage.id)
+            .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year)
+            .group_by(func.extract(time, Invoice.payment_date))).all()
+   return query
+
+def count_members_by_time(year=datetime.now().year):
+    query = (db.session.query(func.extract('month', User.join_date),func.count(User.id.distinct())).join(MemberPackage, User.id == MemberPackage.member_id)
+           .filter(func.extract('year', User.join_date) == year,MemberPackage.status == 'active').group_by(func.extract('month', User.join_date))).all()
+    return query
+
+def stats_by_quarter(year=datetime.now().year):
+    query = (db.session.query(func.extract('quarter', Invoice.payment_date), func.sum(Invoice.total_amount))
+             .join(MemberPackage, Invoice.member_package_id == MemberPackage.id)
+             .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year)
+             .group_by(func.extract('quarter', Invoice.payment_date)).order_by(func.extract('quarter', Invoice.payment_date)).all())
+    return query
 def count_active_members():
     return MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE).count()
 
@@ -518,4 +538,6 @@ if __name__ == '__main__':
         #     print(f"{msg}")
         # else:
         #     print(f" Lỗi: {msg}")
-        pass
+        # pass
+        print(active_member_stats())
+        # print(stats_revenue_by_month(time='month', year=2025))
