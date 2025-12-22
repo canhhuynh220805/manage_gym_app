@@ -541,13 +541,26 @@ def register_package():
     if not user_id or not package_id:
         return jsonify({'status': 400, 'err_msg': 'Dữ liệu không hợp lệ'})
 
-    is_success, message = dao.add_package_registration(user_id, package_id)
+    try:
+        is_valid, result = dao.validate_registration_package(user_id)
 
-    if is_success:
-        dao.send_mail(member_id=user_id,package_id=package_id)
-        return jsonify({'status': 200, 'msg': message})
-    else:
-        return jsonify({'status': 400, 'err_msg': message})
+        if not is_valid:
+            return jsonify({
+                'status': 400,
+                'err_msg': result
+            })
+
+        is_success, message = dao.add_package_registration(user_id, package_id)
+
+        if is_success:
+            dao.send_mail(member_id=user_id, package_id=package_id)
+            return jsonify({'status': 200, 'msg': message})
+        else:
+            return jsonify({'status': 400, 'err_msg': message})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 500, 'err_msg': 'Lỗi hệ thống: ' + str(e)})
 
 
 @app.route('/view_package_receptionist')
