@@ -65,18 +65,6 @@ def add_member_full_info(name, username, password, avatar,phone,gender,dob, emai
     db.session.commit()
     return u
 
-def add_member(name, username, password, email, avatar):
-    u = Member(name=name,
-               username=username.strip(),
-               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()),email = email)
-
-    if avatar:
-        res = cloudinary.uploader.upload(avatar)
-        u.avatar = res.get('secure_url')
-
-    db.session.add(u)
-    db.session.commit()
-
 def get_workout_plan_by_member_id(member_id):
     return (db.session.query(PlanAssignment) \
             .join(MemberPackage, MemberPackage.id == PlanAssignment.member_package_id) \
@@ -546,6 +534,35 @@ def count_active_members():
 
 def get_gym_rules():
     return Regulation.query.filter(Regulation.code.like('GYM_RULE_%')).all()
+
+#ADMIN
+def add_exercise(name, description, image):
+    try:
+        ex = Exercise(name=name, description=description, image=image)
+        db.session.add(ex)
+        db.session.commit()
+        return True, "Thêm bài tập thành công!"
+    except Exception as e:
+        db.session.rollback()
+        return False, str(e)
+
+
+def add_package(name, price, duration, description, image, benefits):
+    try:
+        p = Package(name=name, price=float(price), duration=int(duration), description=description, image=image)
+        db.session.add(p)
+
+        for b in benefits:
+            if b.get('name'):
+                benefit = PackageBenefit(name=b['name'], detail=b.get('detail', ''), package=p)
+                db.session.add(benefit)
+
+        db.session.commit()
+        return True, "Thêm gói dịch vụ thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        return False, str(e)
 
 if __name__ == '__main__':
     with app.app_context():

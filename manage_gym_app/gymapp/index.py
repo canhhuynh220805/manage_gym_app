@@ -440,6 +440,71 @@ def issue_an_invoice_receptionist_process():
 
 ##################################################
 
+#####ADMIN
+@app.route('/api/admin/exercises', methods=['POST'])
+@login_required(UserRole.ADMIN)
+def add_exercise_api():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'status': 400, 'err_msg': 'Dữ liệu không hợp lệ!'})
+        name = data.get('name', '').strip()
+        description = data.get('description', '').strip()
+        image = data.get('image', '').strip()
+        if len(name) < 3:
+            return jsonify({'status': 400, 'err_msg': 'Tên bài tập quá ngắn!'})
+
+        if not description:
+            return jsonify({'status': 400, 'err_msg': 'Thiếu mô tả bài tập!'})
+
+        if not image.startswith(('http://', 'https://')):
+            return jsonify({'status': 400, 'err_msg': 'URL ảnh không hợp lệ!'})
+
+        success, msg = dao.add_exercise(name, description, image)
+        if success:
+            return jsonify({'status': 200, 'msg': msg})
+
+        return jsonify({'status': 400, 'err_msg': msg})
+
+    except Exception as e:
+        return jsonify({'status': 500, 'err_msg': f'Lỗi hệ thống: {str(e)}'})
+
+
+@app.route('/api/admin/packages', methods=['POST'])
+@login_required(UserRole.ADMIN)
+def add_package_api():
+    data = request.json
+    name = data.get('name', '').strip()
+    price = data.get('price')
+    duration = data.get('duration')
+    description = data.get('description', '').strip()
+    image = data.get('image', '').strip()
+    benefits = data.get('benefits', [])
+
+    if not name or len(name) < 3:
+        return jsonify({'status': 400, 'err_msg': 'Tên gói tập phải từ 3 ký tự trở lên!'})
+
+    try:
+        if float(price) <= 0:
+            return jsonify({'status': 400, 'err_msg': 'Giá tiền phải lớn hơn 0!'})
+    except:
+        return jsonify({'status': 400, 'err_msg': 'Giá tiền không hợp lệ!'})
+
+    try:
+        if int(duration) <= 0:
+            return jsonify({'status': 400, 'err_msg': 'Thời hạn phải ít nhất 1 tháng!'})
+    except:
+        return jsonify({'status': 400, 'err_msg': 'Thời hạn không hợp lệ!'})
+
+    if not description:
+        return jsonify({'status': 400, 'err_msg': 'Mô tả không được để trống!'})
+
+    if not image.startswith(('http://', 'https://')):
+        return jsonify({'status': 400, 'err_msg': 'Link ảnh phải là một URL hợp lệ!'})
+
+    success, msg = dao.add_package(name, price, duration, description, image, benefits)
+    return jsonify({'status': 200 if success else 400, 'msg' if success else 'err_msg': msg})
+
 @app.route('/login')
 def login_view():
     return render_template('login.html')
@@ -476,9 +541,14 @@ def workout_plan_detail(plan_id):
 
 @app.route('/register', methods=['post'])
 def register_process():
-    email = request.form.get('email')
     password = request.form.get('password')
     confirm = request.form.get('confirm')
+    name = request.form.get('name')
+    username = request.form.get('username')
+    phone = request.form.get('phone')
+    gender = request.form.get('gender')
+    dob = request.form.get('dob')
+    email = request.form.get('email')
 
     if password != confirm:
         err_msg = 'Mật khẩu KHÔNG khớp'
@@ -488,10 +558,7 @@ def register_process():
         return render_template('register.html', err_msg=err_msg)
     avatar = request.files.get('avatar')
     try:
-        dao.add_member(avatar=avatar,
-                       name=request.form.get('name'),
-                       username=request.form.get('username'),
-                       password=request.form.get('password'),email=email)
+        dao.add_member_full_info(avatar=avatar,name=name,username=username, password=password, phone=phone, gender=gender, dob=dob, email=email)
     except Exception as ex:
         return render_template('register.html', err_msg=str(ex))
     return redirect('/login')
