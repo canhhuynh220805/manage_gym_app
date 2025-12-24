@@ -95,7 +95,7 @@ def add_package_registration(user_id, package_id):
         return False, "Gói tập không tồn tại"
 
     try:
-        _upgrade_user_to_member_force(user_id)
+        upgrade_user_to_member_force(user_id)
 
         new_registration = MemberPackage(
             member=member,
@@ -121,7 +121,7 @@ def add_package_registration(user_id, package_id):
         db.session.rollback()
         return False, str(e)
 
-def _upgrade_user_to_member_force(user_id):
+def upgrade_user_to_member_force(user_id):
     try:
         sql_insert = text("INSERT IGNORE INTO member (id) VALUES (:id)")
         db.session.execute(sql_insert, {'id': user_id})
@@ -328,10 +328,11 @@ def process_pending_invoice(invoice_id):
 
 def add_member_package(member_id, package_id):
     p = db.session.get(Package, package_id)
-    if not p:
-        return None
-    _upgrade_user_to_member_force(member_id)
-    s, e = calculate_package_dates(member_id, p.duration)
+    u = db.session.get(User, member_id)
+
+    if p and u:
+        try:
+            upgrade_user_to_member_force(member_id)
 
     mp = MemberPackage(member_id=member_id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
     db.session.add(mp)
@@ -502,15 +503,16 @@ def validate_registration_package(member_id):
 
 #SEND MAIL
 def send_mail(member_id, package_id):
-    member = User.query.get(member_id)
-    package = Package.query.get(package_id)
+    with app.app_context():
+        member = User.query.get(member_id)
+        package = Package.query.get(package_id)
 
-    msg = Message("Email xác nhận đăng kí thành công", recipients=[member.email])
-    formatted_price = "{:,.0f}".format(package.price)
+        msg = Message("Email xác nhận đăng kí thành công", recipients=[member.email])
+        formatted_price = "{:,.0f}".format(package.price)
 
-    msg.body = (f"Chào {member.name}, bạn đã đăng kí thành công gói {package.name}!\n" 
-                f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
-    mail.send(msg)
+        msg.body = (f"Chào {member.name}, bạn đã đăng kí thành công gói {package.name}!\n" 
+                    f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
+        mail.send(msg)
 
 
 #Thong ke
@@ -523,23 +525,17 @@ def active_member_stats(kw=None):
         query = query.filter(Package.name.contains(kw))
     return query.group_by(Package.id, Package.name).all()
 
-def stats_revenue_by_month(time="month", year=datetime.now().year):
+def stats_revenue(time="month", year=datetime.now().year):
    query =  (db.session.query(func.extract(time, Invoice.payment_date), func.sum(Invoice.total_amount))
             .join(MemberPackage, Invoice.member_package_id == MemberPackage.id)
-            .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year)
-            .group_by(func.extract(time, Invoice.payment_date))).all()
-   return query
+            .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year))
+   return query.group_by(func.extract(time, Invoice.payment_date)).all()
 
 def count_members_by_time(year=datetime.now().year):
     query = (db.session.query(func.extract('month', User.join_date),func.count(User.id.distinct())).join(MemberPackage, User.id == MemberPackage.member_id)
            .filter(func.extract('year', User.join_date) == year,MemberPackage.status == 'active').group_by(func.extract('month', User.join_date))).all()
     return query
 
-def stats_by_quarter(year=datetime.now().year):
-    query = (db.session.query(func.extract('quarter', Invoice.payment_date), func.sum(Invoice.total_amount))
-             .join(MemberPackage, Invoice.member_package_id == MemberPackage.id)
-             .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year)
-             .group_by(func.extract('quarter', Invoice.payment_date)).order_by(func.extract('quarter', Invoice.payment_date)).all())
     return query
 def count_active_members():
     return MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE).count()
@@ -588,5 +584,8 @@ if __name__ == '__main__':
         # else:
         #     print(f" Lỗi: {msg}")
         # pass
-        print(active_member_stats())
+        # print(active_member_stats())
+        # print(stats_revenue(time="month"))
+        # print(stats_revenue(time="quarter"))
         # print(stats_revenue_by_month(time='month', year=2025))
+        pass

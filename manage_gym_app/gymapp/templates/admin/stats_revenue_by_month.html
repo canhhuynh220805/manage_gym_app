@@ -6,15 +6,18 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-6 mb-4">
-            <div class="card p-3 shadow-sm border-0 border-left-success" style="border-left: 5px solid #28a745 !important;">
+            <div class="card p-3 shadow-sm border-0 border-left-success"
+                 style="border-left: 5px solid #28a745 !important;">
                 <div class="text-uppercase small font-weight-bold text-muted">Tổng doanh thu năm</div>
                 <div class="h4 font-weight-bold text-danger">
                     {{ "{:,.0f}".format(revenue_times|map(attribute=1)|sum) if revenue_times else 0 }}đ
                 </div>
             </div>
         </div>
+
         <div class="col-md-6 mb-4">
-            <div class="card p-3 shadow-sm border-0 border-left-info" style="border-left: 5px solid #17a2b8 !important;">
+            <div class="card p-3 shadow-sm border-0 border-left-info"
+                 style="border-left: 5px solid #17a2b8 !important;">
                 <div class="text-uppercase small font-weight-bold text-muted">Trung bình tháng</div>
                 <div class="h4 font-weight-bold text-dark">
                     {{ "{:,.0f}".format((revenue_times|map(attribute=1)|sum) / 12) if revenue_times else 0 }}đ
@@ -24,40 +27,42 @@
     </div>
 
     <div class="row">
-        <div class="col-md-4">
-            <div class="card p-3 shadow-sm border-0">
-                <h5 class="font-weight-bold mb-3">Doanh thu theo Quý</h5>
-                <table class="table table-hover">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>Quý</th>
-                            <th>Doanh thu</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for i in range(1, 5) %}
-                            {% set revenue = namespace(value=0) %}
-                            {% for q in quarterly_stats %}
-                                {% if q[0]|int == i %}
-                                    {% set revenue.value = q[1] %}
-                                {% endif %}
-                            {% endfor %}
-                            <tr>
-                                <td class="font-weight-bold">Quý {{ i }}</td>
-                                <td class="text-primary font-weight-bold">{{ "{:,.0f}".format(revenue.value) }}đ</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="col-md-8">
+        <div class="col-12 mb-4">
             <div class="card p-3 shadow-sm border-0">
                 <h5 class="font-weight-bold mb-3">Biểu đồ doanh thu tháng</h5>
                 <div style="position: relative; height: 350px; width: 100%;">
                     <canvas id="revenueBarChart"></canvas>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card p-3 shadow-sm border-0">
+                <h5 class="font-weight-bold mb-3">Doanh thu theo Quý</h5>
+                <table class="table table-hover">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>Quý</th>
+                        <th>Doanh thu</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for i in range(1, 5) %}
+                    {% set revenue = namespace(value=0) %}
+                    {% for q in quarterly_stats %}
+                    {% if q[0]|int == i %}
+                    {% set revenue.value = q[1] %}
+                    {% endif %}
+                    {% endfor %}
+                    <tr>
+                        <td class="font-weight-bold">Quý {{ i }}</td>
+                        <td class="text-primary font-weight-bold">{{ "{:,.0f}".format(revenue.value) }}đ</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -75,7 +80,7 @@
 
         const ctx = document.getElementById('revenueBarChart').getContext('2d');
         new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
