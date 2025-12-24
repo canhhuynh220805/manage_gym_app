@@ -350,7 +350,16 @@ def process_pending_invoice(invoice_id):
 
 
 def add_member_package(member_id, package_id):
-    pass
+
+    p = db.session.get(Package, package_id)
+    if not p:
+        return None
+    upgrade_user_to_member_force(member_id)
+    s, e = calculate_package_dates(member_id, p.duration)
+
+    mp = MemberPackage(member_id=member_id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
+    db.session.add(mp)
+    return mp
 
 def create_paid_invoice(member_id, total_amount, member_package=None):
     inv = Invoice(member_id=member_id, total_amount=total_amount, status=StatusInvoice.PAID, payment_date=datetime.now(),
