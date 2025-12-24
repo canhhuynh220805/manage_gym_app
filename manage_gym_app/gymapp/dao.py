@@ -94,7 +94,7 @@ def add_package_registration(user_id, package_id):
     if not package:
         return False, "Gói tập không tồn tại"
 
-    try:
+    try:a
         upgrade_user_to_member_force(user_id)
 
         new_registration = MemberPackage(
@@ -328,15 +328,15 @@ def process_pending_invoice(invoice_id):
 
 def add_member_package(member_id, package_id):
     p = db.session.get(Package, package_id)
-    u = db.session.get(User, member_id)
-
-    if p and u:
-        try:
-            upgrade_user_to_member_force(member_id)
+    if not p:
+        return None
+    _upgrade_user_to_member_force(member_id)
+    s, e = calculate_package_dates(member_id, p.duration)
 
     mp = MemberPackage(member_id=member_id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
     db.session.add(mp)
     return mp
+
 
 def create_paid_invoice(member_id, total_amount, member_package=None):
     inv = Invoice(member_id=member_id, total_amount=total_amount, status=StatusInvoice.PAID, payment_date=datetime.now(),
