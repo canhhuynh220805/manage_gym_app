@@ -54,6 +54,18 @@
     </span></h3>
 </div>
 
+{% if pages > 1 %}
+<ul class="pagination mt-2 justify-content-center">
+  {% for i in range(1, pages + 1) %}
+  <li class="page-item {{ 'active' if i == request.args.get('page', 1)|int }}">
+      <a class="page-link" href="{{ url_for('cashier_history_view', page=i, kw=request.args.get('kw', '')) }}">
+          {{ i }}
+      </a>
+  </li>
+  {% endfor %}
+</ul>d
+{% endif %}
+
 {% else %}
 <div class="alert alert-info mt-1">KHÔNG có dữ liệu hóa đơn nào.</div>
 {% endif %}

@@ -253,13 +253,29 @@ def load_members(kw=None):
 def load_packages():
     return Package.query.all()
 
-def get_invoices(kw=None, status=None):
+def get_invoices(kw=None, status=None, page = 1, limit = None):
     query = Invoice.query
     if kw:
         query = query.join(Member).filter(Member.name.contains(kw) | Member.phone.contains(kw))
     if status:
         query = query.filter(Invoice.status == status)
-    return query.order_by(Invoice.id.desc()).all()
+
+    query = query.order_by(Invoice.id.desc())
+    if limit:
+        query = query.limit(limit)
+    elif page:
+        start = (page - 1) * app.config['PAGE_SIZE']
+        query = query.slice(start, start + app.config['PAGE_SIZE'])
+
+    return query.all()
+
+def count_invoices(kw=None, status=None):
+    query = Invoice.query
+    if kw:
+        query = query.join(Member).filter(Member.name.contains(kw) | Member.phone.contains(kw))
+    if status:
+        query = query.filter(Invoice.status == status)
+    return query.count()
   
 def get_invoice_from_cur_user(user_id, date_filter=None, status_filter=None):
     query = Invoice.query.filter(Invoice.member_id == user_id)
@@ -297,55 +313,51 @@ def calculate_package_dates(member_id, duration_months):
 
 
 def process_pending_invoice(invoice_id):
-    is_valid, result = validate_cashier(invoice_id)
-
+    is_valid, inv = validate_cashier(invoice_id)
     if not is_valid:
-        if result == "Hóa đơn đã quá hạn thanh toán":
-            try:
-                inv = db.session.get(Invoice, invoice_id)
-                if inv:
-                    inv.status = StatusInvoice.FAILED
-                    db.session.commit()
-                    return False, "Hóa đơn này đã quá hạn 7 ngày"
-            except Exception as ex:
-                db.session.rollback()
-                return False, f"Lỗi khi tự động hủy đơn quá hạn: {str(ex)}"
-        return False, result
-    inv = result
+        return False, inv
     try:
         state = get_invoice_state(inv)
         success, msg = state.pay(calculate_date=calculate_package_dates)
-        if success:
-            db.session.commit()
+
+        db.session.commit()
         return success, msg
     except Exception as ex:
         db.session.rollback()
         return False, str(ex)
 
-def add_member_package_and_pay(member_id, package_id):
-
+def add_member_package(member_id, package_id):
     p = db.session.get(Package, package_id)
-    u = db.session.get(User, member_id)
+    if not p:
+        return None
+    _upgrade_user_to_member_force(member_id)
+    s, e = calculate_package_dates(member_id, p.duration)
 
-    if p and u:
-        try:
-            _upgrade_user_to_member_force(member_id)
+    mp = MemberPackage(member_id=member_id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
+    db.session.add(mp)
+    return mp
 
-            s, e = calculate_package_dates(member_id, p.duration)
+def create_paid_invoice(member_id, total_amount, member_package=None):
+    inv = Invoice(member_id=member_id, total_amount=total_amount, status=StatusInvoice.PAID, payment_date=datetime.now(),
+        member_package=member_package)
+    db.session.add(inv)
+    return inv
 
-            mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
-            db.session.add(mp)
-            inv = Invoice(member_id=u.id, total_amount=p.price,
-                          status=StatusInvoice.PAID, payment_date=datetime.now())
-            db.session.add(inv)
-
-            db.session.commit()
-            return inv
-        except Exception as ex:
-            db.session.rollback()
+def process_payment(member_id, package_id):
+    try:
+        mp = add_member_package(member_id, package_id)
+        if not mp:
             return None
-    return None
 
+        p = db.session.get(Package, package_id)
+        inv = create_paid_invoice(member_id, p.price, member_package=mp)
+
+        db.session.commit()
+        return inv
+    except Exception as ex:
+        db.session.rollback()
+        print(f"Lỗi hệ thống: {str(ex)}")
+        return None
 
 def cancel_pending_invoice(invoice_id):
     is_valid, result = validate_cashier(invoice_id)
