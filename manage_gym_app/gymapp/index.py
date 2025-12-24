@@ -249,21 +249,20 @@ def assign_workout_plan():
 def cashier_view():
     kw = request.args.get('kw')
 
-    pending_invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PENDING)
-    paid_invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PAID)
+    pending_invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PENDING, limit=5)
+    paid_invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PAID, limit=5)
     packages = dao.load_packages()
     return render_template('cashier/index_cashier.html', packages=packages, pending_invoices=pending_invoices,
                            paid_invoices=paid_invoices)
-
 
 @app.route('/cashier/history')
 @login_required(UserRole.CASHIER)
 def cashier_history_view():
     kw = request.args.get('kw')
-    invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PAID)
+    invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PAID, page=int(request.args.get('page', 1)))
 
-    return render_template('cashier/history_cashier.html', invoices=invoices)
-
+    return render_template('cashier/history_cashier.html', invoices=invoices
+                           , pages=math.ceil(dao.count_invoices(kw=kw, status=StatusInvoice.PAID) / app.config['PAGE_SIZE']))
 
 @app.route('/api/cashier/process-pending', methods=['post'])
 @login_required(UserRole.CASHIER)
@@ -280,10 +279,10 @@ def direct_pay():
     data = request.json
     member_id = data.get('member_id')
     package_id = data.get('package_id')
-    invoice = dao.add_member_package_and_pay(member_id, package_id)
+    invoice = dao.process_payment(member_id, package_id)
 
     if invoice:
-        return jsonify({'status': 200, 'msg': 'Đăng ký và thanh toán thành công!'})
+        return jsonify({'status': 200, 'msg': 'Thanh toán thành công!'})
     else:
         return jsonify({'status': 400, 'msg': 'Lỗi xử lý! Vui lòng kiểm tra lại thông tin.'})
 
