@@ -1,0 +1,93 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<h1 class="text-center text-danger mb-4">THỐNG KÊ HỘI VIÊN ĐANG HOẠT ĐỘNG</h1>
+
+<div class="row">
+    <div class="col-md-5 col-sm-12">
+        <div class="card p-3">
+             <form>
+                <div class="form-group">
+                    <input type="text" name="kw" placeholder="Nhập tên gói tập..." class="form-control" />
+                </div>
+                <input type="submit" value="Lọc dữ liệu" class="btn btn-info btn-block" />
+            </form>
+            <table class="table mt-3">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Tên gói tập</th>
+                        <th>Số hội viên</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in active_stats %}
+                    <tr>
+                        <td>{{ s[1] }}</td>
+                        <td class="text-success font-weight-bold">{{ s[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-7 col-sm-12">
+        <div class="card p-3">
+            <canvas id="activeBarChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let labels = [], data = [];
+        {% for s in active_stats %}
+            labels.push('{{ s[1] }}');
+            data.push({{ s[2] }});
+        {% endfor %}
+
+        const ctx = document.getElementById('activeBarChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Số lượng hội viên',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'TỔNG SỐ HỘI VIÊN ĐANG HOẠT ĐỘNG: {{ total_active }}',
+                        font: {
+                            size: 18,
+                            weight: 'bold'
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 30
+                        },
+                        color: 'red'
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

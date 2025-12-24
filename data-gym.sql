@@ -2,7 +2,11 @@
 --
 -- Host: localhost    Database: gymdb
 -- ------------------------------------------------------
+<<<<<<< HEAD
 -- Server version	9.3.0
+=======
+-- Server version	8.0.42
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -35,7 +39,11 @@ CREATE TABLE `coach` (
 
 LOCK TABLES `coach` WRITE;
 /*!40000 ALTER TABLE `coach` DISABLE KEYS */;
+<<<<<<< HEAD
 INSERT INTO `coach` VALUES (2),(5),(10),(11),(12),(13),(14);
+=======
+INSERT INTO `coach` VALUES (2),(5),(10),(11),(12),(13),(14),(20);
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40000 ALTER TABLE `coach` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -79,7 +87,11 @@ CREATE TABLE `exercise_schedule` (
   PRIMARY KEY (`id`),
   KEY `plan_detail_id` (`plan_detail_id`),
   CONSTRAINT `exercise_schedule_ibfk_1` FOREIGN KEY (`plan_detail_id`) REFERENCES `plan_detail` (`id`)
+<<<<<<< HEAD
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+=======
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -88,6 +100,10 @@ CREATE TABLE `exercise_schedule` (
 
 LOCK TABLES `exercise_schedule` WRITE;
 /*!40000 ALTER TABLE `exercise_schedule` DISABLE KEYS */;
+<<<<<<< HEAD
+=======
+INSERT INTO `exercise_schedule` VALUES (1,1,'MONDAY'),(2,1,'TUESDAY'),(3,1,'THURSDAY'),(4,2,'TUESDAY'),(5,2,'WEDNESDAY'),(6,2,'THURSDAY'),(7,3,'TUESDAY'),(8,3,'WEDNESDAY'),(9,3,'FRIDAY'),(10,4,'MONDAY'),(11,4,'TUESDAY'),(12,4,'WEDNESDAY'),(13,4,'THURSDAY'),(14,5,'MONDAY'),(15,5,'TUESDAY'),(16,5,'WEDNESDAY'),(17,6,'MONDAY'),(18,6,'TUESDAY'),(19,6,'WEDNESDAY'),(20,7,'MONDAY'),(21,7,'TUESDAY'),(22,7,'THURSDAY'),(23,8,'THURSDAY'),(24,8,'FRIDAY'),(25,9,'MONDAY'),(26,9,'TUESDAY'),(27,9,'WEDNESDAY'),(28,9,'THURSDAY'),(29,9,'FRIDAY'),(30,10,'MONDAY'),(31,10,'TUESDAY'),(32,10,'WEDNESDAY'),(33,10,'THURSDAY'),(34,10,'FRIDAY'),(35,10,'SATURDAY'),(36,11,'MONDAY'),(37,11,'TUESDAY'),(38,11,'WEDNESDAY'),(39,11,'THURSDAY'),(40,11,'FRIDAY'),(41,11,'SATURDAY'),(42,12,'MONDAY'),(43,12,'TUESDAY'),(44,12,'WEDNESDAY'),(45,12,'THURSDAY'),(46,12,'FRIDAY'),(47,13,'THURSDAY'),(48,13,'FRIDAY'),(49,13,'SATURDAY'),(50,13,'SUNDAY'),(51,14,'MONDAY'),(52,14,'TUESDAY'),(53,14,'WEDNESDAY'),(54,14,'THURSDAY'),(55,14,'FRIDAY');
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40000 ALTER TABLE `exercise_schedule` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -104,7 +120,10 @@ CREATE TABLE `invoice` (
   `status` enum('PENDING','PAID','FAILED') DEFAULT NULL,
   `total_amount` double NOT NULL,
   `payment_date` datetime DEFAULT NULL,
+<<<<<<< HEAD
   `invoice_day_create` datetime DEFAULT NULL,
+=======
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
   PRIMARY KEY (`id`),
   KEY `member_id` (`member_id`),
   CONSTRAINT `invoice_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `member` (`id`)
@@ -117,7 +136,12 @@ CREATE TABLE `invoice` (
 
 LOCK TABLES `invoice` WRITE;
 /*!40000 ALTER TABLE `invoice` DISABLE KEYS */;
+<<<<<<< HEAD
 INSERT INTO `invoice` VALUES (1,6,'PENDING',500000,'2025-12-12 16:46:30','2025-12-12 16:30:00'),(2,6,'PAID',500000,'2025-12-12 16:48:13','2025-12-12 16:40:15'),(3,4,'PENDING',1500000,'2025-12-12 18:15:14','2025-12-12 10:15:00'),(4,4,'PAID',1500000,'2025-12-12 18:15:36','2025-12-12 18:00:00'),(5,15,'PENDING',1500000,'2025-12-12 20:05:46','2025-12-11 09:30:00'),(6,16,'PENDING',5000000,'2025-12-12 20:05:53','2025-12-12 19:45:00'),(7,18,'PENDING',300000,'2025-12-12 20:06:09','2025-12-12 20:00:00'),(8,15,'PAID',1500000,'2025-12-12 20:06:39','2025-12-10 14:20:00'),(9,16,'PAID',5000000,'2025-12-12 20:06:48','2025-12-12 15:00:00'),(10,18,'PAID',300000,'2025-12-12 20:06:58','2025-12-12 20:01:00'),(11,17,'PAID',300000,'2025-12-12 20:07:04','2025-12-12 20:05:00');/*!40000 ALTER TABLE `invoice` ENABLE KEYS */;
+=======
+INSERT INTO `invoice` VALUES (1,6,'PENDING',500000,'2025-12-12 16:46:30'),(2,6,'PAID',500000,'2025-12-12 16:48:13'),(3,4,'PENDING',1500000,'2025-12-12 18:15:14'),(4,4,'PAID',1500000,'2025-12-12 18:15:36'),(5,15,'PENDING',1500000,'2025-12-12 20:05:46'),(6,16,'PENDING',5000000,'2025-12-12 20:05:53'),(7,18,'PENDING',300000,'2025-12-12 20:06:09'),(8,15,'PAID',1500000,'2025-12-12 20:06:39'),(9,16,'PAID',5000000,'2025-12-12 20:06:48'),(10,18,'PAID',300000,'2025-12-12 20:06:58'),(11,17,'PAID',300000,'2025-12-12 20:07:04');
+/*!40000 ALTER TABLE `invoice` ENABLE KEYS */;
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 UNLOCK TABLES;
 
 --
@@ -185,8 +209,13 @@ CREATE TABLE `member_package` (
   `id` int NOT NULL AUTO_INCREMENT,
   `member_id` int NOT NULL,
   `package_id` int NOT NULL,
+<<<<<<< HEAD
   `startDate` datetime DEFAULT NULL,
   `endDate` datetime DEFAULT NULL,
+=======
+  `startDate` datetime NOT NULL,
+  `endDate` datetime NOT NULL,
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
   `status` enum('ACTIVE','EXPIRED') DEFAULT NULL,
   `coach_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -205,7 +234,11 @@ CREATE TABLE `member_package` (
 
 LOCK TABLES `member_package` WRITE;
 /*!40000 ALTER TABLE `member_package` DISABLE KEYS */;
+<<<<<<< HEAD
 INSERT INTO `member_package` VALUES (1,7,1,'2025-12-09 20:22:48','2026-01-08 20:22:48','ACTIVE',2),(3,6,2,'2025-12-12 16:48:13','2026-01-11 16:48:13','ACTIVE',10),(5,4,3,'2025-12-12 18:15:36','2026-01-11 18:15:36','ACTIVE',12),(6,15,3,'2025-12-12 20:05:46','2026-01-12 20:05:46','EXPIRED',NULL),(7,16,4,'2025-12-12 20:05:53','2026-01-12 20:05:53','EXPIRED',NULL),(8,18,1,'2025-12-12 20:06:09','2026-01-12 20:06:09','EXPIRED',NULL),(9,15,3,'2025-12-12 20:06:39','2026-01-11 20:06:39','ACTIVE',13),(10,16,4,'2025-12-12 20:06:48','2026-01-11 20:06:48','ACTIVE',5),(11,18,1,'2025-12-12 20:06:58','2026-01-11 20:06:58','ACTIVE',10),(12,17,1,'2025-12-12 20:07:04','2026-01-11 20:07:04','ACTIVE',NULL);
+=======
+INSERT INTO `member_package` VALUES (1,7,1,'2025-12-09 20:22:48','2026-01-08 20:22:48','ACTIVE',11),(3,6,2,'2025-12-12 16:48:13','2026-01-11 16:48:13','ACTIVE',5),(5,4,3,'2025-12-12 18:15:36','2026-01-11 18:15:36','ACTIVE',12),(6,15,3,'2025-12-12 20:05:46','2026-01-12 20:05:46','EXPIRED',NULL),(7,16,4,'2025-12-12 20:05:53','2026-01-12 20:05:53','EXPIRED',NULL),(8,18,1,'2025-12-12 20:06:09','2026-01-12 20:06:09','EXPIRED',NULL),(9,15,3,'2025-12-12 20:06:39','2026-01-11 20:06:39','ACTIVE',13),(10,16,4,'2025-12-12 20:06:48','2026-01-11 20:06:48','ACTIVE',5),(11,18,1,'2025-12-12 20:06:58','2026-01-11 20:06:58','ACTIVE',5),(12,17,1,'2025-12-12 20:07:04','2026-01-11 20:07:04','ACTIVE',12);
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40000 ALTER TABLE `member_package` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -266,6 +299,7 @@ INSERT INTO `package_benefit` VALUES ('Truy cập phòng tập từ 6:00 - 22:00
 UNLOCK TABLES;
 
 --
+<<<<<<< HEAD
 -- Table structure for table `package_plan_assignment`
 --
 
@@ -289,6 +323,35 @@ CREATE TABLE `package_plan_assignment` (
 LOCK TABLES `package_plan_assignment` WRITE;
 /*!40000 ALTER TABLE `package_plan_assignment` DISABLE KEYS */;
 /*!40000 ALTER TABLE `package_plan_assignment` ENABLE KEYS */;
+=======
+-- Table structure for table `plan_assignment`
+--
+
+DROP TABLE IF EXISTS `plan_assignment`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plan_assignment` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `workout_plan_id` int NOT NULL,
+  `member_package_id` int NOT NULL,
+  `start_date` datetime DEFAULT NULL,
+  `end_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `workout_plan_id` (`workout_plan_id`),
+  KEY `member_package_id` (`member_package_id`),
+  CONSTRAINT `plan_assignment_ibfk_1` FOREIGN KEY (`workout_plan_id`) REFERENCES `workout_plan` (`id`),
+  CONSTRAINT `plan_assignment_ibfk_2` FOREIGN KEY (`member_package_id`) REFERENCES `member_package` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plan_assignment`
+--
+
+LOCK TABLES `plan_assignment` WRITE;
+/*!40000 ALTER TABLE `plan_assignment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `plan_assignment` ENABLE KEYS */;
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 UNLOCK TABLES;
 
 --
@@ -310,7 +373,11 @@ CREATE TABLE `plan_detail` (
   KEY `exercise_id` (`exercise_id`),
   CONSTRAINT `plan_detail_ibfk_1` FOREIGN KEY (`workout_plan_id`) REFERENCES `workout_plan` (`id`),
   CONSTRAINT `plan_detail_ibfk_2` FOREIGN KEY (`exercise_id`) REFERENCES `exercise` (`id`)
+<<<<<<< HEAD
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+=======
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -319,6 +386,10 @@ CREATE TABLE `plan_detail` (
 
 LOCK TABLES `plan_detail` WRITE;
 /*!40000 ALTER TABLE `plan_detail` DISABLE KEYS */;
+<<<<<<< HEAD
+=======
+INSERT INTO `plan_detail` VALUES (1,1,1,1,2,NULL),(2,1,2,1,3,NULL),(3,1,3,1,3,NULL),(4,1,4,2,3,NULL),(5,2,1,1,1,NULL),(6,3,2,1,2,NULL),(7,3,3,1,1,NULL),(8,8,2,2,3,NULL),(9,8,3,1,5,NULL),(10,13,3,4,3,NULL),(11,14,1,4,4,NULL),(12,14,2,4,4,NULL),(13,14,3,3,4,NULL),(14,14,4,5,4,NULL);
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40000 ALTER TABLE `plan_detail` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -356,7 +427,10 @@ DROP TABLE IF EXISTS `user`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user` (
   `avatar` varchar(150) DEFAULT NULL,
+<<<<<<< HEAD
   `email` varchar(100) DEFAULT NULL,
+=======
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
   `username` varchar(50) NOT NULL,
   `password` varchar(50) NOT NULL,
   `user_role` enum('ADMIN','USER','COACH','RECEPTIONIST','CASHIER') DEFAULT NULL,
@@ -369,7 +443,11 @@ CREATE TABLE `user` (
   `name` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
+<<<<<<< HEAD
 ) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+=======
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -378,7 +456,11 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
+<<<<<<< HEAD
 INSERT INTO `user` VALUES ('https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg',NULL,'admin','e10adc3949ba59abbe56e057f20f883e','ADMIN','2025-12-09 20:22:48',NULL,NULL,'MALE','user',1,'admin'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540197/Screenshot_2025-12-12_185052_mlep1o.png',NULL,'dangbeo','d9b1d7db4cd6e70935368a1efb10e377','COACH','2025-12-09 20:22:48',NULL,NULL,'MALE','trainer',2,'đăng béo'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg',NULL,'canh','e10adc3949ba59abbe56e057f20f883e','CASHIER','2025-12-09 20:22:48',NULL,NULL,'MALE','user',3,'canh huynh'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg',NULL,'cozg','e10adc3949ba59abbe56e057f20f883e','USER','2025-12-09 20:22:48',NULL,NULL,'MALE','member',4,'cozgdeptrai'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765199333/Screenshot_2025-12-08_200923_qqbckv.png',NULL,'hoigym','202cb962ac59075b964b07152d234b70','COACH','2025-12-09 20:22:48',NULL,NULL,'MALE','trainer',5,'hợi gym'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765200160/xb2vpquxw3gv0mxi7bbk.png',NULL,'ronaldo','202cb962ac59075b964b07152d234b70','USER','2025-12-09 20:22:48',NULL,NULL,'MALE','member',6,'ronaldo'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1762914467/xby2eoj58t4dsi3u6vdj.jpg',NULL,'messi','202cb962ac59075b964b07152d234b70','USER','2025-12-09 20:22:48',NULL,NULL,'MALE','member',7,'messi'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1762590455/cld-sample-5.jpg',NULL,'letan','202cb962ac59075b964b07152d234b70','RECEPTIONIST','2025-12-11 21:39:09','2025-12-11 21:39:00',NULL,'MALE','user',8,'nem chua'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157775/dong_uwvxli.png',NULL,'neymar','202cb962ac59075b964b07152d234b70','USER','2025-12-12 18:18:25','0202-12-12 19:29:53','0969293472','MALE','member',9,'neymar'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765539914/Screenshot_2025-12-12_184516_hina0j.png',NULL,'chinh','202cb962ac59075b964b07152d234b70','USER','2025-12-12 18:46:43','2025-12-12 18:46:00','0969293472','MALE','trainer',10,'Lê trung chính'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540070/Screenshot_2025-12-12_184839_nmbf5x.png',NULL,'vu','202cb962ac59075b964b07152d234b70','USER','2025-12-12 18:49:31','2025-12-12 18:46:00','0969293472','MALE','trainer',11,'Ông Zũ'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540237/download_t05ied.jpg',NULL,'cong','202cb962ac59075b964b07152d234b70','USER','2025-12-12 18:52:02','2025-12-12 18:46:00','123','MALE','trainer',12,'công ngu'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540360/Screenshot_2025-12-12_185333_bitxsc.png',NULL,'nhan','202cb962ac59075b964b07152d234b70','USER','2025-12-12 18:54:06','2025-12-12 18:46:00','0969293472','MALE','trainer',13,'Phạm Kim Nhân'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540438/Screenshot_2025-12-12_185440_ipyvbt.png',NULL,'sam','202cb962ac59075b964b07152d234b70','USER','2025-12-12 18:55:10','2025-12-12 18:46:00','0969293472','MALE','trainer',14,'Sam Sulek'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765544550/Screenshot_2025-12-12_200213_vbe930.png',NULL,'robben','202cb962ac59075b964b07152d234b70','USER','2025-12-12 20:03:48',NULL,'123','MALE','member',15,'robben'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765544551/Screenshot_2025-12-12_200232_lbgvm5.png',NULL,'muller','202cb962ac59075b964b07152d234b70','USER','2025-12-12 20:04:07',NULL,'123','MALE','member',16,'muller'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765544550/Screenshot_2025-12-12_200315_dk8jxw.png',NULL,'vinicius','202cb962ac59075b964b07152d234b70','USER','2025-12-12 20:04:27',NULL,'123','MALE','member',17,'vinicius'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765544551/Screenshot_2025-12-12_200309_nhpp3c.png',NULL,'antony','202cb962ac59075b964b07152d234b70','USER','2025-12-12 20:04:48',NULL,'0969293472','MALE','member',18,'Antony De Santos');
+=======
+INSERT INTO `user` VALUES ('https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg','admin','e10adc3949ba59abbe56e057f20f883e','ADMIN','2025-12-09 20:22:48',NULL,NULL,'MALE','user',1,'admin'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540197/Screenshot_2025-12-12_185052_mlep1o.png','dangbeo','d9b1d7db4cd6e70935368a1efb10e377','COACH','2025-12-09 20:22:48',NULL,NULL,'MALE','trainer',2,'đăng béo'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg','canh','e10adc3949ba59abbe56e057f20f883e','CASHIER','2025-12-09 20:22:48',NULL,NULL,'MALE','user',3,'canh huynh'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1764237405/ecjxy41wdhl7k03scea8.jpg','cozg','e10adc3949ba59abbe56e057f20f883e','USER','2025-12-09 20:22:48',NULL,NULL,'MALE','member',4,'cozgdeptrai'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765199333/Screenshot_2025-12-08_200923_qqbckv.png','hoigym','202cb962ac59075b964b07152d234b70','COACH','2025-12-09 20:22:48',NULL,NULL,'MALE','trainer',5,'hợi gym'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765200160/xb2vpquxw3gv0mxi7bbk.png','ronaldo','202cb962ac59075b964b07152d234b70','USER','2025-12-09 20:22:48',NULL,NULL,'MALE','member',6,'ronaldo'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1762914467/xby2eoj58t4dsi3u6vdj.jpg','messi','202cb962ac59075b964b07152d234b70','USER','2025-12-09 20:22:48',NULL,NULL,'MALE','member',7,'messi'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1762590455/cld-sample-5.jpg','letan','202cb962ac59075b964b07152d234b70','RECEPTIONIST','2025-12-11 21:39:09','2025-12-11 21:39:00',NULL,'MALE','user',8,'nem chua'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765157775/dong_uwvxli.png','neymar','202cb962ac59075b964b07152d234b70','USER','2025-12-12 18:18:25','0202-12-12 19:29:53','0969293472','MALE','member',9,'neymar'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765539914/Screenshot_2025-12-12_184516_hina0j.png','chinh','202cb962ac59075b964b07152d234b70','COACH','2025-12-12 18:46:43','2025-12-12 18:46:00','0969293472','MALE','trainer',10,'Lê trung chính'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540070/Screenshot_2025-12-12_184839_nmbf5x.png','vu','202cb962ac59075b964b07152d234b70','COACH','2025-12-12 18:49:31','2025-12-12 18:46:00','0969293472','MALE','trainer',11,'Ông Zũ'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540237/download_t05ied.jpg','cong','202cb962ac59075b964b07152d234b70','COACH','2025-12-12 18:52:02','2025-12-12 18:46:00','123','MALE','trainer',12,'công ngu'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540360/Screenshot_2025-12-12_185333_bitxsc.png','nhan','202cb962ac59075b964b07152d234b70','COACH','2025-12-12 18:54:06','2025-12-12 18:46:00','0969293472','MALE','trainer',13,'Phạm Kim Nhân'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765540438/Screenshot_2025-12-12_185440_ipyvbt.png','sam','202cb962ac59075b964b07152d234b70','COACH','2025-12-12 18:55:10','2025-12-12 18:46:00','0969293472','MALE','trainer',14,'Sam Sulek'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765544550/Screenshot_2025-12-12_200213_vbe930.png','robben','202cb962ac59075b964b07152d234b70','USER','2025-12-12 20:03:48',NULL,'123','MALE','member',15,'robben'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765544551/Screenshot_2025-12-12_200232_lbgvm5.png','muller','202cb962ac59075b964b07152d234b70','USER','2025-12-12 20:04:07',NULL,'123','MALE','member',16,'muller'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765544550/Screenshot_2025-12-12_200315_dk8jxw.png','vinicius','202cb962ac59075b964b07152d234b70','USER','2025-12-12 20:04:27',NULL,'123','MALE','member',17,'vinicius'),('https://res.cloudinary.com/dpl8syyb9/image/upload/v1765544551/Screenshot_2025-12-12_200309_nhpp3c.png','antony','202cb962ac59075b964b07152d234b70','USER','2025-12-12 20:04:48',NULL,'0969293472','MALE','member',18,'Antony De Santos'),(NULL,'haiem','202cb962ac59075b964b07152d234b70','COACH','2025-12-21 11:05:04','2025-12-21 11:05:00','06465','MALE','trainer',20,'haiem');
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -396,7 +478,11 @@ CREATE TABLE `workout_plan` (
   PRIMARY KEY (`id`),
   KEY `coach_id` (`coach_id`),
   CONSTRAINT `workout_plan_ibfk_1` FOREIGN KEY (`coach_id`) REFERENCES `coach` (`id`)
+<<<<<<< HEAD
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+=======
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -405,6 +491,10 @@ CREATE TABLE `workout_plan` (
 
 LOCK TABLES `workout_plan` WRITE;
 /*!40000 ALTER TABLE `workout_plan` DISABLE KEYS */;
+<<<<<<< HEAD
+=======
+INSERT INTO `workout_plan` VALUES (5,1,'tăng cân'),(5,2,'tăng chiều cao'),(5,3,'dadas'),(5,8,'ouukuh'),(5,13,'igiyg'),(5,14,'tăng cân');
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02
 /*!40000 ALTER TABLE `workout_plan` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -417,4 +507,8 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+<<<<<<< HEAD
 -- Dump completed on 2025-12-16 19:43:45
+=======
+-- Dump completed on 2025-12-21 11:25:24
+>>>>>>> a87186dacffd9c87d4b01ef59446715d33588d02

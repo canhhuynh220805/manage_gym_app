@@ -1,0 +1,43 @@
+{% extends 'admin/base.html' %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block page_body %}
+    {% include 'admin/header_admin.html' %}
+
+    <div class="container-fluid admin-content-wrapper">
+        {% block body %}{{ super() }}{% endblock %}
+    </div>
+
+    <div class="modal fade" id="globalConfirmModal" tabindex="-1" aria-hidden="true" style="z-index: 1080;">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="confirmTitle">Xác nhận</h5>
+                    <button type="button" class="btn-close" data-dismiss="modal">x</button>
+                </div>
+                <div class="modal-body text-center"><p id="confirmMessage"></p></div>
+                <div class="modal-footer justify-content-center border-0">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnConfirmYes">Đồng ý</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1200">
+    <div id="liveToast" class="toast align-items-center border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fw-bold" id="toast-message"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block tail %}
+    {{ super() }}
+{% endblock %}

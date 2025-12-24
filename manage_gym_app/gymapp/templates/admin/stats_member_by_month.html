@@ -1,0 +1,73 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<h2 class="text-center my-4 text-uppercase font-weight-bold">Thống kê hội viên trong năm</h2>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card p-3 shadow-sm border-0 border-left-success" style="border-left: 5px solid #28a745 !important;">
+                <div class="text-uppercase small font-weight-bold text-muted">Tổng hội viên mới</div>
+                <div class="h4 font-weight-bold text-success">
+                    {{ member_stats|map(attribute=1)|sum if member_stats else 0 }} Người
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card p-3 shadow-sm border-0 border-left-info" style="border-left: 5px solid #17a2b8 !important;">
+                <div class="text-uppercase small font-weight-bold text-muted">Trung bình đăng ký tháng</div>
+                <div class="h4 font-weight-bold text-info">
+                    {{ ((member_stats|map(attribute=1)|sum / 12) | round | int) if member_stats else 0 }} Người/Tháng
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm p-3 border-0">
+                <h5 class="font-weight-bold text-dark mb-3">Biểu đồ thống kê hội viên</h5>
+                <div style="position: relative; height: 400px; width: 100%;">
+                    <canvas id="memberBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let labels = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+        let data = new Array(12).fill(0);
+
+        {% for s in member_stats %}
+            data[{{ s[0]|int - 1 }}] = {{ s[1] }};
+        {% endfor %}
+
+        const ctx = document.getElementById('memberBarChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Hội viên trong năm theo tháng',
+                    data: data
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

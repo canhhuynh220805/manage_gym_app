@@ -51,11 +51,12 @@ def get_total_revenue_month():
     return result if result else 0
 
 
-def stats_package_usage():
+def stats_revenue_package_usage():
     return (db.session.query(Package.id, Package.name, func.count(MemberPackage.id))
             .outerjoin(MemberPackage, MemberPackage.package_id == Package.id)
             .group_by(Package.id, Package.name)
             .order_by(Package.id).all())
+
 
 
 def add_member_full_info(name, username, password, avatar, phone, gender, dob, email):
@@ -71,20 +72,6 @@ def add_member_full_info(name, username, password, avatar, phone, gender, dob, e
     db.session.add(u)
     db.session.commit()
     return u
-
-
-def add_member(name, username, password, email, avatar):
-    u = Member(name=name,
-               username=username.strip(),
-               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()), email=email)
-
-    if avatar:
-        res = cloudinary.uploader.upload(avatar)
-        u.avatar = res.get('secure_url')
-
-    db.session.add(u)
-    db.session.commit()
-
 
 def get_workout_plan_by_member_id(member_id):
     return (db.session.query(PlanAssignment) \
@@ -337,7 +324,18 @@ def calculate_package_dates(member_id, duration_months):
 
 def process_pending_invoice(invoice_id):
     is_valid, result = validate_cashier(invoice_id)
+
     if not is_valid:
+        if result == "Hóa đơn đã quá hạn thanh toán":
+            try:
+                inv = db.session.get(Invoice, invoice_id)
+                if inv:
+                    inv.status = StatusInvoice.FAILED
+                    db.session.commit()
+                    return False, "Hóa đơn này đã quá hạn 7 ngày"
+            except Exception as ex:
+                db.session.rollback()
+                return False, f"Lỗi khi tự động hủy đơn quá hạn: {str(ex)}"
         return False, result
     inv = result
     try:
@@ -361,11 +359,8 @@ def add_member_package_and_pay(member_id, package_id):
 
             s, e = calculate_package_dates(member_id, p.duration)
 
-            mp = MemberPackage(member_id=u.id, package_id=p.id,
-                               startDate=s, endDate=e,
-                               status=StatusPackage.ACTIVE)
+            mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
             db.session.add(mp)
-
             inv = Invoice(member_id=u.id, total_amount=p.price,
                           status=StatusInvoice.PAID, payment_date=datetime.now())
             db.session.add(inv)
@@ -439,13 +434,15 @@ def assign_coach(coach_id, package_id):
         return None
 
 
-# VALIDATE
+#VALIDATE
 
 def validate_cashier(invoice_id):
     if not invoice_id:
         return False, "Mã hóa đơn không được để trống"
 
+
     inv = db.session.query(Invoice).filter(Invoice.id == invoice_id).with_for_update().first()  # pessimistic locking
+
     if not inv:
         return False, f"Hóa đơn mã {invoice_id} không tồn tại trong hệ thống"
     if inv.status != StatusInvoice.PENDING:
@@ -463,10 +460,26 @@ def validate_cashier(invoice_id):
         expired_date = inv.invoice_day_create + timedelta(days=expired_day)
         if datetime.now() > expired_date:
             return False, "Hóa đơn đã quá hạn thanh toán"
-
     return True, inv
 
+def validate_registration_package(member_id):
+    active_package = MemberPackage.query.filter(MemberPackage.member_id == member_id,MemberPackage.status == 'ACTIVE').first()
 
+    if active_package and active_package.endDate > datetime.now():
+        end_date = active_package.endDate.strftime('%d/%m/%Y')
+        return False, f"Gói '{active_package.package.name}' của bạn còn hạn đến {end_date}, nếu muốn đăng kí gói mới, vui lòng đến phòng gym để hủy gói hiện tại"
+
+    pending_invoice = Invoice.query.filter(Invoice.member_id == member_id,Invoice.status == StatusInvoice.PENDING).first()
+
+    if pending_invoice:
+        create_date = pending_invoice.invoice_day_create.strftime('%H:%M %d/%m')
+        return False, (f"Hội viên đã có một yêu cầu đăng ký chờ thanh toán lúc {create_date}."
+                       f" Vui lòng xử lý hóa đơn cũ trước, nếu muốn đăng kí gói Khác, vui lòng đến phòng gym để hủy")
+
+    return True, 'Thông tin hợp lệ'
+
+
+#SEND MAIL
 def send_mail(member_id, package_id):
     member = User.query.get(member_id)
     package = Package.query.get(package_id)
@@ -477,6 +490,70 @@ def send_mail(member_id, package_id):
     msg.body = (f"Chào {member.name}, bạn đã đăng kí thành công gói {package.name}!\n"
                 f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
     mail.send(msg)
+
+
+#Thong ke
+
+def active_member_stats(kw=None):
+    query = db.session.query(Package.id, Package.name, func.count(MemberPackage.id))\
+                      .join(MemberPackage, MemberPackage.package_id.__eq__(Package.id))\
+                      .filter(MemberPackage.status.__eq__(StatusPackage.ACTIVE))
+    if kw:
+        query = query.filter(Package.name.contains(kw))
+    return query.group_by(Package.id, Package.name).all()
+
+def stats_revenue_by_month(time="month", year=datetime.now().year):
+   query =  (db.session.query(func.extract(time, Invoice.payment_date), func.sum(Invoice.total_amount))
+            .join(MemberPackage, Invoice.member_package_id == MemberPackage.id)
+            .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year)
+            .group_by(func.extract(time, Invoice.payment_date))).all()
+   return query
+
+def count_members_by_time(year=datetime.now().year):
+    query = (db.session.query(func.extract('month', User.join_date),func.count(User.id.distinct())).join(MemberPackage, User.id == MemberPackage.member_id)
+           .filter(func.extract('year', User.join_date) == year,MemberPackage.status == 'active').group_by(func.extract('month', User.join_date))).all()
+    return query
+
+def stats_by_quarter(year=datetime.now().year):
+    query = (db.session.query(func.extract('quarter', Invoice.payment_date), func.sum(Invoice.total_amount))
+             .join(MemberPackage, Invoice.member_package_id == MemberPackage.id)
+             .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year)
+             .group_by(func.extract('quarter', Invoice.payment_date)).order_by(func.extract('quarter', Invoice.payment_date)).all())
+    return query
+def count_active_members():
+    return MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE).count()
+
+def get_gym_rules():
+    return Regulation.query.filter(Regulation.code.like('GYM_RULE_%')).all()
+
+#ADMIN
+def add_exercise(name, description, image):
+    try:
+        ex = Exercise(name=name, description=description, image=image)
+        db.session.add(ex)
+        db.session.commit()
+        return True, "Thêm bài tập thành công!"
+    except Exception as e:
+        db.session.rollback()
+        return False, str(e)
+
+
+def add_package(name, price, duration, description, image, benefits):
+    try:
+        p = Package(name=name, price=float(price), duration=int(duration), description=description, image=image)
+        db.session.add(p)
+
+        for b in benefits:
+            if b.get('name'):
+                benefit = PackageBenefit(name=b['name'], detail=b.get('detail', ''), package=p)
+                db.session.add(benefit)
+
+        db.session.commit()
+        return True, "Thêm gói dịch vụ thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        return False, str(e)
 
 
 if __name__ == '__main__':
@@ -490,4 +567,6 @@ if __name__ == '__main__':
         #     print(f"{msg}")
         # else:
         #     print(f" Lỗi: {msg}")
-        pass
+        # pass
+        print(active_member_stats())
+        # print(stats_revenue_by_month(time='month', year=2025))

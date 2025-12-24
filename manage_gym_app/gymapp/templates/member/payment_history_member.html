@@ -38,7 +38,6 @@
                         <th class="py-3">Tên dịch vụ</th>
                         <th class="py-3 text-end">Tổng tiền (VNĐ)</th>
                         <th class="py-3 text-center">Trạng thái</th>
-                        <th class="py-3 text-end pe-4">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -51,7 +50,7 @@
 
                     {% for i in invoice %}
                     <tr>
-                        <td class="ps-4 fw-bold text-primary">{{ i.id }}</td>
+                        <td class="ps-4 fw-bold text-primary">{{ loop.index }}</td>
                         <td>
                             <div class="d-flex flex-column"><span class="fw-medium">{{ i.invoice_day_create }}</span>
                             </div>
@@ -67,9 +66,6 @@
                             {% else %}
                             <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger px-3 py-2 text-white">{{ i.status.name }}</span>
                             {% endif %}
-                        </td>
-                        <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-light border" title="Xem chi tiết">chi tiết</button>
                         </td>
                     </tr>
                     {% endfor %}

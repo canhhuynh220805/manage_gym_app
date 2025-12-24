@@ -3,9 +3,13 @@ from flask_admin import Admin, BaseView, expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.model import InlineFormAdmin
 from flask_login import logout_user, current_user
-from flask import redirect
+from flask import redirect, request
 from markupsafe import Markup
+
+from wtforms.validators import DataRequired, Length, URL
+
 from gymapp import app, db, dao
+from gymapp.dao import active_member_stats
 from gymapp.models import UserRole, User, Member, Coach, Exercise, Package, Regulation, PackageBenefit
 
 
@@ -31,8 +35,8 @@ class AdminView(ModelView):
 
 
 class UserView(AdminView):
-    column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar']
-    form_columns = ['name', 'username', 'password', 'user_role', 'phone', 'gender', 'avatar', 'dob']
+    column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar', 'email']
+    form_columns = ['name', 'username', 'password','user_role', 'phone', 'email', 'gender' ,'avatar', 'dob']
     column_searchable_list = ['name', 'username']
     column_filters = ['user_role', 'gender']
 
@@ -65,12 +69,18 @@ class CoachView(AdminView):
 
 
 class ExerciseView(AdminView):
-    column_list = ['id', 'name', 'description', 'image']
+
+    column_list = ['name', 'description', 'image']
+    form_columns = ['name', 'description', 'image']
     column_searchable_list = ['name']
     create_modal = True
     edit_modal = True
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-running'
+
+    @expose('/new/', methods=('GET', 'POST'))
+    def create_view(self):
+        return self.render('admin/create_exercise.html')
 
     def list_img(view, context, model, name):
         if not model.image:
@@ -84,10 +94,14 @@ class ExerciseView(AdminView):
 
 class PackageBenefitInline(InlineFormAdmin):
     form_label = 'Quyền lợi'
-    form_columns = ['id', 'detail']
+    form_columns = ['name', 'detail']
+
 
 
 class PackageView(AdminView):
+    create_modal_template = 'admin/create_package.html'
+    edit_modal_template= 'admin/create_package.html'
+
     column_list = ['name', 'duration', 'price', 'description', 'image']
     form_columns = ['name', 'duration', 'price', 'description', 'image', 'benefits']
     inline_models = (PackageBenefitInline(PackageBenefit),)
@@ -95,14 +109,17 @@ class PackageView(AdminView):
     edit_modal = False
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-box-open'
+    @expose('/new/')
+    def create_view(self):
+        return self.render('admin/create_package.html')
 
     def format_price(view, context, model, name):
-        return "{:,.0f}".format(model.price)
+        return "{:,.0f} VNĐ".format(model.price) if model.price else "0"
 
     def list_img(view, context, model, name):
         if not model.image:
             return ''
-        return Markup(f'<img src="{model.image}" width="50" />')
+        return Markup(f'<img src="{model.image}" width="50" class="img-thumbnail" />')
 
     column_formatters = {
         'price': format_price,
@@ -110,8 +127,11 @@ class PackageView(AdminView):
     }
 
 
-class RegulationView(ModelView):
-    column_list = ['code', 'name', 'value']
+
+class RegulationView(AdminView):
+    column_list = ['name', 'value', 'code']
+    can_create = True
+
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-gavel'
 
@@ -132,17 +152,41 @@ class LogoutView(BaseView):
         return current_user.is_authenticated
 
 
+class StatsRevenueViewByMonth(BaseView):
+    @expose('/')
+    def index(self):
+        revenue_times = dao.stats_revenue_by_month("month")
+        revenue_quarters = dao.stats_by_quarter()
+
+        return self.render('admin/stats_revenue_by_month.html', revenue_times= revenue_times, quarterly_stats=revenue_quarters)
+
+
 class StatsView(BaseView):
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-chart-pie'
 
     @expose('/')
     def index(self):
-        return self.render('admin/stats.html')
+        kw = request.args.get('kw')
+        stats = dao.active_member_stats(kw=kw)
+        total_active = dao.count_active_members()
+
+        return self.render('admin/stats.html', active_stats = stats, total_active = total_active)
 
     def is_accessible(self) -> bool:
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
+class StatsMemberViewByMonth(BaseView):
+    @expose('/')
+    def index(self):
+
+        member_stats = dao.count_members_by_time()
+
+        return self.render('admin/stats_member_by_month.html',
+                           member_stats=member_stats)
+
+    def is_accessible(self) -> bool:
+        return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
 class MyAdminIndexView(AdminIndexView):
     @expose('/')
@@ -153,14 +197,13 @@ class MyAdminIndexView(AdminIndexView):
             'packages': dao.count_packages(),
             'revenue': dao.get_total_revenue_month()
         }
-        pkg_stats = dao.stats_package_usage()
-        return self.render('admin/index.html', stats=cards_stats, pkg_stats=pkg_stats)
 
+        pkg_stats = dao.stats_revenue_package_usage()
+        return self.render('admin/index.html', stats=cards_stats,pkg_stats=pkg_stats)
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
-
-admin = Admin(app=app, name="GYM Management", template_mode='bootstrap4', index_view=MyAdminIndexView())
+admin = Admin(app=app, name="GYM Management", template_mode='bootstrap4', index_view=MyAdminIndexView(), base_template='admin/master.html',)
 
 admin.add_view(UserView(User, db.session, name='Tài khoản hệ thống', category='Quản lý người dùng'))
 admin.add_view(MemberView(Member, db.session, name='Hội viên', category='Quản lý người dùng'))
@@ -168,5 +211,8 @@ admin.add_view(CoachView(Coach, db.session, name='Huấn luyện viên', categor
 admin.add_view(ExerciseView(Exercise, db.session, name='Bài tập'))
 admin.add_view(PackageView(Package, db.session, name='Gói dịch vụ'))
 admin.add_view(RegulationView(Regulation, db.session, name='Quy định'))
-admin.add_view(StatsView(name='Thống kê'))
+admin.add_view(StatsRevenueViewByMonth(name='Thống kê doanh thu theo tháng'))
+admin.add_view(StatsMemberViewByMonth(name='Thống kê hội viên theo tháng'))
+admin.add_view(StatsView(name='Thống kê hội viên hoạt động'))
 admin.add_view(LogoutView(name='Đăng xuất'))
+
