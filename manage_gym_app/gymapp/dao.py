@@ -109,7 +109,7 @@ def add_package_registration(user_id, package_id):
         return False, "Gói tập không tồn tại"
 
     try:
-        _upgrade_user_to_member_force(user_id)
+        upgrade_user_to_member_force(user_id)
 
         new_registration = MemberPackage(
             member=member,
@@ -137,7 +137,7 @@ def add_package_registration(user_id, package_id):
         return False, str(e)
 
 
-def _upgrade_user_to_member_force(user_id):
+def upgrade_user_to_member_force(user_id):
     try:
         sql_insert = text("INSERT IGNORE INTO member (id) VALUES (:id)")
         db.session.execute(sql_insert, {'id': user_id})
@@ -273,15 +273,27 @@ def load_members(kw=None):
 def load_packages():
     return Package.query.all()
 
-
-def get_invoices(kw=None, status=None):
+def get_invoices(kw=None, status=None, page = 1, limit = None):
     query = Invoice.query
     if kw:
         query = query.join(Member).filter(Member.name.contains(kw) | Member.phone.contains(kw))
     if status:
         query = query.filter(Invoice.status == status)
-    return query.order_by(Invoice.id.desc()).all()
+    query = query.order_by(Invoice.id.desc())
+    if limit:
+        query = query.limit(limit)
+    elif page:
+        start = (page - 1) * app.config['PAGE_SIZE']
+        query = query.slice(start, start + app.config['PAGE_SIZE'])
+    return query.all()
 
+def count_invoices(kw=None, status=None):
+    query = Invoice.query
+    if kw:
+        query = query.join(Member).filter(Member.name.contains(kw) | Member.phone.contains(kw))
+    if status:
+        query = query.filter(Invoice.status == status)
+    return query.count()
 
 def get_invoice_from_cur_user(user_id, date_filter=None, status_filter=None):
     query = Invoice.query.filter(Invoice.member_id == user_id)
@@ -323,55 +335,44 @@ def calculate_package_dates(member_id, duration_months):
 
 
 def process_pending_invoice(invoice_id):
-    is_valid, result = validate_cashier(invoice_id)
-
+    is_valid, inv = validate_cashier(invoice_id)
     if not is_valid:
-        if result == "Hóa đơn đã quá hạn thanh toán":
-            try:
-                inv = db.session.get(Invoice, invoice_id)
-                if inv:
-                    inv.status = StatusInvoice.FAILED
-                    db.session.commit()
-                    return False, "Hóa đơn này đã quá hạn 7 ngày"
-            except Exception as ex:
-                db.session.rollback()
-                return False, f"Lỗi khi tự động hủy đơn quá hạn: {str(ex)}"
-        return False, result
-    inv = result
+        return False, inv
     try:
         state = get_invoice_state(inv)
         success, msg = state.pay(calculate_date=calculate_package_dates)
-        if success:
-            db.session.commit()
+
+        db.session.commit()
         return success, msg
     except Exception as ex:
         db.session.rollback()
         return False, str(ex)
 
 
-def add_member_package_and_pay(member_id, package_id):
-    p = db.session.get(Package, package_id)
-    u = db.session.get(User, member_id)
+def add_member_package(member_id, package_id):
+    pass
 
-    if p and u:
-        try:
-            _upgrade_user_to_member_force(member_id)
+def create_paid_invoice(member_id, total_amount, member_package=None):
+    inv = Invoice(member_id=member_id, total_amount=total_amount, status=StatusInvoice.PAID, payment_date=datetime.now(),
+        member_package=member_package)
+    db.session.add(inv)
+    return inv
 
-            s, e = calculate_package_dates(member_id, p.duration)
-
-            mp = MemberPackage(member_id=u.id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
-            db.session.add(mp)
-            inv = Invoice(member_id=u.id, total_amount=p.price,
-                          status=StatusInvoice.PAID, payment_date=datetime.now())
-            db.session.add(inv)
-
-            db.session.commit()
-            return inv
-        except Exception as ex:
-            db.session.rollback()
+def process_payment(member_id, package_id):
+    try:
+        mp = add_member_package(member_id, package_id)
+        if not mp:
             return None
-    return None
 
+        p = db.session.get(Package, package_id)
+        inv = create_paid_invoice(member_id, p.price, member_package=mp)
+
+        db.session.commit()
+        return inv
+    except Exception as ex:
+        db.session.rollback()
+        print(f"Lỗi hệ thống: {str(ex)}")
+        return None
 
 def cancel_pending_invoice(invoice_id):
     is_valid, result = validate_cashier(invoice_id)
@@ -481,15 +482,15 @@ def validate_registration_package(member_id):
 
 #SEND MAIL
 def send_mail(member_id, package_id):
-    member = User.query.get(member_id)
-    package = Package.query.get(package_id)
+    with app.app_context():
+        member = User.query.get(member_id)
+        package = Package.query.get(package_id)
 
-    msg = Message("Email xác nhận đăng kí thành công", recipients=[member.email])
-    formatted_price = "{:,.0f}".format(package.price)
-
-    msg.body = (f"Chào {member.name}, bạn đã đăng kí thành công gói {package.name}!\n"
-                f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
-    mail.send(msg)
+        msg = Message("Email xác nhận đăng kí thành công", recipients=[member.email])
+        formatted_price = "{:,.0f}".format(package.price)
+        msg.body = (f"Chào {member.name}, bạn đã đăng kí thành công gói {package.name}!\n" 
+                    f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
+        mail.send(msg)
 
 
 #Thong ke
@@ -502,23 +503,17 @@ def active_member_stats(kw=None):
         query = query.filter(Package.name.contains(kw))
     return query.group_by(Package.id, Package.name).all()
 
-def stats_revenue_by_month(time="month", year=datetime.now().year):
+def stats_revenue(time="month", year=datetime.now().year):
    query =  (db.session.query(func.extract(time, Invoice.payment_date), func.sum(Invoice.total_amount))
             .join(MemberPackage, Invoice.member_package_id == MemberPackage.id)
-            .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year)
-            .group_by(func.extract(time, Invoice.payment_date))).all()
-   return query
+            .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year))
+   return query.group_by(func.extract(time, Invoice.payment_date)).all()
 
 def count_members_by_time(year=datetime.now().year):
     query = (db.session.query(func.extract('month', User.join_date),func.count(User.id.distinct())).join(MemberPackage, User.id == MemberPackage.member_id)
            .filter(func.extract('year', User.join_date) == year,MemberPackage.status == 'active').group_by(func.extract('month', User.join_date))).all()
     return query
 
-def stats_by_quarter(year=datetime.now().year):
-    query = (db.session.query(func.extract('quarter', Invoice.payment_date), func.sum(Invoice.total_amount))
-             .join(MemberPackage, Invoice.member_package_id == MemberPackage.id)
-             .filter(Invoice.status == StatusInvoice.PAID,func.extract('year', Invoice.payment_date) == year)
-             .group_by(func.extract('quarter', Invoice.payment_date)).order_by(func.extract('quarter', Invoice.payment_date)).all())
     return query
 def count_active_members():
     return MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE).count()
@@ -568,5 +563,8 @@ if __name__ == '__main__':
         # else:
         #     print(f" Lỗi: {msg}")
         # pass
-        print(active_member_stats())
+        # print(active_member_stats())
+        # print(stats_revenue(time="month"))
+        # print(stats_revenue(time="quarter"))
         # print(stats_revenue_by_month(time='month', year=2025))
+        pass
