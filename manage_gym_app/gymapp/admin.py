@@ -5,6 +5,7 @@ from flask_admin.model import InlineFormAdmin
 from flask_login import logout_user, current_user
 from flask import redirect, request
 from markupsafe import Markup
+
 from wtforms.validators import DataRequired, Length, URL
 
 from gymapp import app, db, dao
@@ -32,6 +33,7 @@ class AdminView(ModelView):
     def is_accessible(self) -> bool:
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
+
 class UserView(AdminView):
     column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar', 'email']
     form_columns = ['name', 'username', 'password','user_role', 'phone', 'email', 'gender' ,'avatar', 'dob']
@@ -45,7 +47,7 @@ class UserView(AdminView):
 class MemberView(AdminView):
     column_list = ['id', 'name', 'username', 'phone', 'gender', 'packages']
     column_searchable_list = ['name', 'phone']
-    form_columns = ['name', 'username', 'password', 'phone', 'gender' ,'avatar', 'dob']
+    form_columns = ['name', 'username', 'password', 'phone', 'gender', 'avatar', 'dob']
     create_modal = True
     edit_modal = True
     menu_icon_type = 'fa'
@@ -89,9 +91,11 @@ class ExerciseView(AdminView):
         'image': list_img
     }
 
+
 class PackageBenefitInline(InlineFormAdmin):
     form_label = 'Quyền lợi'
     form_columns = ['name', 'detail']
+
 
 
 class PackageView(AdminView):
@@ -99,11 +103,10 @@ class PackageView(AdminView):
     edit_modal_template= 'admin/create_package.html'
 
     column_list = ['name', 'duration', 'price', 'description', 'image']
-    form_columns = ['name', 'duration', 'price', 'description', 'image']
-    inline_models = [PackageBenefitInline(PackageBenefit)]
-
-    create_modal = True
-    edit_modal = True
+    form_columns = ['name', 'duration', 'price', 'description', 'image', 'benefits']
+    inline_models = (PackageBenefitInline(PackageBenefit),)
+    create_modal = False
+    edit_modal = False
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-box-open'
     @expose('/new/')
@@ -122,16 +125,24 @@ class PackageView(AdminView):
         'price': format_price,
         'image': list_img
     }
+
+
+
 class RegulationView(AdminView):
     column_list = ['name', 'value', 'code']
     can_create = True
-    can_delete = True
+
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-gavel'
+
+    def is_accessible(self) -> bool:
+        return current_user.is_authenticated
+
 
 class LogoutView(BaseView):
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-sign-out-alt'
+
     @expose('/')
     def index(self):
         logout_user()
@@ -139,6 +150,7 @@ class LogoutView(BaseView):
 
     def is_accessible(self) -> bool:
         return current_user.is_authenticated
+
 
 class StatsRevenueViewByMonth(BaseView):
     @expose('/')
@@ -148,9 +160,11 @@ class StatsRevenueViewByMonth(BaseView):
 
         return self.render('admin/stats_revenue_by_month.html', revenue_times= revenue_times, quarterly_stats=revenue_quarters)
 
+
 class StatsView(BaseView):
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-chart-pie'
+
     @expose('/')
     def index(self):
         kw = request.args.get('kw')
@@ -183,6 +197,7 @@ class MyAdminIndexView(AdminIndexView):
             'packages': dao.count_packages(),
             'revenue': dao.get_total_revenue_month()
         }
+
         pkg_stats = dao.stats_revenue_package_usage()
         return self.render('admin/index.html', stats=cards_stats,pkg_stats=pkg_stats)
     def is_accessible(self):
@@ -200,3 +215,4 @@ admin.add_view(StatsRevenueViewByMonth(name='Thống kê doanh thu theo tháng')
 admin.add_view(StatsMemberViewByMonth(name='Thống kê hội viên theo tháng'))
 admin.add_view(StatsView(name='Thống kê hội viên hoạt động'))
 admin.add_view(LogoutView(name='Đăng xuất'))
+
