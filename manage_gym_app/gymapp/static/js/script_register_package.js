@@ -17,7 +17,7 @@ function register_package(userId, packageId) {
                     showToast(data.msg, 'success');
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    showToast("Lỗi: " + data.msg, 'danger');
+                    showToast("Lỗi: " + data.err_msg, 'danger');
                 }
             }).catch(err => {
                 console.error(err);

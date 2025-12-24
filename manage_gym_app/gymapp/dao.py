@@ -65,18 +65,6 @@ def add_member_full_info(name, username, password, avatar,phone,gender,dob, emai
     db.session.commit()
     return u
 
-def add_member(name, username, password, email, avatar):
-    u = Member(name=name,
-               username=username.strip(),
-               password=str(hashlib.md5(password.strip().encode('utf-8')).hexdigest()),email = email)
-
-    if avatar:
-        res = cloudinary.uploader.upload(avatar)
-        u.avatar = res.get('secure_url')
-
-    db.session.add(u)
-    db.session.commit()
-
 def get_workout_plan_by_member_id(member_id):
     return (db.session.query(PlanAssignment) \
             .join(MemberPackage, MemberPackage.id == PlanAssignment.member_package_id) \
@@ -146,6 +134,8 @@ def _upgrade_user_to_member_force(user_id):
         db.session.expire_all()
     except Exception as e:
         db.session.rollback()
+
+
 
 # HUẤN LUYỆN VIÊN
 def get_all_exercises():
@@ -481,6 +471,24 @@ def validate_cashier(invoice_id):
             return False, "Hóa đơn đã quá hạn thanh toán"
     return True, inv
 
+def validate_registration_package(member_id):
+    active_package = MemberPackage.query.filter(MemberPackage.member_id == member_id,MemberPackage.status == 'ACTIVE').first()
+
+    if active_package and active_package.endDate > datetime.now():
+        end_date = active_package.endDate.strftime('%d/%m/%Y')
+        return False, f"Gói '{active_package.package.name}' của bạn còn hạn đến {end_date}, nếu muốn đăng kí gói mới, vui lòng đến phòng gym để hủy gói hiện tại"
+
+    pending_invoice = Invoice.query.filter(Invoice.member_id == member_id,Invoice.status == StatusInvoice.PENDING).first()
+
+    if pending_invoice:
+        create_date = pending_invoice.invoice_day_create.strftime('%H:%M %d/%m')
+        return False, (f"Hội viên đã có một yêu cầu đăng ký chờ thanh toán lúc {create_date}."
+                       f" Vui lòng xử lý hóa đơn cũ trước, nếu muốn đăng kí gói Khác, vui lòng đến phòng gym để hủy")
+
+    return True, 'Thông tin hợp lệ'
+
+
+#SEND MAIL
 def send_mail(member_id, package_id):
     member = User.query.get(member_id)
     package = Package.query.get(package_id)
