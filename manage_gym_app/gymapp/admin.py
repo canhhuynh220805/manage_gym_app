@@ -5,7 +5,6 @@ from flask_admin.model import InlineFormAdmin
 from flask_login import logout_user, current_user
 from flask import redirect
 from markupsafe import Markup
-
 from gymapp import app, db, dao
 from gymapp.models import UserRole, User, Member, Coach, Exercise, Package, Regulation, PackageBenefit
 
@@ -23,16 +22,17 @@ class AdminView(ModelView):
     }
 
     def on_model_change(self, form, model, is_created):
-        raw_password = form.password.data
-        if raw_password:
+        if hasattr(form, 'password') and form.password.data:
+            raw_password = form.password.data
             model.password = str(hashlib.md5(raw_password.strip().encode('utf-8')).hexdigest())
 
     def is_accessible(self) -> bool:
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
 
+
 class UserView(AdminView):
     column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar']
-    form_columns = ['name', 'username', 'password','user_role', 'phone', 'gender' ,'avatar', 'dob']
+    form_columns = ['name', 'username', 'password', 'user_role', 'phone', 'gender', 'avatar', 'dob']
     column_searchable_list = ['name', 'username']
     column_filters = ['user_role', 'gender']
 
@@ -43,7 +43,7 @@ class UserView(AdminView):
 class MemberView(AdminView):
     column_list = ['id', 'name', 'username', 'phone', 'gender', 'packages']
     column_searchable_list = ['name', 'phone']
-    form_columns = ['name', 'username', 'password', 'phone', 'gender' ,'avatar', 'dob']
+    form_columns = ['name', 'username', 'password', 'phone', 'gender', 'avatar', 'dob']
     create_modal = True
     edit_modal = True
     menu_icon_type = 'fa'
@@ -81,16 +81,18 @@ class ExerciseView(AdminView):
         'image': list_img
     }
 
+
 class PackageBenefitInline(InlineFormAdmin):
     form_label = 'Quyền lợi'
     form_columns = ['id', 'detail']
 
+
 class PackageView(AdminView):
     column_list = ['name', 'duration', 'price', 'description', 'image']
-    form_columns = ['name', 'duration', 'price', 'description', 'image']
+    form_columns = ['name', 'duration', 'price', 'description', 'image', 'benefits']
     inline_models = (PackageBenefitInline(PackageBenefit),)
-    create_modal = True
-    edit_modal = True
+    create_modal = False
+    edit_modal = False
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-box-open'
 
@@ -108,16 +110,19 @@ class PackageView(AdminView):
     }
 
 
-class RegulationView(AdminView):
-    column_list = ['name', 'value']
-    can_create = False
-    can_delete = False
+class RegulationView(ModelView):
+    column_list = ['code', 'name', 'value']
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-gavel'
+
+    def is_accessible(self) -> bool:
+        return current_user.is_authenticated
+
 
 class LogoutView(BaseView):
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-sign-out-alt'
+
     @expose('/')
     def index(self):
         logout_user()
@@ -126,9 +131,11 @@ class LogoutView(BaseView):
     def is_accessible(self) -> bool:
         return current_user.is_authenticated
 
+
 class StatsView(BaseView):
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-chart-pie'
+
     @expose('/')
     def index(self):
         return self.render('admin/stats.html')
@@ -147,9 +154,11 @@ class MyAdminIndexView(AdminIndexView):
             'revenue': dao.get_total_revenue_month()
         }
         pkg_stats = dao.stats_package_usage()
-        return self.render('admin/index.html', stats=cards_stats,pkg_stats=pkg_stats)
+        return self.render('admin/index.html', stats=cards_stats, pkg_stats=pkg_stats)
+
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role == UserRole.ADMIN
+
 
 admin = Admin(app=app, name="GYM Management", template_mode='bootstrap4', index_view=MyAdminIndexView())
 

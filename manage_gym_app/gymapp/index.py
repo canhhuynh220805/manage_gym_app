@@ -6,7 +6,7 @@ from flask_login import logout_user, login_user, current_user
 
 from gymapp import app, dao, login, db
 from gymapp.decorators import login_required
-from gymapp.models import UserRole, StatusInvoice, DayOfWeek
+from gymapp.models import UserRole, StatusInvoice, DayOfWeek, WorkoutPlan
 
 
 @app.route('/')
@@ -147,51 +147,22 @@ def create_workout_plan():
         if not data:
             return jsonify({'err_msg': 'Dữ liệu không hợp lệ', 'status': 400})
         name_plan = str(data.get('name-plan'))
-        if not name_plan:
-            return jsonify({'err_msg': "Vui lòng nhập tên kế hoạch", 'status': 400})
         member_ids = data.get('member_ids')
         start_date = data.get('startDate')
         end_date = data.get('endDate')
-
-        if not member_ids and (start_date or end_date):
-            return jsonify(
-                {'err_msg': "Không có gán hội viên, vui lòng bỏ ngày bắt đầu và ngày kết thúc", 'status': 400})
-
-        if member_ids and (not start_date or not end_date):
-            return jsonify({'err_msg': "Vui lòng chọn ngày bắt đầu và ngày kết thúc", 'status': 400})
-
-        if start_date and end_date:
-            # '2025-12-04T00:00:00.000Z' lấy 10 kí tự đầu
-            start_date = datetime.strptime(start_date[:10], "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_date[:10], "%Y-%m-%d").date()
-            if start_date >= end_date:
-                return jsonify({'err_msg': "Ngày bắt đầu phải nhỏ hơn ngày kết thúc", 'status': 400})
-            if start_date < datetime.now().date():
-                return jsonify({'err_msg': "Ngày bắt đầu không được ở trong quá khứ", 'status': 400})
-
         plan = session.get('workout-plan')
-        if not plan or len(plan) == 0:
-            return jsonify({'err_msg': 'Kế hoạch chưa có bài tập nào! Vui lòng chọn bài tập.', 'status': 400})
-
-        for ex in plan.values():
-            ex_name = ex.get('name', 'Bài tập')
-            sets = int(ex.get('sets', 0))
-            reps = int(ex.get('reps', 0))
-            days = ex.get('days', [])
-            if sets <= 0 or reps <= 0:
-                return jsonify(
-                    {'err_msg': f'Bài "{ex_name}" chưa nhập số hiệp/lần tập hợp lệ!, số hiệp và số lần phải lớn hơn 0',
-                     'status': 400})
-
-            if len(days) == 0:
-                return jsonify(
-                    {'err_msg': f'Bài "{ex_name}" chưa chọn ngày tập!, vui lòng chọn ít nhất 1 ngày', 'status': 400})
-
-        dao.add_workout_plan(name=name_plan, plan=session.get('workout-plan'), member_ids=member_ids,
-                             start_date=start_date, end_date=end_date)
-        del session['workout-plan']
-
-        return jsonify({'msg': "Tạo kế hoạch thành công", 'status': 200})
+        success, err_msg, msg = (
+            WorkoutPlan.Builder()\
+            .set_info(name=name_plan,coach_id=current_user.id)\
+            .set_exercise(plan)\
+            .set_member(member_ids=member_ids, start_date=start_date, end_date=end_date)\
+            .build()
+        )
+        if success:
+            del session['workout-plan']
+            return jsonify({'msg': msg, 'status': 200})
+        else:
+            return jsonify({'err_msg': err_msg, 'status': 400})
     except Exception as e:
         return jsonify({'err_msg': f'Lỗi hệ thống: {str(e)}', 'status': 500})
 
@@ -381,6 +352,7 @@ def receptionist_create_invoice_view():
 def assign_coach(package_id):
     coach_id = request.json.get('coach_id')
     updated_package = dao.assign_coach(package_id=package_id, coach_id=coach_id)
+    print(updated_package)
     if updated_package:
         return jsonify({
             'msg': 'Gán HLV thành công!',
@@ -448,6 +420,7 @@ def register_view():
 
 
 @app.route('/workout-plans')
+@login_required(UserRole.USER)
 def workout_plan_view():
     workout_plans = dao.get_workout_plan_by_member_id(member_id=current_user.id)
     return render_template('member/member_workout_plan.html', workout_plans=workout_plans)
@@ -530,8 +503,10 @@ def load_user(pk):
 
 
 @app.route('/api/register_package', methods=['post'])
+@login_required(UserRole.USER)
 def register_package():
     data = request.json
+    print(data)
     user_id = data.get('user_id')
     package_id = data.get('package_id')
 
