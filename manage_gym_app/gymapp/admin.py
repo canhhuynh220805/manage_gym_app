@@ -143,8 +143,8 @@ class LogoutView(BaseView):
 class StatsRevenueViewByMonth(BaseView):
     @expose('/')
     def index(self):
-        revenue_times = dao.stats_revenue_by_month("month")
-        revenue_quarters = dao.stats_by_quarter()
+        revenue_times = dao.stats_revenue(time="month")
+        revenue_quarters = dao.stats_revenue(time="quarter")
 
         return self.render('admin/stats_revenue_by_month.html', revenue_times= revenue_times, quarterly_stats=revenue_quarters)
 
