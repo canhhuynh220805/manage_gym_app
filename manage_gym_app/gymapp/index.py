@@ -1,4 +1,5 @@
 import math
+import threading
 from datetime import datetime
 import sys
 print("Python đang chạy ở:", sys.executable)
@@ -426,6 +427,13 @@ def issue_an_invoice_receptionist_process():
 
         dao.add_package_registration(user_id=member.id,package_id=package_id)
         dao.send_mail(member_id=member.id,package_id=package_id)
+
+        send_mail_thread = threading.Thread(
+            target=dao.send_mail,
+            kwargs={'member_id': member.id, 'package_id': package_id}
+        )
+        send_mail_thread.start()
+
         return jsonify({
             'status': 200,
             'msg': 'Tạo hóa đơn thành công! Vui lòng báo khách qua quầy thu ngân.'
@@ -620,7 +628,12 @@ def register_package():
         is_success, message = dao.add_package_registration(user_id, package_id)
 
         if is_success:
-            dao.send_mail(member_id=user_id, package_id=package_id)
+            send_mail_thread = threading.Thread(
+                target=dao.send_mail,
+                kwargs={'member_id': user_id, 'package_id': package_id}
+            )
+            send_mail_thread.start()
+
             return jsonify({'status': 200, 'msg': message})
         else:
             return jsonify({'status': 400, 'err_msg': message})

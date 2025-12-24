@@ -95,7 +95,7 @@ def add_package_registration(user_id, package_id):
         return False, "Gói tập không tồn tại"
 
     try:
-        _upgrade_user_to_member_force(user_id)
+        upgrade_user_to_member_force(user_id)
 
         new_registration = MemberPackage(
             member=member,
@@ -121,7 +121,7 @@ def add_package_registration(user_id, package_id):
         db.session.rollback()
         return False, str(e)
 
-def _upgrade_user_to_member_force(user_id):
+def upgrade_user_to_member_force(user_id):
     try:
         sql_insert = text("INSERT IGNORE INTO member (id) VALUES (:id)")
         db.session.execute(sql_insert, {'id': user_id})
@@ -329,7 +329,7 @@ def add_member_package_and_pay(member_id, package_id):
 
     if p and u:
         try:
-            _upgrade_user_to_member_force(member_id)
+            upgrade_user_to_member_force(member_id)
 
             s, e = calculate_package_dates(member_id, p.duration)
 
@@ -490,15 +490,16 @@ def validate_registration_package(member_id):
 
 #SEND MAIL
 def send_mail(member_id, package_id):
-    member = User.query.get(member_id)
-    package = Package.query.get(package_id)
+    with app.app_context():
+        member = User.query.get(member_id)
+        package = Package.query.get(package_id)
 
-    msg = Message("Email xác nhận đăng kí thành công", recipients=[member.email])
-    formatted_price = "{:,.0f}".format(package.price)
+        msg = Message("Email xác nhận đăng kí thành công", recipients=[member.email])
+        formatted_price = "{:,.0f}".format(package.price)
 
-    msg.body = (f"Chào {member.name}, bạn đã đăng kí thành công gói {package.name}!\n" 
-                f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
-    mail.send(msg)
+        msg.body = (f"Chào {member.name}, bạn đã đăng kí thành công gói {package.name}!\n" 
+                    f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
+        mail.send(msg)
 
 
 #Thong ke
