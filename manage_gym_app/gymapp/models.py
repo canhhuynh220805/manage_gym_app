@@ -93,7 +93,12 @@ class Member(User):
     __mapper_args__ = {
         'polymorphic_identity': 'member',
     }
-
+    @property
+    def current_package(self):
+        for mp in self.packages:
+            if mp.status == StatusPackage.ACTIVE:
+                return mp.package.name
+        return "Chưa có"
 
 class Coach(User):
     id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
@@ -312,12 +317,11 @@ if __name__ == '__main__':
         coaches = [
             Coach(name='đăng béo', username='dangbeo',
                   password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                  user_role=UserRole.COACH, gender=Gender.MALE, avatar=default_avt,
-                  dob=datetime(2000, 12, 12, 18, 46, 0),phone='0912345678',email="huynhthecanhpvh@gmail.com"),
+                  user_role=UserRole.COACH, phone='0969293472', gender=Gender.MALE, avatar=default_avt,
+                  dob=datetime(2000, 12, 12, 18, 46, 0),email="huynhthecanhpvh@gmail.com"),
             Coach(name='hợi gym', username='hoigym',
                   password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                  user_role=UserRole.COACH, gender=Gender.MALE,
-                  phone='0987654321',
+                  user_role=UserRole.COACH, phone='0969293472', gender=Gender.MALE,
                   avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765199333/Screenshot_2025-12-08_200923_qqbckv.png",
                   dob=datetime(2000, 12, 12, 18, 46, 0),email="huynhthecanhpvh@gmail.com"),
             Coach(name='Lê trung chính', username='chinh',
@@ -344,20 +348,20 @@ if __name__ == '__main__':
         members = [
             Member(name='cozgdeptrai', username='cozg',
                    password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                   user_role=UserRole.USER, gender=Gender.MALE,
-                  dob=datetime(2000, 12, 12, 18, 46, 0), phone='0969293472',email="huynhthecanhpvh@gmail.com"),
+                   user_role=UserRole.USER, gender=Gender.MALE,phone='0969293472',
+                  dob=datetime(2000, 12, 12, 18, 46, 0),email="huynhthecanhpvh@gmail.com"),
 
             Member(name='ronaldo', username='ronaldo',
                    password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                   user_role=UserRole.USER, gender=Gender.MALE,
+                   user_role=UserRole.USER, gender=Gender.MALE,phone='0969293472',
                    avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1765200160/xb2vpquxw3gv0mxi7bbk.png",
-                  dob=datetime(2000, 12, 12, 18, 46, 0), phone='0969293472',email="huynhthecanhpvh@gmail.com"),
+                  dob=datetime(2000, 12, 12, 18, 46, 0),email="huynhthecanhpvh@gmail.com"),
 
             Member(name='messi', username='messi',
                    password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                   user_role=UserRole.USER, gender=Gender.MALE,
+                   user_role=UserRole.USER, gender=Gender.MALE,phone='0969293472',
                    avatar="https://res.cloudinary.com/dpl8syyb9/image/upload/v1762914467/xby2eoj58t4dsi3u6vdj.jpg",
-                  dob=datetime(2000, 12, 12, 18, 46, 0), phone='0969293472',email="huynhthecanhpvh@gmail.com"),
+                  dob=datetime(2000, 12, 12, 18, 46, 0),email="huynhthecanhpvh@gmail.com"),
 
             Member(name='neymar', username='neymar',
                    password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
@@ -385,39 +389,39 @@ if __name__ == '__main__':
                   dob=datetime(2000, 12, 12, 18, 46, 0),email="huynhthecanhpvh@gmail.com"),
 
             Member(name='cong36', username='cong36',
-                   password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                   user_role=UserRole.USER, email='huynhthecanhpvh@gmail.com', phone='0969293472', gender=Gender.MALE,
+                   password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),phone='0969293472',
+                   user_role=UserRole.USER, email='huynhthecanhpvh@gmail.com', gender=Gender.MALE,
                   dob=datetime(2000, 12, 12, 18, 46, 0)),
 
             Member(name='Ngô Công Danh', username='danh',
-                   password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                   user_role=UserRole.USER, phone='0969293472', email='danh03112005@gmail.com', gender=Gender.MALE,
+                   password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),phone='0969293472',
+                   user_role=UserRole.USER, email='danh03112005@gmail.com', gender=Gender.MALE,
                   dob=datetime(2000, 12, 12, 18, 46, 0)),
 
             Member(name='Ung Nguyễn Anh Tuấn', username='tuan',
-                   password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                   user_role=UserRole.USER, phone='0969293472', email='ungtuan0812@gmail.com', gender=Gender.MALE,
+                   password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),phone='0969293472',
+                   user_role=UserRole.USER, email='ungtuan0812@gmail.com', gender=Gender.MALE,
                   dob=datetime(2000, 12, 12, 18, 46, 0)),
         ]
         others = [
             # ADMIN
             User(name='admin', username='admin',
-                 password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                 password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),phone='0969293472',
                  user_role=UserRole.ADMIN, gender=Gender.MALE, avatar=default_avt,
-                  dob=datetime(2000, 12, 12, 18, 46, 0), phone='0969293472',email="huynhthecanhpvh@gmail.com"),
+                  dob=datetime(2000, 12, 12, 18, 46, 0),email="huynhthecanhpvh@gmail.com"),
 
             # CASHIER
             User(name='canh huynh', username='canh',
-                 password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                 password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),phone='0969293472',
                  user_role=UserRole.CASHIER, gender=Gender.MALE, avatar=default_avt,
-                  dob=datetime(2000, 12, 12, 18, 46, 0), phone='0969293472',email="huynhthecanhpvh@gmail.com"),
+                  dob=datetime(2000, 12, 12, 18, 46, 0),email="huynhthecanhpvh@gmail.com"),
 
             # RECEPTIONIST
             User(name='nem chua', username='letan',
-                 password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                 password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),phone='0969293472',
                  user_role=UserRole.RECEPTIONIST, gender=Gender.MALE, avatar=default_avt,
                  dob=datetime(2025, 12, 11, 21, 39, 0)
-                 , phone='0969293472',email="huynhthecanhpvh@gmail.com"),
+                 ,email="huynhthecanhpvh@gmail.com"),
         ]
         exercises = [
             Exercise(
