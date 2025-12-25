@@ -105,8 +105,8 @@ class PackageView(AdminView):
     column_list = ['name', 'duration', 'price', 'description', 'image']
     form_columns = ['name', 'duration', 'price', 'description', 'image', 'benefits']
     inline_models = (PackageBenefitInline(PackageBenefit),)
-    create_modal = False
-    edit_modal = False
+    create_modal = True
+    edit_modal = True
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-box-open'
     @expose('/new/')
