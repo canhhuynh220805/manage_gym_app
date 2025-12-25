@@ -45,13 +45,16 @@ class UserView(AdminView):
 
 
 class MemberView(AdminView):
-    column_list = ['id', 'name', 'username', 'phone', 'gender', 'packages','is_active', 'avatar', 'email']
+    column_list = ['id', 'name', 'username', 'phone', 'current_package', 'gender','is_active', 'avatar', 'email']
     column_searchable_list = ['name', 'phone']
     form_columns = ['name', 'username', 'password', 'phone', 'gender', 'avatar', 'dob']
     create_modal = True
     edit_modal = True
     menu_icon_type = 'fa'
     menu_icon_value = 'fa-user'
+    column_labels = {
+        'current_package': 'Packages'
+    }
 
 
 class CoachView(AdminView):
@@ -96,8 +99,6 @@ class PackageBenefitInline(InlineFormAdmin):
     form_label = 'Quyền lợi'
     form_columns = ['name', 'detail']
 
-
-
 class PackageView(AdminView):
     create_modal_template = 'admin/create_package.html'
     edit_modal_template= 'admin/create_package.html'
@@ -126,8 +127,6 @@ class PackageView(AdminView):
         'image': list_img
     }
 
-
-
 class RegulationView(AdminView):
     column_list = ['name', 'value', 'code']
     can_create = True
@@ -151,7 +150,6 @@ class LogoutView(BaseView):
     def is_accessible(self) -> bool:
         return current_user.is_authenticated
 
-
 class StatsRevenueViewByMonth(BaseView):
     @expose('/')
     def index(self):
@@ -159,7 +157,6 @@ class StatsRevenueViewByMonth(BaseView):
         revenue_quarters = dao.stats_revenue(time="quarter")
 
         return self.render('admin/stats_revenue_by_month.html', revenue_times= revenue_times, quarterly_stats=revenue_quarters)
-
 
 class StatsView(BaseView):
     menu_icon_type = 'fa'
