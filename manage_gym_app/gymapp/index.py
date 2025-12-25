@@ -99,8 +99,8 @@ def update_exercise_to_plan(id):
     if not plan or id not in plan:
         return jsonify({'err_msg': 'Bài tập không tồn tại trong giáo án!', 'status': 404})
     try:
-        sets = int(data.get("sets"), 0)
-        reps = int(data.get("reps"), 0)
+        sets = int(data.get("sets") or 0)
+        reps = int(data.get("reps") or 0)
         days = data.get("days", [])
 
         plan[id]["sets"] = sets
