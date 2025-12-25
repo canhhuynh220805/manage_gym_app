@@ -25,6 +25,8 @@ def index():
 @app.route('/coach')
 @login_required(UserRole.COACH)
 def coach_view():
+    if 'workout-plan' in session:
+        del session['workout-plan']
     workout_plans = dao.get_workout_plan_by_coach_id(current_user.id)
     return render_template('coach/index_coach.html', workout_plans=workout_plans)
 

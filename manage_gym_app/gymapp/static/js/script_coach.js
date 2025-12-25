@@ -3,8 +3,8 @@ const memberDropdown = document.getElementById("member-dropdown");
 const msg = document.getElementById("no-member-msg");
 
 function checkDropdownEmpty() {
-    const hasItems = memberDropdown.querySelectorAll("li").length > 0;
-    msg.classList.toggle("d-none", hasItems); // có item → ẩn, hết → hiện
+    const hasItems = memberDropdown.querySelectorAll(".dropdown-item").length > 0;
+    msg.classList.toggle("d-none", hasItems);
 }
 
 memberDropdown.addEventListener("click", function(event) {

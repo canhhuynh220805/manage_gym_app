@@ -79,18 +79,18 @@
                         <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                             Thêm hội viên
                         </button>
-                        {% if members %}
                         <ul class="dropdown-menu" id="member-dropdown">
+                            {% if members %}
                             {% for m in members %}
                             <li><a class="dropdown-item" href="#" data-name="{{m.name}}"
                                    data-id="{{m.id}}">{{m.name}}</a></li>
                             {% endfor %}
+                            {% else %}
+                            <li>
+                                Không có hội viên
+                            </li>
+                            {% endif %}
                         </ul>
-                        {% else %}
-                        <div id="no-member-msg" class="text-muted mt-1 d-none">
-                            Không có hội viên
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
