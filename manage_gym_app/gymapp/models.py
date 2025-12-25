@@ -93,7 +93,12 @@ class Member(User):
     __mapper_args__ = {
         'polymorphic_identity': 'member',
     }
-
+    @property
+    def current_package(self):
+        for mp in self.packages:
+            if mp.status == StatusPackage.ACTIVE:
+                return mp.package.name
+        return "Chưa có"
 
 class Coach(User):
     id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
