@@ -7,7 +7,7 @@ print("Python đang chạy ở:", sys.executable)
 from flask import render_template, request, redirect, url_for, jsonify, session
 from flask_login import logout_user, login_user, current_user
 
-from gymapp import app, dao, login, db
+from gymapp import app, dao, login, db, observers
 from gymapp.decorators import login_required
 from gymapp.models import UserRole, StatusInvoice, DayOfWeek, WorkoutPlan
 
@@ -397,13 +397,10 @@ def issue_an_invoice_receptionist_process():
                        password= password,phone=phone,gender=gender,dob=dob,email = email)
 
         dao.add_package_registration(user_id=member.id,package_id=package_id)
-        dao.send_mail(member_id=member.id,package_id=package_id)
 
-        send_mail_thread = threading.Thread(
-            target=dao.send_mail,
-            kwargs={'member_id': member.id, 'package_id': package_id}
-        )
-        send_mail_thread.start()
+        notifier = observers.RegistrationSubject()
+        notifier.attach(observers.EmailNotificationObserver())
+        notifier.notify(user_id=member.id, package_id=package_id)
 
         return jsonify({
             'status': 200,
@@ -602,11 +599,9 @@ def register_package():
         is_success, message = dao.add_package_registration(user_id, package_id)
 
         if is_success:
-            send_mail_thread = threading.Thread(
-                target=dao.send_mail,
-                kwargs={'member_id': user_id, 'package_id': package_id}
-            )
-            send_mail_thread.start()
+            notifier = observers.RegistrationSubject()
+            notifier.attach(observers.EmailNotificationObserver())
+            notifier.notify(user_id=user_id,package_id=package_id)
 
             return jsonify({'status': 200, 'msg': message})
         else:
