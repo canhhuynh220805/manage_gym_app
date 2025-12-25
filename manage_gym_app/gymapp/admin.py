@@ -35,7 +35,7 @@ class AdminView(ModelView):
 
 
 class UserView(AdminView):
-    column_list = ['id', 'name', 'username', 'user_role', 'is_active', 'avatar', 'email']
+    column_list = ['id', 'name', 'username', 'user_role', 'phone' ,'is_active', 'avatar', 'email']
     form_columns = ['name', 'username', 'password','user_role', 'phone', 'email', 'gender' ,'avatar', 'dob']
     column_searchable_list = ['name', 'username']
     column_filters = ['user_role', 'gender']
@@ -45,7 +45,7 @@ class UserView(AdminView):
 
 
 class MemberView(AdminView):
-    column_list = ['id', 'name', 'username', 'phone', 'gender', 'packages']
+    column_list = ['id', 'name', 'username', 'phone', 'gender', 'packages','is_active', 'avatar', 'email']
     column_searchable_list = ['name', 'phone']
     form_columns = ['name', 'username', 'password', 'phone', 'gender', 'avatar', 'dob']
     create_modal = True
@@ -55,7 +55,7 @@ class MemberView(AdminView):
 
 
 class CoachView(AdminView):
-    column_list = ['id', 'name', 'username', 'phone', 'gender']
+    column_list = ['id', 'name', 'username', 'phone', 'gender', 'is_active', 'avatar', 'email']
     form_columns = ['name', 'username', 'password', 'phone', 'gender', 'avatar', 'dob']
     create_modal = True
     edit_modal = True
