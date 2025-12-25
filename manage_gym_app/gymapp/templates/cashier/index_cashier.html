@@ -24,6 +24,7 @@
                         <th>Khách hàng</th>
                         <th>Gói tập</th>
                         <th>Tổng tiền</th>
+                        <th>Ngày tạo</th>
                         <th>Tác vụ</th>
                     </tr>
                 </thead>
@@ -48,6 +49,9 @@
                             <td class="text-danger fw-bold">
                                 {{ "{:,.0f}".format(i.total_amount) }} VNĐ
                             </td>
+                            <td>
+                                {{ i.invoice_day_create.strftime('%H:%M %d/%m/%Y') }}
+                            </td>
                             <td class="text-center">
                                 <button class="btn btn-success btn-sm" onclick="processPending({{ i.id }})">
                                     Thu tiền
@@ -58,7 +62,7 @@
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-3">
+                            <td colspan="6" class="text-center text-muted py-3">
                                 Không có đơn chờ xử lý.
                             </td>
                         </tr>

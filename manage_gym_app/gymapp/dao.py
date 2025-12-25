@@ -21,24 +21,19 @@ def get_regulation_by_code(code):
 def get_user_by_id(id):
     return User.query.get(id)
 
-
 def auth_user(username, password):
     password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
     return User.query.filter(User.username == username.strip(),
                              User.password == password).first()
 
-
 def count_members():
     return Member.query.count()
-
 
 def count_coaches():
     return Coach.query.count()
 
-
 def count_packages():
     return Package.query.count()
-
 
 def get_total_revenue_month():
     current_month = datetime.now().month
@@ -49,14 +44,11 @@ def get_total_revenue_month():
                 Invoice.status == StatusInvoice.PAID).scalar()
     return result if result else 0
 
-
 def stats_revenue_package_usage():
     return (db.session.query(Package.id, Package.name, func.count(MemberPackage.id))
             .outerjoin(MemberPackage, MemberPackage.package_id == Package.id)
             .group_by(Package.id, Package.name)
             .order_by(Package.id).all())
-
-
 
 def add_member_full_info(name, username, password, avatar, phone, gender, dob, email):
     u = Member(name=name,
@@ -79,24 +71,19 @@ def get_workout_plan_by_member_id(member_id):
             .order_by(PlanAssignment.start_date.desc()) \
             .all())
 
-
 def get_workout_plan_by_coach_id(coach_id):
     return WorkoutPlan.query.filter(WorkoutPlan.coach_id == coach_id).all()
 
-
 def get_detail_workout_plan_by_id(workout_plan_id):
     return WorkoutPlan.query.get(workout_plan_id)
-
 
 def load_package():
     query = Package.query.all()
     return query
 
-
 def load_package_benefit():
     query = Package.query.all()
     return query
-
 
 def add_package_registration(user_id, package_id):
     member = User.query.get(user_id)
@@ -135,7 +122,6 @@ def add_package_registration(user_id, package_id):
         print(f"Lỗi đăng ký: {str(e)}")
         return False, str(e)
 
-
 def upgrade_user_to_member_force(user_id):
     try:
         sql_insert = text("INSERT IGNORE INTO member (id) VALUES (:id)")
@@ -150,15 +136,12 @@ def upgrade_user_to_member_force(user_id):
     except Exception as e:
         db.session.rollback()
 
-
 # HUẤN LUYỆN VIÊN
 def get_all_exercises():
     return Exercise.query.all()
 
-
 def get_all_day_of_week():
     return [e.value for e in DayOfWeek]
-
 
 def get_active_packages(coach_id, member_ids):
     if not member_ids:
@@ -169,14 +152,12 @@ def get_active_packages(coach_id, member_ids):
         MemberPackage.status == StatusPackage.ACTIVE
     ).all()
 
-
 def has_plan_assigned(coach_id, member_id):
     active_packages = get_active_packages(coach_id, [member_id])
     for pkg in active_packages:
         if pkg.workout_plans:
             return True
     return False
-
 
 def get_latest_assignment_end_date(member_id):
     latest_assignment = (db.session.query(PlanAssignment)
@@ -188,7 +169,6 @@ def get_latest_assignment_end_date(member_id):
     if latest_assignment:
         return latest_assignment.end_date
     return None
-
 
 def assign_existing_plan(coach_id, member_id, plan_id, start_date, end_date):
     plan = WorkoutPlan.query.get(plan_id)
@@ -210,7 +190,6 @@ def assign_existing_plan(coach_id, member_id, plan_id, start_date, end_date):
         return True
 
     return False
-
 
 def add_workout_plan(name, plan, member_ids, start_date=None, end_date=None):
     if plan:
@@ -243,7 +222,6 @@ def add_workout_plan(name, plan, member_ids, start_date=None, end_date=None):
 
         db.session.commit()
 
-
 def get_members_by_coach(coach_id):
     query = (db.session.query(Member)
              .join(MemberPackage, MemberPackage.member_id == Member.id)
@@ -251,17 +229,10 @@ def get_members_by_coach(coach_id):
 
     return query.all()
 
-
 def get_plan_by_coach(coach_id):
     return WorkoutPlan.query.filter(WorkoutPlan.coach_id == coach_id).all()
 
-
 # CASHIER
-
-def get_payment_history():
-    return Invoice.query.all()
-
-
 def load_members(kw=None):
     query = Member.query
     if kw:
@@ -398,7 +369,6 @@ def cancel_pending_invoice(invoice_id):
         db.session.rollback()
         return False, str(ex)
 
-
 # RECEPTIONIST
 def get_members_for_receptionist(kw=None, page=1):
     # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)
@@ -416,17 +386,14 @@ def get_members_for_receptionist(kw=None, page=1):
 
     return query.all()
 
-
 def count_members_for_receptionist():
     return MemberPackage.query \
         .options(joinedload(MemberPackage.member)) \
         .options(joinedload(MemberPackage.coach)) \
         .options(joinedload(MemberPackage.package)).count()
 
-
 def get_all_coach():
     return Coach.query.all()
-
 
 def assign_coach(coach_id, package_id):
     coach = Coach.query.get(coach_id)
@@ -449,9 +416,7 @@ def validate_cashier(invoice_id):
     if not invoice_id:
         return False, "Mã hóa đơn không được để trống"
 
-
     inv = db.session.query(Invoice).filter(Invoice.id == invoice_id).with_for_update().first()  # pessimistic locking
-
     if not inv:
         return False, f"Hóa đơn mã {invoice_id} không tồn tại trong hệ thống"
     if inv.status != StatusInvoice.PENDING:
@@ -521,7 +486,6 @@ def add_exercise(name, description, image):
         db.session.rollback()
         return False, str(e)
 
-
 def add_package(name, price, duration, description, image, benefits):
     try:
         p = Package(name=name, price=float(price), duration=int(duration), description=description, image=image)
@@ -538,22 +502,3 @@ def add_package(name, price, duration, description, image, benefits):
     except Exception as e:
         db.session.rollback()
         return False, str(e)
-
-
-if __name__ == '__main__':
-    with app.app_context():
-        # u_id = 1
-        # p_id = 1
-        #
-        # success, msg = add_package_registration(u_id, p_id)
-        #
-        # if success:
-        #     print(f"{msg}")
-        # else:
-        #     print(f" Lỗi: {msg}")
-        # pass
-        # print(active_member_stats())
-        # print(stats_revenue(time="month"))
-        # print(stats_revenue(time="quarter"))
-        # print(stats_revenue_by_month(time='month', year=2025))
-        pass
