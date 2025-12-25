@@ -116,7 +116,7 @@ def add_package_registration(user_id, package_id):
         db.session.add(new_invoice_pending)
         db.session.commit()
 
-        return True, "Đăng ký thành công, vui lòng đến phòng gym để thanh toán và kích hoạt tài khoản!"
+        return True, "Đăng ký thành công, vui lòng đến phòng gym để thanh toán để kích hoạt gói!"
 
     except Exception as e:
         db.session.rollback()
@@ -240,6 +240,7 @@ def load_members(kw=None):
         query = query.filter(Member.name.contains(kw) | Member.phone.contains(kw))
     return query.limit(10).all()
 
+
 def load_packages():
     return Package.query.all()
 
@@ -286,6 +287,7 @@ def get_package_name_by_invoice(invoice_id):
         print(e)
     return "Không đăng kí gói nào"
 
+
 def calculate_package_dates(member_id, duration_months):
     now = datetime.now()
 
@@ -316,6 +318,7 @@ def process_pending_invoice(invoice_id):
     except Exception as ex:
         db.session.rollback()
         return False, str(ex)
+
 
 def add_member_package(member_id, package_id):
 
@@ -407,6 +410,7 @@ def assign_coach(coach_id, package_id):
         db.session.rollback()
         return None
 
+
 #VALIDATE
 
 def validate_cashier(invoice_id):
@@ -434,19 +438,12 @@ def validate_cashier(invoice_id):
     return True, inv
 
 def validate_registration_package(member_id):
-    active_package = MemberPackage.query.filter(MemberPackage.member_id == member_id,MemberPackage.status == 'ACTIVE').first()
-
-    if active_package and active_package.endDate > datetime.now():
-        end_date = active_package.endDate.strftime('%d/%m/%Y')
-        return False, f"Gói '{active_package.package.name}' của bạn còn hạn đến {end_date}, nếu muốn đăng kí gói mới, vui lòng đến phòng gym để hủy gói hiện tại"
-
     pending_invoice = Invoice.query.filter(Invoice.member_id == member_id,Invoice.status == StatusInvoice.PENDING).first()
 
     if pending_invoice:
         create_date = pending_invoice.invoice_day_create.strftime('%H:%M %d/%m')
         return False, (f"Hội viên đã có một yêu cầu đăng ký chờ thanh toán lúc {create_date}."
                        f" Vui lòng xử lý hóa đơn cũ trước, nếu muốn đăng kí gói Khác, vui lòng đến phòng gym để hủy")
-
     return True, 'Thông tin hợp lệ'
 
 

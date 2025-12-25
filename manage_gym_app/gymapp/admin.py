@@ -94,7 +94,6 @@ class ExerciseView(AdminView):
         'image': list_img
     }
 
-
 class PackageBenefitInline(InlineFormAdmin):
     form_label = 'Quyền lợi'
     form_columns = ['name', 'detail']
@@ -150,6 +149,7 @@ class LogoutView(BaseView):
     def is_accessible(self) -> bool:
         return current_user.is_authenticated
 
+
 class StatsRevenueViewByMonth(BaseView):
     @expose('/')
     def index(self):
@@ -157,6 +157,7 @@ class StatsRevenueViewByMonth(BaseView):
         revenue_quarters = dao.stats_revenue(time="quarter")
 
         return self.render('admin/stats_revenue_by_month.html', revenue_times= revenue_times, quarterly_stats=revenue_quarters)
+
 
 class StatsView(BaseView):
     menu_icon_type = 'fa'
