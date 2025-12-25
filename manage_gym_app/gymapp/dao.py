@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import joinedload
 import cloudinary
 from flask_login import current_user
-from cloudinary import uploader  # them uploader de up anh luc dang ki
+from cloudinary import uploader
 from gymapp import db, app
 from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPackage,
                            StatusInvoice, StatusPackage, Package, ExerciseSchedule, DayOfWeek,
@@ -136,7 +136,6 @@ def upgrade_user_to_member_force(user_id):
     except Exception as e:
         db.session.rollback()
 
-# HUẤN LUYỆN VIÊN
 def get_all_exercises():
     return Exercise.query.all()
 
@@ -232,7 +231,6 @@ def get_members_by_coach(coach_id):
 def get_plan_by_coach(coach_id):
     return WorkoutPlan.query.filter(WorkoutPlan.coach_id == coach_id).all()
 
-# CASHIER
 def load_members(kw=None):
     query = Member.query
     if kw:
@@ -369,9 +367,7 @@ def cancel_pending_invoice(invoice_id):
         db.session.rollback()
         return False, str(ex)
 
-# RECEPTIONIST
 def get_members_for_receptionist(kw=None, page=1):
-    # query = MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE)
     query = MemberPackage.query.join(MemberPackage.member) \
         .options(joinedload(MemberPackage.member)) \
         .options(joinedload(MemberPackage.coach)) \
@@ -409,14 +405,11 @@ def assign_coach(coach_id, package_id):
         db.session.rollback()
         return None
 
-
-#VALIDATE
-
 def validate_cashier(invoice_id):
     if not invoice_id:
         return False, "Mã hóa đơn không được để trống"
 
-    inv = db.session.query(Invoice).filter(Invoice.id == invoice_id).with_for_update().first()  # pessimistic locking
+    inv = db.session.query(Invoice).filter(Invoice.id == invoice_id).with_for_update().first()
     if not inv:
         return False, f"Hóa đơn mã {invoice_id} không tồn tại trong hệ thống"
     if inv.status != StatusInvoice.PENDING:
@@ -445,10 +438,6 @@ def validate_registration_package(member_id):
                        f" Vui lòng xử lý hóa đơn cũ trước, nếu muốn đăng kí gói Khác, vui lòng đến phòng gym để hủy")
     return True, 'Thông tin hợp lệ'
 
-
-
-#Thong ke
-
 def active_member_stats(kw=None):
     query = db.session.query(Package.id, Package.name, func.count(MemberPackage.id))\
                       .join(MemberPackage, MemberPackage.package_id.__eq__(Package.id))\
@@ -474,7 +463,6 @@ def count_active_members():
 def get_gym_rules():
     return Regulation.query.filter(Regulation.code.like('GYM_RULE_%')).all()
 
-#ADMIN
 def add_exercise(name, description, image):
     try:
         ex = Exercise(name=name, description=description, image=image)

@@ -104,8 +104,6 @@ function saveExercise() {
                     if (typeof $ !== 'undefined') {
                         $('.modal.show').modal('hide');
                     }
-
-                    // Reload lại trang sau 1.5s
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     showToast("Lỗi: " + data.err_msg, "danger");

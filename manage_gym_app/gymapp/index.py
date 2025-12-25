@@ -19,9 +19,6 @@ def index():
     gym_rules = dao.get_gym_rules()
     return render_template('index.html', packages=packages, gym_rules=gym_rules)
 
-
-###################### VIEW ############################
-# coach view
 @app.route('/coach')
 @login_required(UserRole.COACH)
 def coach_view():
@@ -218,7 +215,6 @@ def assign_workout_plan():
         return jsonify({'status': 400, 'err_msg': str(e)})
 
 
-###########
 @app.route('/cashier')
 @login_required(UserRole.CASHIER)
 def cashier_view():
@@ -312,9 +308,6 @@ def payment_history_member():
     return render_template('member/payment_history_member.html',
                            invoice=view_data, StatusInvoice=StatusInvoice, date_filter=date_arg,
                            status_filter=status_arg)
-
-
-#############RECEPTIONIST##################
 
 @app.route('/receptionist')
 @login_required(UserRole.RECEPTIONIST)
@@ -422,10 +415,6 @@ def issue_an_invoice_receptionist_process():
             'err_msg': 'đã có tài username này rồi'
         })
 
-
-##################################################
-
-#####ADMIN
 @app.route('/api/admin/exercises', methods=['POST'])
 @login_required(UserRole.ADMIN)
 def add_exercise_api():
@@ -589,8 +578,6 @@ def logout_process():
 def load_user(pk):
     return dao.get_user_by_id(pk)
 
-
-#################
 @app.route('/api/register_package', methods=['post'])
 @login_required(UserRole.USER)
 def register_package():
