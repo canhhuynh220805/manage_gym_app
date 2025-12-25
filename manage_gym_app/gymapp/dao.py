@@ -468,7 +468,6 @@ def count_members_by_time(year=datetime.now().year):
            .filter(func.extract('year', User.join_date) == year,MemberPackage.status == 'active').group_by(func.extract('month', User.join_date))).all()
     return query
 
-    return query
 def count_active_members():
     return MemberPackage.query.filter(MemberPackage.status == StatusPackage.ACTIVE).count()
 
