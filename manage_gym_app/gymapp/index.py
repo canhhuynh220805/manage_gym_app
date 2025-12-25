@@ -2,6 +2,7 @@ import math
 import threading
 from datetime import datetime
 import sys
+
 print("Python đang chạy ở:", sys.executable)
 
 from flask import render_template, request, redirect, url_for, jsonify, session
@@ -16,7 +17,7 @@ from gymapp.models import UserRole, StatusInvoice, DayOfWeek, WorkoutPlan
 def index():
     packages = dao.load_package()
     gym_rules = dao.get_gym_rules()
-    return render_template('index.html', packages=packages, gym_rules = gym_rules)
+    return render_template('index.html', packages=packages, gym_rules=gym_rules)
 
 
 ###################### VIEW ############################
@@ -156,11 +157,11 @@ def create_workout_plan():
         end_date = data.get('endDate')
         plan = session.get('workout-plan')
         success, err_msg, msg = (
-            WorkoutPlan.Builder()\
-            .set_info(name=name_plan,coach_id=current_user.id)\
-            .set_exercise(plan)\
-            .set_member(member_ids=member_ids, start_date=start_date, end_date=end_date)\
-            .build()
+            WorkoutPlan.Builder() \
+                .set_info(name=name_plan, coach_id=current_user.id) \
+                .set_exercise(plan) \
+                .set_member(member_ids=member_ids, start_date=start_date, end_date=end_date) \
+                .build()
         )
         if success:
             del session['workout-plan']
@@ -194,7 +195,8 @@ def assign_workout_plan():
     if end_lates_date and start_date <= end_lates_date:
         fmt_date = end_lates_date.strftime('%d/%m/%Y')
         return jsonify({
-            'err_msg': f"Hội viên đang bận tập giáo án cũ đến hết ngày {fmt_date}. Vui lòng chọn ngày bắt đầu sau ngày này!", 'status': 400
+            'err_msg': f"Hội viên đang bận tập giáo án cũ đến hết ngày {fmt_date}. Vui lòng chọn ngày bắt đầu sau ngày này!",
+            'status': 400
         })
 
     if start_date >= end_date:
@@ -226,6 +228,7 @@ def cashier_view():
     return render_template('cashier/index_cashier.html', packages=packages, pending_invoices=pending_invoices,
                            paid_invoices=paid_invoices)
 
+
 @app.route('/cashier/history')
 @login_required(UserRole.CASHIER)
 def cashier_history_view():
@@ -233,7 +236,9 @@ def cashier_history_view():
     invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PAID, page=int(request.args.get('page', 1)))
 
     return render_template('cashier/history_cashier.html', invoices=invoices
-                           , pages=math.ceil(dao.count_invoices(kw=kw, status=StatusInvoice.PAID) / app.config['PAGE_SIZE']))
+                           , pages=math.ceil(
+            dao.count_invoices(kw=kw, status=StatusInvoice.PAID) / app.config['PAGE_SIZE']))
+
 
 @app.route('/api/cashier/process-pending', methods=['post'])
 @login_required(UserRole.CASHIER)
@@ -242,7 +247,8 @@ def process_pending():
     success, msg = dao.process_pending_invoice(invoice_id)
     return jsonify({'status': 200 if success else 400,
                     'msg': msg
-    })
+                    })
+
 
 @app.route('/api/cashier/direct-pay', methods=['post'])
 @login_required(UserRole.CASHIER)
@@ -256,6 +262,7 @@ def direct_pay():
         return jsonify({'status': 200, 'msg': 'Thanh toán thành công!'})
     else:
         return jsonify({'status': 400, 'msg': 'Lỗi xử lý! Vui lòng kiểm tra lại thông tin.'})
+
 
 @app.route('/api/cashier/cancel-invoice', methods=['post'])
 @login_required(UserRole.CASHIER)
@@ -335,10 +342,9 @@ def search_members_api():
 @app.route('/receptionist/members')
 @login_required(UserRole.RECEPTIONIST)
 def receptionist_members_view():
-    page = int(request.args.get('page', 1))
-    packages = dao.get_members_for_receptionist(page=page, kw=request.args.get('kw'))
+    page_mem = int(request.args.get('page', 1))
+    packages = dao.get_members_for_receptionist(page=page_mem, kw=request.args.get('kw'))
     coaches = dao.get_all_coach()
-
     return render_template('receptionist/members_receptionist.html', packages=packages, coaches=coaches,
                            pages=math.ceil(dao.count_members_for_receptionist() / app.config['MEMBER_RECEP']))
 
@@ -355,7 +361,6 @@ def receptionist_create_invoice_view():
 def assign_coach(package_id):
     coach_id = request.json.get('coach_id')
     updated_package = dao.assign_coach(package_id=package_id, coach_id=coach_id)
-    print(updated_package)
     if updated_package:
         return jsonify({
             'msg': 'Gán HLV thành công!',
@@ -370,7 +375,9 @@ def assign_coach(package_id):
 def issue_an_invoice_receptionist_view():
     selected_package_id = request.args.get('package_id', type=int)
     pakages = dao.load_package()
-    return render_template('receptionist/issue_an_invoice_receptionist.html',pakages=pakages,selected_package_id=selected_package_id)
+    return render_template('receptionist/issue_an_invoice_receptionist.html', pakages=pakages,
+                           selected_package_id=selected_package_id)
+
 
 @app.route('/api/receptionist/issue_an_invoice_receptionist', methods=['post'])
 @login_required(UserRole.RECEPTIONIST)
@@ -392,11 +399,11 @@ def issue_an_invoice_receptionist_process():
     avatar = request.files.get('avatar')
     try:
         member = dao.add_member_full_info(avatar=avatar,
-                       name=name,
-                       username=username,
-                       password= password,phone=phone,gender=gender,dob=dob,email = email)
+                                          name=name,
+                                          username=username,
+                                          password=password, phone=phone, gender=gender, dob=dob, email=email)
 
-        dao.add_package_registration(user_id=member.id,package_id=package_id)
+        dao.add_package_registration(user_id=member.id, package_id=package_id)
 
         notifier = observers.RegistrationSubject()
         notifier.attach(observers.EmailNotificationObserver())
@@ -481,6 +488,7 @@ def add_package_api():
     success, msg = dao.add_package(name, price, duration, description, image, benefits)
     return jsonify({'status': 200 if success else 400, 'msg' if success else 'err_msg': msg})
 
+
 @app.route('/login')
 def login_view():
     return render_template('login.html')
@@ -535,7 +543,8 @@ def register_process():
         return render_template('register.html', err_msg=err_msg)
     avatar = request.files.get('avatar')
     try:
-        dao.add_member_full_info(avatar=avatar,name=name,username=username, password=password, phone=phone, gender=gender, dob=dob, email=email)
+        dao.add_member_full_info(avatar=avatar, name=name, username=username, password=password, phone=phone,
+                                 gender=gender, dob=dob, email=email)
     except Exception as ex:
         return render_template('register.html', err_msg=str(ex))
     return redirect('/login')
@@ -549,7 +558,8 @@ def login_process():
     if u:
         login_user(user=u)
     else:
-        return redirect('/login')
+        err_msg = "Đăng nhập thất bại, tài khoản hoặc mật khẩu ko tồn tại!!!"
+        return render_template('login.html', err_msg=err_msg)
     next = request.args.get('next')
     if next:
         return redirect(next)
@@ -574,6 +584,7 @@ def logout_process():
 @login.user_loader
 def load_user(pk):
     return dao.get_user_by_id(pk)
+
 
 #################
 @app.route('/api/register_package', methods=['post'])
@@ -601,7 +612,7 @@ def register_package():
         if is_success:
             notifier = observers.RegistrationSubject()
             notifier.attach(observers.EmailNotificationObserver())
-            notifier.notify(user_id=user_id,package_id=package_id)
+            notifier.notify(user_id=user_id, package_id=package_id)
 
             return jsonify({'status': 200, 'msg': message})
         else:

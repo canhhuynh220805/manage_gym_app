@@ -26,7 +26,7 @@ function assignCoach(coach_id, package_id){
             });
         }
     )
-
+}
 
 function setupAvatarPreview() {
     const avatarInput = document.getElementById('avatar');
@@ -90,32 +90,6 @@ document.addEventListener('DOMContentLoaded', function () {
     updatePackageForDisPlay();
     setupAvatarPreview('avatar', 'avatarPreview');
 });
-
-function assignCoach(coach_id, package_id){
-    fetch(`/api/member-packages/${package_id}/assign-coach`,{
-        method: 'PATCH',
-        headers: {
-        'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            'coach_id': coach_id
-        })
-    }).then(res => {
-        if (res.ok) {
-            return res.json().then(data => {
-                showToast(data.message, 'success');
-                setTimeout(() => location.reload(), 1500);
-            });
-        } else {
-            return res.json().then(data => {
-                showToast(data.error || 'Có lỗi xảy ra', 'danger');
-            });
-        }
-    }).catch(err => {
-        console.error('Lỗi:', err);
-        showToast('Mất kết nối đến máy chủ!', 'danger');
-    });
-}
 function searchMembers() {
     let kw = document.getElementById("memberSearch").value;
 

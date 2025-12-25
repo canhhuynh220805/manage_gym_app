@@ -5,13 +5,6 @@
 {% block content %}
 <h1 class="text-center text-success mt-1">ĐĂNG KÝ</h1>
 
-{% if err_msg %}
-<div class="alert alert-danger">{{ err_msg }}</div>
-{% endif %}
-{% if msg %}
-<div class="alert alert-success">{{ msg }}</div>
-{% endif %}
-
 <form method="post" action="/register" enctype="multipart/form-data">
 
     <div class="form-floating mb-3 mt-3">

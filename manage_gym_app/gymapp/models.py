@@ -147,12 +147,14 @@ class WorkoutPlan(BaseModel):
                 return self
 
             self.plan.exercises = []
-            max_day = int(dao.get_regulation_by_code("MAX DAY PRACTISE").value)
+            max_day = int(dao.get_regulation_by_code("MAX_PRACTISE_DAY").value)
+            day_temp = set()
             for ex in exercise.values():
                 ex_name = ex.get('name', 'Bài tập')
                 sets = int(ex.get('sets', 0))
                 reps = int(ex.get('reps', 0))
                 days = ex.get('days', [])
+                day_temp.update(days)
                 if sets <= 0 or reps <= 0:
                     self.err_msg.append(f'Bài "{ex_name}" chưa nhập số hiệp/lần tập hợp lệ!, số hiệp và số lần phải lớn hơn 0')
                     return self
@@ -160,14 +162,14 @@ class WorkoutPlan(BaseModel):
                     self.err_msg.append(
                         f'Bài "{ex_name}" chưa chọn ngày tập!, vui lòng chọn ít nhất 1 ngày')
                     return self
-                if len(days) > max_day:
+                if len(day_temp) > max_day:
                     self.err_msg.append(
-                        f'Bài "{ex_name}"  vượt quá số ngày tập quy định, quy định chỉ cho tập tối đa {max_day}')
+                        f'Tổng số ngày tập vượt quá số ngày tập quy định, quy định chỉ cho tập tối đa {max_day} ngày')
                     return self
                 ex_detail = PlanDetail(
                     exercise_id=int(ex.get('id')),
-                    reps=sets,
-                    sets=reps,
+                    reps=reps,
+                    sets=sets,
                 )
                 days = ex.get('days', [])
                 for day in days:
