@@ -1,12 +1,11 @@
 import hashlib
 from datetime import datetime, timedelta
-from flask_mail import Message
 
 from sqlalchemy.orm import joinedload
 import cloudinary
 from flask_login import current_user
 from cloudinary import uploader  # them uploader de up anh luc dang ki
-from gymapp import db, app, mail
+from gymapp import db, app
 from gymapp.models import (User, Member, UserRole, Exercise, Invoice, MemberPackage,
                            StatusInvoice, StatusPackage, Package, ExerciseSchedule, DayOfWeek,
                            PlanDetail, WorkoutPlan, PackageBenefit, Coach, PlanAssignment, Regulation)
@@ -481,18 +480,6 @@ def validate_registration_package(member_id):
                        f" Vui lòng xử lý hóa đơn cũ trước, nếu muốn đăng kí gói Khác, vui lòng đến phòng gym để hủy")
     return True, 'Thông tin hợp lệ'
 
-
-#SEND MAIL
-def send_mail(member_id, package_id):
-    with app.app_context():
-        member = User.query.get(member_id)
-        package = Package.query.get(package_id)
-
-        msg = Message("Email xác nhận đăng kí thành công", recipients=[member.email])
-        formatted_price = "{:,.0f}".format(package.price)
-        msg.body = (f"Chào {member.name}, bạn đã đăng kí thành công gói {package.name}!\n" 
-                    f"Vui lòng chuẩn bị {formatted_price} VNĐ đến quầy thu ngân để thanh toán và kích hoạt tài khoản.")
-        mail.send(msg)
 
 
 #Thong ke
