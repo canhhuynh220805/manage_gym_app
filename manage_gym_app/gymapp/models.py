@@ -515,6 +515,13 @@ if __name__ == '__main__':
                            detail="Ưu tiên đặt lịch sử dụng máy tập, phòng chức năng và các dịch vụ cao cấp trong giờ cao điểm.",
                            package_id=4)
         ]
+        regulations = [
+            Regulation(code='MAX DAY PRACTISE', name='Số ngày tập tối đa/tuần', value='6'),
+            Regulation(code='GYM_RULE_SHIRT', name='Quy định trang phục', value='Không được cởi trần trong phòng tập'),
+            Regulation(code='GYM_RULE_EQUIPMENT', name='Sử dụng thiết bị',value='Cất tạ về đúng vị trí sau khi sử dụng'),
+            Regulation(code='GYM_RULE_SMOKE', name='Cấm chất kích thích', value='Hoàn toàn không hút thuốc trong khuôn viên tập luyện')
+        ]
+        db.session.add_all(regulations)
         db.session.add_all(coaches)
         db.session.add_all(members)
         db.session.add_all(others)

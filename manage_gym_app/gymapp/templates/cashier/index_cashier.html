@@ -40,10 +40,12 @@
                                 </small>
                             </td>
                             <td>
-                                {% if i.invoice_details %}
+                                {% if i.member_package and i.member_package.package %}
                                     <span class="badge bg-secondary">
-                                        {{ i.invoice_details[0].member_package.package.name }}
+                                        {{ i.member_package.package.name }}
                                     </span>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
                                 {% endif %}
                             </td>
                             <td class="text-danger fw-bold">
