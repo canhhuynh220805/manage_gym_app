@@ -510,6 +510,8 @@ def workout_plan_view():
 
 @app.route('/workout-plans/<plan_id>', methods=['GET'])
 def workout_plan_detail(plan_id):
+    if not plan_id or plan_id == 'None':
+        return redirect(url_for('workout_plan_view'))
     workout_plan = dao.get_detail_workout_plan_by_id(workout_plan_id=plan_id)
     schedule = {day.value: [] for day in DayOfWeek}
     for detail in workout_plan.exercises:
