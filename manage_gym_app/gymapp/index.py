@@ -242,21 +242,6 @@ def process_pending():
     success, msg = dao.process_pending_invoice(invoice_id)
     return jsonify({'status': 200 if success else 400, 'msg': msg})
 
-
-@app.route('/api/cashier/direct-pay', methods=['post'])
-@login_required(UserRole.CASHIER)
-def direct_pay():
-    data = request.json
-    member_id = data.get('member_id')
-    package_id = data.get('package_id')
-    invoice = dao.process_payment(member_id, package_id)
-
-    if invoice:
-        return jsonify({'status': 200, 'msg': 'Thanh toán thành công!'})
-    else:
-        return jsonify({'status': 400, 'msg': 'Lỗi xử lý! Vui lòng kiểm tra lại thông tin.'})
-
-
 @app.route('/api/cashier/cancel-invoice', methods=['post'])
 @login_required(UserRole.CASHIER)
 def cancel_invoice():
@@ -273,7 +258,6 @@ def cancel_invoice():
         return jsonify({'status': 200, 'msg': msg})
     else:
         return jsonify({'status': 400, 'msg': msg})
-
 
 @app.route('/payment_history')
 @login_required(UserRole.USER)

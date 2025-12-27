@@ -290,8 +290,7 @@ def calculate_package_dates(member_id, duration_months):
 
     last_active_package = MemberPackage.query.filter(MemberPackage.member_id == member_id,
                                                      MemberPackage.status == StatusPackage.ACTIVE,
-                                                     MemberPackage.endDate > now).order_by(
-        MemberPackage.endDate.desc()).first()
+                                                     MemberPackage.endDate > now).order_by(MemberPackage.endDate.desc()).first()
 
     if last_active_package:
         start_date = last_active_package.endDate
@@ -472,7 +471,6 @@ def add_exercise(name, description, image):
     except Exception as e:
         db.session.rollback()
         return False, str(e)
-
 
 def validate_package_data(data):
     required_fields = {
