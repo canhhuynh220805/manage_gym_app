@@ -96,11 +96,11 @@ class ExerciseView(AdminView):
 
 class PackageBenefitInline(InlineFormAdmin):
     form_label = 'Quyền lợi'
-    form_columns = ['name', 'detail']
+    form_columns = ['id', 'name', 'detail']
 
 class PackageView(AdminView):
-    create_modal_template = 'admin/create_package.html'
-    edit_modal_template= 'admin/create_package.html'
+    # create_modal_template = 'admin/create_package.html'
+    # edit_modal_template= 'admin/create_package.html'
 
     column_list = ['name', 'duration', 'price', 'description', 'image']
     form_columns = ['name', 'duration', 'price', 'description', 'image', 'benefits']

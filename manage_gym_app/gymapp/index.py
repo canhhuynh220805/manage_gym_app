@@ -10,7 +10,7 @@ from flask_login import logout_user, login_user, current_user
 
 from gymapp import app, dao, login, db, observers
 from gymapp.decorators import login_required
-from gymapp.models import UserRole, StatusInvoice, DayOfWeek, WorkoutPlan
+from gymapp.models import UserRole, StatusInvoice, DayOfWeek, WorkoutPlan, Package
 
 
 @app.route('/')
@@ -226,7 +226,6 @@ def cashier_view():
     return render_template('cashier/index_cashier.html', packages=packages, pending_invoices=pending_invoices,
                            paid_invoices=paid_invoices)
 
-
 @app.route('/cashier/history')
 @login_required(UserRole.CASHIER)
 def cashier_history_view():
@@ -234,18 +233,14 @@ def cashier_history_view():
     invoices = dao.get_invoices(kw=kw, status=StatusInvoice.PAID, page=int(request.args.get('page', 1)))
 
     return render_template('cashier/history_cashier.html', invoices=invoices
-                           , pages=math.ceil(
-            dao.count_invoices(kw=kw, status=StatusInvoice.PAID) / app.config['PAGE_SIZE']))
-
+                           , pages=math.ceil(dao.count_invoices(kw=kw, status=StatusInvoice.PAID) / app.config['PAGE_SIZE']))
 
 @app.route('/api/cashier/process-pending', methods=['post'])
 @login_required(UserRole.CASHIER)
 def process_pending():
     invoice_id = request.json.get('invoice_id')
     success, msg = dao.process_pending_invoice(invoice_id)
-    return jsonify({'status': 200 if success else 400,
-                    'msg': msg
-                    })
+    return jsonify({'status': 200 if success else 400, 'msg': msg})
 
 
 @app.route('/api/cashier/direct-pay', methods=['post'])
@@ -448,35 +443,20 @@ def add_exercise_api():
 @login_required(UserRole.ADMIN)
 def add_package_api():
     data = request.json
-    name = data.get('name', '').strip()
-    price = data.get('price')
-    duration = data.get('duration')
-    description = data.get('description', '').strip()
-    image = data.get('image', '').strip()
-    benefits = data.get('benefits', [])
 
-    if not name or len(name) < 3:
-        return jsonify({'status': 400, 'err_msg': 'Tên gói tập phải từ 3 ký tự trở lên!'})
+    validate = dao.validate_package_data(data)
+    if validate:
+        return jsonify({'status': 400, 'err_msg': validate})
 
-    try:
-        if float(price) <= 0:
-            return jsonify({'status': 400, 'err_msg': 'Giá tiền phải lớn hơn 0!'})
-    except:
-        return jsonify({'status': 400, 'err_msg': 'Giá tiền không hợp lệ!'})
+    name = data.get('name').strip()
+    if Package.query.filter_by(name=name).first():
+        return jsonify({'status': 400, 'err_msg': f'Gói tập "{name}" đã tồn tại!'})
 
-    try:
-        if int(duration) <= 0:
-            return jsonify({'status': 400, 'err_msg': 'Thời hạn phải ít nhất 1 tháng!'})
-    except:
-        return jsonify({'status': 400, 'err_msg': 'Thời hạn không hợp lệ!'})
+    valid_benefits = [b for b in data.get('benefits', []) if b.get('name', '').strip()]
+    success, msg = dao.add_package(name=name, price=float(data.get('price')), duration=int(data.get('duration')),
+                                   description=data.get('description').strip(), image=data.get('image').strip(),
+                                   benefits=valid_benefits)
 
-    if not description:
-        return jsonify({'status': 400, 'err_msg': 'Mô tả không được để trống!'})
-
-    if not image.startswith(('http://', 'https://')):
-        return jsonify({'status': 400, 'err_msg': 'Link ảnh phải là một URL hợp lệ!'})
-
-    success, msg = dao.add_package(name, price, duration, description, image, benefits)
     return jsonify({'status': 200 if success else 400, 'msg' if success else 'err_msg': msg})
 
 

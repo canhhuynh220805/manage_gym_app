@@ -95,7 +95,7 @@ def add_package_registration(user_id, package_id):
         return False, "Gói tập không tồn tại"
 
     try:
-        upgrade_user_to_member_force(user_id)
+        upgrade_user_to_member(user_id)
 
         new_registration = MemberPackage(
             member=member,
@@ -122,7 +122,7 @@ def add_package_registration(user_id, package_id):
         print(f"Lỗi đăng ký: {str(e)}")
         return False, str(e)
 
-def upgrade_user_to_member_force(user_id):
+def upgrade_user_to_member(user_id):
     try:
         sql_insert = text("INSERT IGNORE INTO member (id) VALUES (:id)")
         db.session.execute(sql_insert, {'id': user_id})
@@ -322,7 +322,7 @@ def add_member_package(member_id, package_id):
     p = db.session.get(Package, package_id)
     if not p:
         return None
-    upgrade_user_to_member_force(member_id)
+    upgrade_user_to_member(member_id)
     s, e = calculate_package_dates(member_id, p.duration)
 
     mp = MemberPackage(member_id=member_id, package_id=p.id, startDate=s, endDate=e, status=StatusPackage.ACTIVE)
@@ -472,6 +472,42 @@ def add_exercise(name, description, image):
     except Exception as e:
         db.session.rollback()
         return False, str(e)
+
+
+def validate_package_data(data):
+    required_fields = {
+        'name': 'Tên gói tập',
+        'price': 'Giá tiền',
+        'duration': 'Thời hạn',
+        'description': 'Mô tả',
+        'image': 'Link ảnh'
+    }
+    for field, label in required_fields.items():
+        if not data.get(field) or str(data.get(field)).strip() == "":
+            return f"{label} không được để trống!"
+
+    name = data.get('name').strip()
+    if len(name) < 3:
+        return "Tên gói tập phải từ 3 ký tự trở lên!"
+
+    try:
+        price = float(data.get('price'))
+        duration = int(data.get('duration'))
+        if price <= 0 or duration <= 0:
+            return "Giá tiền và thời hạn phải lớn hơn 0!"
+    except (ValueError, TypeError):
+        return "Giá tiền hoặc thời hạn không hợp lệ!"
+
+    image = data.get('image').strip()
+    if not image.startswith(('http://', 'https://')):
+        return "Link ảnh phải là một URL hợp lệ (http/https)!"
+
+    benefits = data.get('benefits', [])
+    valid_benefits = [b for b in benefits if b.get('name', '').strip()]
+    if not valid_benefits:
+        return "Yêu cầu nhập ít nhất 1 quyền lợi cho gói tập!"
+
+    return None
 
 def add_package(name, price, duration, description, image, benefits):
     try:
